@@ -1,0 +1,98 @@
+[project]
+name = "Edelya"
+version = "0.0.0"
+requires-python = ">=3.14"
+
+[project.urls]
+Homepage = "https://github.com/platsajacki/edelya"
+Repository = "https://github.com/platsajacki/edelya"
+
+# ----------------------------
+# Optional: Ruff
+# ----------------------------
+[tool.ruff]
+line-length = 120
+target-version = "py314"
+fix = true
+exclude = ["migrations", "venv", ".mypy_cache", "__pycache__"]
+
+[tool.ruff.format]
+quote-style = "single"
+indent-style = "space"
+docstring-code-format = true
+docstring-code-line-length = 60
+
+[tool.ruff.lint]
+select = ["E", "F", "B", "N", "I", "UP", "SIM"]
+
+[tool.ruff.lint.isort]
+section-order = [
+  "future",
+  "testing",
+  "standard-library",
+  "django",
+  "third-party",
+  "first-party",
+  "local-folder",
+]
+
+[tool.ruff.lint.isort.sections]
+"testing" = ["pytest", "pytest_lazy_fixtures", "pytest_mock"]
+"django" = [
+  "django",
+  "django_query_profiler",
+  "drf_spectacular",
+  "pgcrypto",
+  "phonenumber_field",
+  "rest_framework",
+  "rest_framework_api_key",
+]
+
+# ----------------------------
+# Static typing: mypy
+# ----------------------------
+[tool.mypy]
+mypy_path = "src"
+python_version = "3.14"
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+strict_optional = true
+no_implicit_optional = true
+ignore_missing_imports = true
+plugins = ["mypy_django_plugin.main"]
+exclude = "(venv|migrations)"
+
+[tool.django-stubs]
+django_settings_module = "app.settings"
+strict_settings = true
+
+# ----------------------------
+# Testing: Pytest
+# ----------------------------
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+DJANGO_SETTINGS_MODULE = "app.settings"
+norecursedirs = ["env/*", "venv/*"]
+addopts = ["-n", "auto", "-p", "no:cacheprovider", "--reuse-db", "--blockage"]
+testpaths = ["src/_tests/"]
+python_files = ["test_*.py"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+# ----------------------------
+# Coverage
+# ----------------------------
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "__init__.py",
+    "*/migrations/*",
+    "asgi.py",
+    "wsgi.py",
+    "*/_tests/*",
+    "manage.py",
+    "logging_handlers.py",
+]
+disable_warnings = ["no-data-collected"]
