@@ -12,9 +12,9 @@ SECRET_KEY = getenv('SECRET_KEY', 'django-insecure-default-key')
 
 DEBUG = bool(int(getenv('DEBUG', 0)))
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS: list[str] = []
 
-INSTALLED_APPS = [
+DJANGO_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -22,6 +22,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 ]
+LOCAL_APPS = [
+    'users',
+]
+THIRD_PARTY_APPS: list[str] = []
+INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -63,6 +68,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+AUTH_USER_MODEL = 'users.User'
 
 # Internationalization
 LANGUAGE_CODE = 'en-us'
