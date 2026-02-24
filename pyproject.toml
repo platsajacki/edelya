@@ -78,8 +78,8 @@ norecursedirs = ["env/*", "venv/*"]
 addopts = ["-n", "auto", "-p", "no:cacheprovider", "--reuse-db", "--blockage"]
 testpaths = ["src/_tests/"]
 python_files = ["test_*.py"]
-asyncio_mode = "auto"
-asyncio_default_fixture_loop_scope = "function"
+# asyncio_mode = "auto"
+# asyncio_default_fixture_loop_scope = "function"
 
 # ----------------------------
 # Coverage
