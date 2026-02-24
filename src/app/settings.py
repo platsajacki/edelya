@@ -1,3 +1,4 @@
+from datetime import timedelta
 from os import getenv
 from pathlib import Path
 
@@ -25,7 +26,11 @@ DJANGO_APPS = [
 LOCAL_APPS = [
     'users',
 ]
-THIRD_PARTY_APPS: list[str] = []
+THIRD_PARTY_APPS = [
+    'drf_spectacular',
+    'rest_framework',
+    'rest_framework_simplejwt',
+]
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
 
 MIDDLEWARE = [
@@ -69,6 +74,24 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 AUTH_USER_MODEL = 'users.User'
+
+
+# Telegram Bot settings
+EDELYA_BOT_TOKEN = getenv('EDELYA_BOT_TOKEN', '')
+
+# Rest Framework & JWT settings
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': ('rest_framework_simplejwt.authentication.JWTAuthentication',),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=10),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=14),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+}
+
 
 # Internationalization
 LANGUAGE_CODE = 'en-us'
