@@ -6,8 +6,8 @@ repos:
         entry: bash -c "source venv/bin/activate && make check"
         language: system
         pass_filenames: false
-      # - id: make-test
-      #   name: Run make test
-      #   entry: bash -c "source venv/bin/activate && make test"
-      #   language: system
-      #   pass_filenames: false
+      - id: make-test
+        name: Run make test
+        entry: bash -c "source venv/bin/activate && make test"
+        language: system
+        pass_filenames: false

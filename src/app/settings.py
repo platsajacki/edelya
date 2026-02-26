@@ -24,6 +24,7 @@ DJANGO_APPS = [
     'django.contrib.staticfiles',
 ]
 LOCAL_APPS = [
+    'dishes',
     'users',
 ]
 THIRD_PARTY_APPS = [
