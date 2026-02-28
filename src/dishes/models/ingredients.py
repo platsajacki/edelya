@@ -16,11 +16,6 @@ class IngredientCategory(BaseModel):
         max_length=128,
         unique=True,
     )
-    slug = models.SlugField(
-        verbose_name='Уникальный идентификатор категории',
-        max_length=128,
-        unique=True,
-    )
     is_active = models.BooleanField(
         verbose_name='Активность категории',
         default=True,

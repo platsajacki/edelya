@@ -2,11 +2,26 @@ from django.db import models
 
 
 class Unit(models.TextChoices):
-    MG = 'mg', 'Миллиграммы'
-    G = 'g', 'Граммы'
-    KG = 'kg', 'Килограммы'
-    ML = 'ml', 'Миллилитры'
-    L = 'l', 'Литры'
-    PCS = 'pcs', 'Штуки'
-    TSP = 'tsp', 'Чайные ложки'
-    TBSP = 'tbsp', 'Столовые ложки'
+    MILLIGRAM = 'milligram', 'Миллиграмм'
+    GRAM = 'gram', 'Грамм'
+    KILOGRAM = 'kilogram', 'Килограмм'
+
+    MILLILITER = 'milliliter', 'Миллилитр'
+    LITER = 'liter', 'Литр'
+
+    PIECE = 'piece', 'Штука'
+    SLICE = 'slice', 'Ломтик'
+
+    TEASPOON = 'teaspoon', 'Чайная ложка'
+    TABLESPOON = 'tablespoon', 'Столовая ложка'
+
+    GLASS = 'glass', 'Стакан'
+    CUP = 'cup', 'Чашка'
+
+    BUNCH = 'bunch', 'Пучок'
+    CAN = 'can', 'Банка'
+
+    PINCH = 'pinch', 'Щепотка'
+
+    CLOVE = 'clove', 'Зубчик'
+    TO_TASTE = 'to_taste', 'По вкусу'

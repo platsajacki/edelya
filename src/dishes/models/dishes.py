@@ -16,11 +16,6 @@ class DishCategory(BaseModel):
         max_length=128,
         unique=True,
     )
-    slug = models.SlugField(
-        verbose_name='Уникальный идентификатор категории',
-        max_length=128,
-        unique=True,
-    )
     is_active = models.BooleanField(
         verbose_name='Активность категории',
         default=True,
@@ -121,6 +116,10 @@ class DishIngredient(BaseModel):
         on_delete=models.PROTECT,
         related_name='ingredient_in_dishes',
         verbose_name='Ингредиент',
+    )
+    is_optional = models.BooleanField(
+        verbose_name='Опциональность ингредиента',
+        default=False,
     )
     amount = models.DecimalField(
         verbose_name='Количество',
