@@ -1,7 +1,10 @@
 import pytest
 
+from random import choice
+
 from _tests import FixtureFactory
 from dishes.models import Ingredient, IngredientCategory
+from dishes.models.model_enums import Unit
 from users.models import User
 
 
@@ -39,7 +42,7 @@ def ingredient_data(factory: FixtureFactory, ingredient_category: IngredientCate
         lambda: {
             'name': factory.generic.text.word(),
             'owner': None,
-            'base_unit': factory.generic.text.word(),
+            'base_unit': choice(Unit.values),
             'category': ingredient_category,
         },
         iterations=10,

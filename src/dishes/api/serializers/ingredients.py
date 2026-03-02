@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from app.base.validators import UniqueTogetherWithOperatorValidator
 from dishes.models import Ingredient, IngredientCategory
 
 
@@ -16,7 +17,6 @@ class IngredientCategorySerializer(serializers.ModelSerializer):
 
 
 class IngredientSerializer(serializers.ModelSerializer):
-    category = IngredientCategorySerializer(read_only=True)
     owner = serializers.HiddenField(default=serializers.CurrentUserDefault())
 
     class Meta:
@@ -37,3 +37,15 @@ class IngredientSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
         ]
+        validators = [
+            UniqueTogetherWithOperatorValidator(
+                queryset=Ingredient.objects.actived(),
+                fields=['name__iexact', 'owner'],
+                message='An ingredient with this name already exists for this user.',
+            )
+        ]
+
+    def to_representation(self, instance: Ingredient) -> dict:
+        data = super().to_representation(instance)
+        data['category'] = IngredientCategorySerializer(instance.category).data
+        return data

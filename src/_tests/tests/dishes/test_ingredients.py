@@ -234,3 +234,35 @@ class TestIngredientViewSet:
         )
         response = auth_telegram_api_client.delete(self.get_detail_url(str(foreign.id)))
         assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_authenticated_client_cannot_make_duplicate_ingredient(
+        self, auth_telegram_api_client: APIClient, ingredient_user: Ingredient, ingredient_category: IngredientCategory
+    ) -> None:
+        response = auth_telegram_api_client.post(
+            self.list_url,
+            data={
+                'name': ingredient_user.name,
+                'base_unit': ingredient_user.base_unit,
+                'category': str(ingredient_user.category.id),
+            },
+            format='json',
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert 'An ingredient with this name already exists for this user' in str(response.data)
+
+    def test_authenticated_client_can_create_ingredient(
+        self, auth_telegram_api_client: APIClient, ingredient_category: IngredientCategory
+    ) -> None:
+        response = auth_telegram_api_client.post(
+            self.list_url,
+            data={
+                'name': 'New Ingredient',
+                'base_unit': Unit.TABLESPOON,
+                'category': str(ingredient_category.id),
+            },
+            format='json',
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        assert response.data['name'] == 'New Ingredient'
+        assert response.data['base_unit'] == Unit.TABLESPOON
+        assert response.data['category']['id'] == str(ingredient_category.id)
