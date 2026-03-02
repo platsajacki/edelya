@@ -17,6 +17,7 @@ class IngredientCategoryViewSet(ReadOnlyModelViewSet):
     serializer_class = IngredientCategorySerializer
     permission_classes = [IsAuthenticated]
     filterset_class = IngredientCategoryFilter
+    lookup_url_kwarg = 'ingredient_category_id'
 
 
 @extend_schema_view_from_class(IngredientViewSetSchema)
@@ -25,6 +26,7 @@ class IngredientViewSet(ModelViewSet):
     serializer_class = IngredientSerializer
     permission_classes = [IsAuthenticated & OwnerObjectPermission]
     filterset_class = IngredientFilter
+    lookup_url_kwarg = 'ingredient_id'
 
     def get_queryset(self) -> QuerySet[Ingredient]:
         if isinstance(self.request.user, User) and self.request.user.is_authenticated:

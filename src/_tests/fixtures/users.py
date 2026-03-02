@@ -6,6 +6,7 @@ import json
 from urllib.parse import quote_plus
 
 from django.conf import settings
+from rest_framework.test import APIClient
 
 from a12n.validators import WebAppUserData
 from users.models import User
@@ -26,6 +27,15 @@ def telegram_user(telegram_user_data: dict) -> User:
         telegram_id=telegram_user_data['id'],
         telegram_name=telegram_user_data['first_name'],
         telegram_username=telegram_user_data['username'],
+    )
+
+
+@pytest.fixture
+def another_telegram_user(telegram_user_data: dict) -> User:
+    return User.objects.create(
+        telegram_id=telegram_user_data['id'] + 1,
+        telegram_name=telegram_user_data['first_name'] + '2',
+        telegram_username=telegram_user_data['username'] + '2',
     )
 
 
@@ -54,3 +64,9 @@ def valid_tg_data(valid_tg_user_data: WebAppUserData) -> dict:
     secret_key = hmac.new(b'WebAppData', settings.EDELYA_BOT_TOKEN.encode(), hashlib.sha256).digest()
     hash_ = hmac.new(secret_key, data_string.encode(), hashlib.sha256).hexdigest()
     return {'user': user_encoded, 'auth_date': auth_date, 'hash': hash_}
+
+
+@pytest.fixture
+def auth_telegram_api_client(api_client: APIClient, telegram_user: User) -> APIClient:
+    api_client.force_authenticate(user=telegram_user)
+    return api_client

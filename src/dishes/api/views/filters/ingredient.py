@@ -24,10 +24,7 @@ class IngredientCategoryFilter(filters.FilterSet):
 
 
 class IngredientFilter(filters.FilterSet):
-    category = filters.ModelMultipleChoiceFilter(
-        field_name='category__id',
-        queryset=IngredientCategory.objects.actived(),
-    )
+    category = filters.UUIDFilter(field_name='category__id')
 
     class Meta:
         model = Ingredient
