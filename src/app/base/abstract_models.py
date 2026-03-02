@@ -23,3 +23,17 @@ class BaseModel(models.Model):
 
     class Meta:
         abstract = True
+
+
+class BaseActiveModel(BaseModel):
+    is_active = models.BooleanField(
+        verbose_name='Активно',
+        default=True,
+    )
+
+    class Meta:
+        abstract = True
+
+    def deactivate(self) -> None:
+        self.is_active = False
+        self.save(update_fields=['is_active'])

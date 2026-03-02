@@ -5,21 +5,20 @@ from django.db.models import Q
 from django.db.models.base import ModelBase
 from django.db.models.functions import Lower
 
-from app.base.abstract_models import BaseModel
+from app.base.abstract_models import BaseActiveModel
 from app.utils import normalize_string
+from dishes.models.managers.ingredients import IngredientCategoryManager, IngredientManager
 from dishes.models.model_enums import Unit
 
 
-class IngredientCategory(BaseModel):
+class IngredientCategory(BaseActiveModel):
     name = models.CharField(
         verbose_name='Название категории',
         max_length=128,
         unique=True,
     )
-    is_active = models.BooleanField(
-        verbose_name='Активность категории',
-        default=True,
-    )
+
+    objects: IngredientCategoryManager = IngredientCategoryManager()
 
     class Meta:
         verbose_name = 'Категория ингредиента'
@@ -30,7 +29,7 @@ class IngredientCategory(BaseModel):
         return self.name
 
 
-class Ingredient(BaseModel):
+class Ingredient(BaseActiveModel):
     owner = models.ForeignKey(
         'users.User',
         on_delete=models.CASCADE,
@@ -55,10 +54,8 @@ class Ingredient(BaseModel):
         max_length=10,
         choices=Unit.choices,
     )
-    is_active = models.BooleanField(
-        verbose_name='Активность ингредиента',
-        default=True,
-    )
+
+    objects: IngredientManager = IngredientManager()
 
     class Meta:
         verbose_name = 'Ингредиент'
