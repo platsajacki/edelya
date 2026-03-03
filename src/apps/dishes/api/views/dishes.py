@@ -2,12 +2,15 @@ from django.db.models import QuerySet
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
+from apps.dishes.api.schemas import DishCategoryViewSetSchema
 from apps.dishes.api.serializers.dishes import DishCategorySerializer, DishSerializer
 from apps.dishes.api.views.filters.dishes import DishCategoryFilter, DishFilter
 from apps.dishes.models import Dish, DishCategory
+from core.base.decorators import extend_schema_view_from_class
 from core.base.permissions import OwnerObjectPermission
 
 
+@extend_schema_view_from_class(DishCategoryViewSetSchema)
 class DishCategoryViewSet(ReadOnlyModelViewSet):
     queryset = DishCategory.objects.actived()
     serializer_class = DishCategorySerializer

@@ -1,11 +1,13 @@
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import status
 
+from apps.dishes.api.serializers.dishes import DishCategorySerializer
 from apps.dishes.api.serializers.ingredients import IngredientCategorySerializer, IngredientSerializer
 from core.schemas import STANDARD_ERROR_RESPONSES
 
 INGREDIENT_CATEGORY_TAG = 'Ingredient Categories'
 INGREDIENT_TAG = 'Ingredients'
+DISH_CATEGORY_TAG = 'Dish Categories'
 
 
 class IngredientCategoryViewSetSchema:
@@ -29,6 +31,33 @@ class IngredientCategoryViewSetSchema:
             status.HTTP_200_OK: OpenApiResponse(
                 description='Details of the ingredient category',
                 response=IngredientCategorySerializer(),
+            ),
+            **STANDARD_ERROR_RESPONSES,
+        },
+    )
+
+
+class DishCategoryViewSetSchema:
+    list = extend_schema(
+        tags=[DISH_CATEGORY_TAG],
+        summary='List all dish categories',
+        description='Retrieve a list of all active dish categories.',
+        responses={
+            status.HTTP_200_OK: OpenApiResponse(
+                description='A list of dish categories',
+                response=DishCategorySerializer(many=True),
+            ),
+            **STANDARD_ERROR_RESPONSES,
+        },
+    )
+    retrieve = extend_schema(
+        tags=[DISH_CATEGORY_TAG],
+        summary='Retrieve a dish category',
+        description='Retrieve details of a specific dish category by its ID.',
+        responses={
+            status.HTTP_200_OK: OpenApiResponse(
+                description='Details of the dish category',
+                response=DishCategorySerializer(),
             ),
             **STANDARD_ERROR_RESPONSES,
         },
