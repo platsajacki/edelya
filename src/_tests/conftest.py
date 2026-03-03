@@ -11,6 +11,7 @@ def enable_db_access_for_all_tests(db: Any) -> None:
 
 
 pytest_plugins = [
+    '_tests.fixtures.dishes',
     '_tests.fixtures.ingredients',
     '_tests.fixtures.main',
     '_tests.fixtures.mocks',

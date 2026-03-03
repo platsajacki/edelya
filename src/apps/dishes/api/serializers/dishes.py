@@ -17,12 +17,9 @@ class DishCategorySerializer(serializers.ModelSerializer):
         ]
 
 
-class DishSerializer(serializers.ModelSerializer):
-    ingredients = IngredientSerializer(
-        source='dish_ingredients',
-        many=True,
-        read_only=True,
-    )
+class DishReadSerializer(serializers.ModelSerializer):
+    category = DishCategorySerializer(read_only=True)
+    ingredients = IngredientSerializer(many=True, read_only=True)
 
     class Meta:
         model = Dish
@@ -30,17 +27,13 @@ class DishSerializer(serializers.ModelSerializer):
             'id',
             'owner',
             'category',
+            'ingredients',
             'name',
             'description',
             'is_active',
             'created_at',
             'updated_at',
         ]
-
-    def to_representation(self, instance: Dish) -> dict:
-        data = super().to_representation(instance)
-        data['category'] = DishCategorySerializer(instance.category).data
-        return data
 
 
 class DishIngredientSerializer(serializers.ModelSerializer):
@@ -55,6 +48,11 @@ class DishIngredientSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
         ]
+        read_only_fields = [
+            'id',
+            'created_at',
+            'updated_at',
+        ]
         validators = [
             UniqueTogetherValidator(
                 queryset=DishIngredient.objects.all(),
@@ -62,3 +60,15 @@ class DishIngredientSerializer(serializers.ModelSerializer):
                 message='Such ingredient already exists in this dish.',
             ),
         ]
+
+
+class DishSerializer(DishReadSerializer):
+    ingredients = serializers.ListSerializer(
+        child=DishIngredientSerializer(),
+        write_only=True,
+    )
+
+    class Meta(DishReadSerializer.Meta): ...
+
+    def to_representation(self, instance: Dish) -> dict:
+        return DishReadSerializer(instance, context=self.context).data

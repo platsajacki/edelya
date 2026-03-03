@@ -1,6 +1,6 @@
 from django_filters import rest_framework as filters
 
-from apps.dishes.models import DishCategory
+from apps.dishes.models import Dish, DishCategory
 
 
 class DishCategoryFilter(filters.FilterSet):
@@ -27,11 +27,10 @@ class DishFilter(filters.FilterSet):
     category = filters.UUIDFilter(field_name='category__id')
 
     class Meta:
-        model = DishCategory
+        model = Dish
         fields = {
             'id': ['exact', 'in'],
             'name': ['exact', 'icontains', 'in'],
-            'category': ['exact', 'in'],
             'created_at': ['exact', 'lte', 'gte'],
             'updated_at': ['exact', 'lte', 'gte'],
         }
