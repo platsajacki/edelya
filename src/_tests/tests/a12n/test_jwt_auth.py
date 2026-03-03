@@ -4,7 +4,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from users.models import User
+from apps.users.models import User
 
 
 class TestTelegramA12nJWTService:

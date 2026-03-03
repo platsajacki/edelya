@@ -4,11 +4,11 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from dishes.api.serializers.ingredients import IngredientCategorySerializer, IngredientSerializer
-from dishes.models import IngredientCategory
-from dishes.models.ingredients import Ingredient
-from dishes.models.model_enums import Unit
-from users.models import User
+from apps.dishes.api.serializers.ingredients import IngredientCategorySerializer, IngredientSerializer
+from apps.dishes.models import IngredientCategory
+from apps.dishes.models.ingredients import Ingredient
+from apps.dishes.models.model_enums import Unit
+from apps.users.models import User
 
 
 class TestIngredientCategoryViewSet:

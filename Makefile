@@ -1,5 +1,5 @@
 export PYTHONPATH := src
-export DJANGO_SETTINGS_MODULE := app.settings
+export DJANGO_SETTINGS_MODULE := core.settings
 
 install-hooks:
 	@$(if $(wildcard .git/hooks/pre-commit), \

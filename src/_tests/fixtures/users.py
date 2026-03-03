@@ -8,8 +8,8 @@ from urllib.parse import quote_plus
 from django.conf import settings
 from rest_framework.test import APIClient
 
-from a12n.validators import WebAppUserData
-from users.models import User
+from apps.a12n.validators import WebAppUserData
+from apps.users.models import User
 
 
 @pytest.fixture

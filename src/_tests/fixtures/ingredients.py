@@ -3,9 +3,9 @@ import pytest
 from random import choice
 
 from _tests import FixtureFactory
-from dishes.models import Ingredient, IngredientCategory
-from dishes.models.model_enums import Unit
-from users.models import User
+from apps.dishes.models import Ingredient, IngredientCategory
+from apps.dishes.models.model_enums import Unit
+from apps.users.models import User
 
 
 @pytest.fixture
