@@ -30,7 +30,7 @@ class IngredientViewSet(ModelViewSet):
 
     def get_queryset(self) -> QuerySet[Ingredient]:
         if isinstance(self.request.user, User) and self.request.user.is_authenticated:
-            return Ingredient.objects.for_user(self.request.user).with_category()
+            return Ingredient.objects.for_user(self.request.user)
         return Ingredient.objects.none()
 
     def perform_destroy(self, instance: Ingredient) -> None:

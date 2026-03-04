@@ -33,7 +33,7 @@ class DishManager(ActiveManager['Dish', DishQueryset]):
         return DishQueryset
 
     def for_user(self, user: User) -> DishQueryset:
-        return self.get_queryset().for_user(user).with_category()
+        return self.get_queryset().for_user(user).with_category().with_ingredients()
 
     def with_category(self) -> DishQueryset:
         return self.get_queryset().with_category()

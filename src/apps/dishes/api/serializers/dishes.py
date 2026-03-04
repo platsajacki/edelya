@@ -1,7 +1,7 @@
 from rest_framework import serializers
-from rest_framework.validators import UniqueTogetherValidator
 
 from apps.dishes.api.serializers.ingredients import IngredientSerializer
+from apps.dishes.contstants import MAX_INGREDIENTS_PER_DISH
 from apps.dishes.models import Dish, DishCategory, DishIngredient
 
 
@@ -17,26 +17,9 @@ class DishCategorySerializer(serializers.ModelSerializer):
         ]
 
 
-class DishReadSerializer(serializers.ModelSerializer):
-    category = DishCategorySerializer(read_only=True)
-    ingredients = IngredientSerializer(many=True, read_only=True)
-
-    class Meta:
-        model = Dish
-        fields = [
-            'id',
-            'owner',
-            'category',
-            'ingredients',
-            'name',
-            'description',
-            'is_active',
-            'created_at',
-            'updated_at',
-        ]
-
-
 class DishIngredientSerializer(serializers.ModelSerializer):
+    ingredient = IngredientSerializer(read_only=True)
+
     class Meta:
         model = DishIngredient
         fields = [
@@ -53,22 +36,71 @@ class DishIngredientSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
         ]
-        validators = [
-            UniqueTogetherValidator(
-                queryset=DishIngredient.objects.all(),
-                fields=['dish', 'ingredient'],
-                message='Such ingredient already exists in this dish.',
-            ),
+
+
+class DishReadSerializer(serializers.ModelSerializer):
+    category = DishCategorySerializer(read_only=True)
+    dish_ingredients = DishIngredientSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Dish
+        fields = [
+            'id',
+            'owner',
+            'category',
+            'dish_ingredients',
+            'name',
+            'description',
+            'is_active',
+            'created_at',
+            'updated_at',
         ]
 
 
-class DishSerializer(DishReadSerializer):
-    ingredients = serializers.ListSerializer(
-        child=DishIngredientSerializer(),
-        write_only=True,
+class DishIngredientWriteSerializer(serializers.Serializer):
+    ingredient = serializers.UUIDField(
+        label='Ingredient ID',
+        help_text='The ID of the ingredient to add to the dish.',
+    )
+    is_optional = serializers.BooleanField(
+        default=False,
+        help_text='Whether the ingredient is optional in the dish.',
+    )
+    amount = serializers.DecimalField(
+        label='Amount',
+        max_digits=12,
+        decimal_places=3,
+        min_value=0,
+        help_text="The amount of the ingredient needed for the dish, in the ingredient's base unit.",
     )
 
-    class Meta(DishReadSerializer.Meta): ...
 
-    def to_representation(self, instance: Dish) -> dict:
-        return DishReadSerializer(instance, context=self.context).data
+class DishWriteSerializer(serializers.ModelSerializer):
+    owner = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    dish_ingredients = DishIngredientWriteSerializer(
+        many=True,
+        required=False,
+        default=list,
+        help_text=f'List of ingredients for the dish. Max {MAX_INGREDIENTS_PER_DISH} ingredients allowed.',
+    )
+
+    class Meta:
+        model = Dish
+        fields = [
+            'owner',
+            'category',
+            'name',
+            'description',
+            'dish_ingredients',
+        ]
+
+    def validate_dish_ingredients(self, value: list[dict]) -> list[dict]:
+        if not value:
+            raise serializers.ValidationError('At least one ingredient is required.')
+        ingredient_ids = [item['ingredient'] for item in value]
+        length = len(ingredient_ids)
+        if length != len(set(ingredient_ids)):
+            raise serializers.ValidationError('Duplicate ingredients are not allowed.')
+        if length > MAX_INGREDIENTS_PER_DISH:
+            raise serializers.ValidationError(f'Maximum {MAX_INGREDIENTS_PER_DISH} ingredients are allowed.')
+        return value

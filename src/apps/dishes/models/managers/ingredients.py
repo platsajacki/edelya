@@ -30,7 +30,7 @@ class IngredientManager(ActiveManager['Ingredient', IngredientQueryset]):
         return IngredientQueryset
 
     def for_user(self, user: User) -> IngredientQueryset:
-        return self.get_queryset().for_user(user)
+        return self.get_queryset().for_user(user).with_category()
 
     def with_category(self) -> IngredientQueryset:
         return self.get_queryset().with_category()

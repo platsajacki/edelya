@@ -1,6 +1,10 @@
 from abc import ABCMeta, abstractmethod
 from collections.abc import Callable
+from dataclasses import dataclass
+from dataclasses import field as dc_field
 from typing import Any
+
+from rest_framework.serializers import BaseSerializer
 
 
 class BaseService(metaclass=ABCMeta):
@@ -22,3 +26,17 @@ class BaseService(metaclass=ABCMeta):
     @abstractmethod
     def act(self) -> Any:
         raise NotImplementedError('Please implement in the services class')
+
+
+@dataclass
+class BaseViewSetService(BaseService):
+    serializer: BaseSerializer
+    raise_exception: bool = dc_field(default=True)
+    validated_data: dict = dc_field(init=False, repr=False)
+
+    def validate_serializer(self) -> None:
+        self.serializer.is_valid(raise_exception=self.raise_exception)
+        self.validated_data = self.serializer.validated_data
+
+    def get_validators(self) -> list[Callable]:
+        return super().get_validators() + [self.validate_serializer]
