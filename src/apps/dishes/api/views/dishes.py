@@ -15,7 +15,7 @@ from apps.dishes.api.serializers.dishes import (
 )
 from apps.dishes.api.services.dish_updater import DishUpdater
 from apps.dishes.api.views.filters.dishes import DishCategoryFilter, DishFilter
-from apps.dishes.models import Dish, DishCategory
+from apps.dishes.models import Dish, DishCategory, DishIngredient
 from core.base.decorators import extend_schema_view_from_class
 from core.base.permissions import OwnerObjectPermission
 
@@ -68,4 +68,4 @@ class DishViewSet(ModelViewSet):
     def perform_destroy(self, instance: Dish) -> None:
         with transaction.atomic():
             instance.deactivate()
-            instance.dish_ingredients.all().delete()
+            DishIngredient.objects.filter(dish=instance).delete()
