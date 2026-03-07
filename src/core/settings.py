@@ -26,6 +26,7 @@ DJANGO_APPS = [
 LOCAL_APPS = [
     'apps.a12n',
     'apps.dishes',
+    'apps.planning',
     'apps.users',
 ]
 THIRD_PARTY_APPS = [

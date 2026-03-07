@@ -132,10 +132,15 @@ class DishIngredient(BaseModel):
         decimal_places=3,
         validators=[MinValueValidator(0)],
     )
+    position = models.PositiveIntegerField(
+        verbose_name='Позиция',
+        default=100,
+    )
 
     class Meta:
         verbose_name = 'Ингредиент в блюде'
         verbose_name_plural = 'Ингредиенты в блюде'
+        ordering = ['dish', 'position', 'created_at']
         constraints = [
             models.UniqueConstraint(
                 fields=['dish', 'ingredient'],
