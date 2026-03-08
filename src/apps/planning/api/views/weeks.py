@@ -14,5 +14,5 @@ from core.base.decorators import extend_schema_view_from_class
 class WeekDishesAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request: Request, args: Any, **kwargs: Any) -> Response:
+    def get(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         return WeekDishesGetter(user=request.user, year=kwargs['year'], week=kwargs['week'])()
