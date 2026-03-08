@@ -1,5 +1,6 @@
 from django.db import models
 
+from apps.planning.models.managers.meal_plan import MealPlanItemManager
 from core.base.abstract_models import BaseModel
 
 
@@ -35,6 +36,8 @@ class MealPlanItem(BaseModel):
         verbose_name='Добавлено вручную',
         default=False,
     )
+
+    objects: MealPlanItemManager = MealPlanItemManager()
 
     class Meta:
         verbose_name = 'Элемент плана питания'

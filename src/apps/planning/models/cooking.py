@@ -1,6 +1,7 @@
 from django.core.validators import MinValueValidator
 from django.db import models
 
+from apps.planning.models.managers.cooking import CookingEventManager
 from core.base.abstract_models import BaseModel
 
 
@@ -32,6 +33,8 @@ class CookingEvent(BaseModel):
         blank=True,
         default='',
     )
+
+    objects: CookingEventManager = CookingEventManager()
 
     class Meta:
         verbose_name = 'Событие готовки'
