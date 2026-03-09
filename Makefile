@@ -61,10 +61,10 @@ shell:
 
 TEST ?= src/_tests
 COVERAGE ?= --cov=src --cov-report=term-missing
-
+F ?= -q
 test:
 	make install-hooks
-	pytest $(TEST) --create-db $(COVERAGE) -q
+	pytest $(TEST) --create-db $(COVERAGE) $(F)
 
 tag-win:
 	make check

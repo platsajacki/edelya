@@ -1,7 +1,7 @@
 from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
 from rest_framework import status
 
-from apps.planning.api.serializers.cooking import CookingEventSerializer
+from apps.planning.api.serializers.cooking import CookingEventSerializer, CookingEventWriteSerializer
 from apps.planning.api.serializers.meal_plan import WeekDishesSerializer
 from core.schemas import STANDARD_ERROR_RESPONSES
 
@@ -64,7 +64,7 @@ class CookingEventViewSetSchema:
             'Creates a new cooking event for the authenticated user. '
             'Automatically generates meal plan items for each day in the eating range.'
         ),
-        request=CookingEventSerializer(),
+        request=CookingEventWriteSerializer(),
         responses={
             status.HTTP_201_CREATED: OpenApiResponse(
                 description='The created cooking event',
@@ -81,7 +81,7 @@ class CookingEventViewSetSchema:
             'If the start eating date changes, all related meal plan item dates are shifted accordingly. '
             'If the duration changes, meal plan items are created or removed to match the new range.'
         ),
-        request=CookingEventSerializer(partial=True),
+        request=CookingEventWriteSerializer(partial=True),
         responses={
             status.HTTP_200_OK: OpenApiResponse(
                 description='The updated cooking event',

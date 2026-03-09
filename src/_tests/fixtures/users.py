@@ -70,3 +70,10 @@ def valid_tg_data(valid_tg_user_data: WebAppUserData) -> dict:
 def auth_telegram_api_client(api_client: APIClient, telegram_user: User) -> APIClient:
     api_client.force_authenticate(user=telegram_user)
     return api_client
+
+
+@pytest.fixture
+def auth_another_telegram_api_client(another_telegram_user: User) -> APIClient:
+    client = APIClient()
+    client.force_authenticate(user=another_telegram_user)
+    return client

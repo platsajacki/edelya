@@ -33,8 +33,8 @@ class CookingEventUpdater(CookingEventBaseService):
     def act(self) -> None:
         old_start_eating_date = self.serializer.instance.start_eating_date
         old_duration_days = self.serializer.instance.duration_days
+        meal_plan_items = list(self.serializer.instance.meal_plan_items.all())
         cooking_event = self.serializer.save()
-        meal_plan_items = list(MealPlanItem.objects.filter(cooking_event=cooking_event))
         if not meal_plan_items:
             self.create_meal_plan_items(cooking_event, self.get_meal_plan_item_dates_by_cooking_event(cooking_event))
             return
