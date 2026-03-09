@@ -1,4 +1,4 @@
-from django.core.validators import MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 from apps.planning.models.managers.cooking import CookingEventManager
@@ -23,7 +23,7 @@ class CookingEvent(BaseModel):
     )
     duration_days = models.PositiveSmallIntegerField(
         verbose_name='На сколько дней хватит',
-        validators=[MinValueValidator(1)],
+        validators=[MinValueValidator(1), MaxValueValidator(30)],
     )
     start_eating_date = models.DateField(
         verbose_name='Когда начнем есть',

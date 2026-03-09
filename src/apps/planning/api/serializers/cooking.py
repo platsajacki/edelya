@@ -1,3 +1,4 @@
+from rest_framework.fields import CurrentUserDefault, HiddenField
 from rest_framework.serializers import ModelSerializer
 
 from apps.dishes.api.serializers.dishes import DishReadSerializer
@@ -6,6 +7,7 @@ from apps.planning.models import CookingEvent
 
 class CookingEventSerializer(ModelSerializer):
     dish = DishReadSerializer(read_only=True)
+    owner = HiddenField(default=CurrentUserDefault())
 
     class Meta:
         model = CookingEvent
