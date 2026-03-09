@@ -1,3 +1,4 @@
+from rest_framework.exceptions import ValidationError
 from rest_framework.fields import CurrentUserDefault, HiddenField
 from rest_framework.serializers import ModelSerializer
 
@@ -22,3 +23,8 @@ class CookingEventSerializer(ModelSerializer):
             'created_at',
             'updated_at',
         ]
+
+    def validate(self, attrs: dict) -> dict:
+        if attrs['start_eating_date'] < attrs['cooking_date']:
+            raise ValidationError('Date when eating starts cannot be earlier than cooking date')
+        return attrs

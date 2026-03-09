@@ -2,20 +2,21 @@ from django.db.models import QuerySet
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 
+from apps.planning.api.schemas import CookingEventViewSetSchema
 from apps.planning.api.serializers.cooking import CookingEventSerializer
-
-# from core.base.decorators import extend_schema_view_from_class
 from apps.planning.api.services.cooking.cooking_event_creator import CookingEventCreator
 from apps.planning.api.services.cooking.cooking_event_updater import CookingEventUpdater
 from apps.planning.models import CookingEvent
+from core.base.decorators import extend_schema_view_from_class
 from core.base.permissions import OwnerObjectPermission
 
 
+@extend_schema_view_from_class(CookingEventViewSetSchema)
 class CookingEventViewSet(ModelViewSet):
     queryset = CookingEvent.objects.none()
     serializer_class = CookingEventSerializer
     permission_classes = [IsAuthenticated & OwnerObjectPermission]
-    http_method_names = ['get', 'post', 'patchdelete', 'head', 'options']
+    http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
     lookup_url_kwarg = 'cooking_event_id'
 
     def get_queryset(self) -> QuerySet[CookingEvent]:
