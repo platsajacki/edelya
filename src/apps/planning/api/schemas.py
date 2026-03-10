@@ -2,11 +2,16 @@ from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_sche
 from rest_framework import status
 
 from apps.planning.api.serializers.cooking import CookingEventSerializer, CookingEventWriteSerializer
-from apps.planning.api.serializers.meal_plan import WeekDishesSerializer
+from apps.planning.api.serializers.meal_plan import (
+    MealPlanItemCreateSerializer,
+    MealPlanItemUpdateSerializer,
+    WeekDishesSerializer,
+)
 from core.schemas import STANDARD_ERROR_RESPONSES
 
 WEEK_TAG = 'Planning'
 COOKING_EVENT_TAG = 'Cooking Events'
+MEAL_PLAN_TAG = 'Meal Plan'
 
 
 class WeekDishesAPIViewSchema:
@@ -96,6 +101,44 @@ class CookingEventViewSetSchema:
         description='Delete a cooking event and all its associated meal plan items.',
         responses={
             status.HTTP_204_NO_CONTENT: OpenApiResponse(description='Cooking event deleted successfully'),
+            **STANDARD_ERROR_RESPONSES,
+        },
+    )
+
+
+class MealPlanItemViewSetSchema:
+    create = extend_schema(
+        tags=[MEAL_PLAN_TAG],
+        summary='Create a meal plan item',
+        description='Create a new manual meal plan item for the authenticated user.',
+        request=MealPlanItemCreateSerializer(),
+        responses={
+            status.HTTP_201_CREATED: OpenApiResponse(
+                description='The created meal plan item',
+                response=MealPlanItemCreateSerializer(),
+            ),
+            **STANDARD_ERROR_RESPONSES,
+        },
+    )
+    partial_update = extend_schema(
+        tags=[MEAL_PLAN_TAG],
+        summary='Partially update a meal plan item',
+        description='Partially update an existing meal plan item (e.g. change its date or position).',
+        request=MealPlanItemUpdateSerializer(partial=True),
+        responses={
+            status.HTTP_200_OK: OpenApiResponse(
+                description='The updated meal plan item',
+                response=MealPlanItemUpdateSerializer(),
+            ),
+            **STANDARD_ERROR_RESPONSES,
+        },
+    )
+    destroy = extend_schema(
+        tags=[MEAL_PLAN_TAG],
+        summary='Delete a meal plan item',
+        description='Delete a manual meal plan item belonging to the authenticated user.',
+        responses={
+            status.HTTP_204_NO_CONTENT: OpenApiResponse(description='Meal plan item deleted successfully'),
             **STANDARD_ERROR_RESPONSES,
         },
     )

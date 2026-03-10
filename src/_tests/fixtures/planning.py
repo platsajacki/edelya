@@ -91,6 +91,15 @@ def cooking_event_payload(dish_global: Dish) -> dict:
 
 
 @pytest.fixture
+def meal_plan_item_payload(dish_global: Dish) -> dict:
+    return {
+        'dish': str(dish_global.id),
+        'date': str(WEEK_START),
+        'position': 2,
+    }
+
+
+@pytest.fixture
 def multiple_cooking_events(telegram_user: User, dish_global: Dish) -> list[CookingEvent]:
     """Five CookingEvents for the same user — used to detect N+1 query problems."""
     events = []
