@@ -42,6 +42,48 @@ class TelegramA12nJWTSchema:
     )
 
 
+class LoginTokenObtainPairViewSchema:
+    post = extend_schema(
+        tags=[TAG],
+        summary='Obtain JWT token pair using username and password',
+        description=(
+            'This endpoint accepts a username and password and returns a JWT token pair (access and refresh tokens).'
+        ),
+        request=OpenApiRequest(
+            request={
+                'type': 'object',
+                'properties': {
+                    'username': {'type': 'string', 'description': 'Account username'},
+                    'password': {'type': 'string', 'description': 'Account password'},
+                },
+                'required': ['username', 'password'],
+            },
+        ),
+        responses={
+            status.HTTP_200_OK: OpenApiResponse(
+                description='Successful authentication',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'refresh': {'type': 'string', 'description': 'JWT refresh token'},
+                        'access': {'type': 'string', 'description': 'JWT access token'},
+                    },
+                },
+            ),
+            status.HTTP_401_UNAUTHORIZED: OpenApiResponse(
+                description='Invalid credentials',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'detail': {'type': 'string', 'description': 'Error message for invalid credentials'}
+                    },
+                    'example': {'detail': 'No active account found with the given credentials'},
+                },
+            ),
+        },
+    )
+
+
 class TokenRefreshViewSchema:
     post = extend_schema(
         tags=[TAG],

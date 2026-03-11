@@ -1,0 +1,178 @@
+dish_categories:
+  - name: Завтраки
+  - name: Закуски
+  - name: Салаты
+  - name: Супы
+  - name: Основные блюда
+  - name: Десерты
+  - name: Напитки
+
+ingredient_categories:
+  - name: Овощи
+  - name: Фрукты
+  - name: Ягоды
+  - name: Зелень
+  - name: Грибы
+  - name: Орехи
+  - name: Семечки и семена
+  - name: Сухофрукты
+
+  - name: Мясо
+  - name: Птица
+  - name: Колбасы и мясные изделия
+  - name: Рыба
+  - name: Морепродукты
+
+  - name: Молочные продукты
+  - name: Кисломолочные продукты
+  - name: Сыры
+  - name: Творог и творожные продукты
+  - name: Яйца
+
+  - name: Крупы и злаки
+  - name: Бобовые
+  - name: Макароны и лапша
+  - name: Мука
+  - name: Крахмалы и панировка
+  - name: Тесто и основы
+  - name: Хлеб и хлебобулочные изделия
+
+  - name: Специи и приправы
+  - name: Соусы и заправки
+  - name: Масла и жиры
+  - name: Уксусы и кислоты
+
+  - name: Сахар и подсластители
+  - name: Шоколад и какао
+  - name: Кондитерские ингредиенты
+  - name: Варенье, джемы и сиропы
+
+  - name: Консервы
+  - name: Маринады и соленья
+  - name: Замороженные продукты
+  - name: Сухие смеси и концентраты
+  - name: Полуфабрикаты
+
+  - name: Напитки
+  - name: Растительные продукты
+
+ingredients:
+  - name: Говядина
+    category: Мясо
+    base_unit: gram
+
+  - name: Куриное филе
+    category: Птица
+    base_unit: gram
+
+  - name: Панчетта
+    category: Колбасы и мясные изделия
+    base_unit: gram
+
+  - name: Свекла
+    category: Овощи
+    base_unit: gram
+
+  - name: Картофель
+    category: Овощи
+    base_unit: gram
+
+  - name: Капуста белокочанная
+    category: Овощи
+    base_unit: gram
+
+  - name: Морковь
+    category: Овощи
+    base_unit: gram
+
+  - name: Лук репчатый
+    category: Овощи
+    base_unit: gram
+
+  - name: Чеснок
+    category: Овощи
+    base_unit: clove
+
+  - name: Помидор
+    category: Овощи
+    base_unit: piece
+
+  - name: Огурец
+    category: Овощи
+    base_unit: piece
+
+  - name: Болгарский перец
+    category: Овощи
+    base_unit: piece
+
+  - name: Листья салата ромэн
+    category: Зелень
+    base_unit: gram
+
+  - name: Петрушка
+    category: Зелень
+    base_unit: bunch
+
+  - name: Маслины
+    category: Консервы
+    base_unit: gram
+
+  - name: Пармезан
+    category: Сыры
+    base_unit: gram
+
+  - name: Фета
+    category: Сыры
+    base_unit: gram
+
+  - name: Творог
+    category: Творог и творожные продукты
+    base_unit: gram
+
+  - name: Молоко
+    category: Молочные продукты
+    base_unit: milliliter
+
+  - name: Яйцо куриное
+    category: Яйца
+    base_unit: piece
+
+  - name: Спагетти
+    category: Макароны и лапша
+    base_unit: gram
+
+  - name: Мука пшеничная
+    category: Мука
+    base_unit: gram
+
+  - name: Гренки
+    category: Хлеб и хлебобулочные изделия
+    base_unit: gram
+
+  - name: Черный перец
+    category: Специи и приправы
+    base_unit: pinch
+
+  - name: Соль
+    category: Специи и приправы
+    base_unit: to_taste
+
+  - name: Томатная паста
+    category: Соусы и заправки
+    base_unit: tablespoon
+
+  - name: Оливковое масло
+    category: Масла и жиры
+    base_unit: milliliter
+
+  - name: Уксус
+    category: Уксусы и кислоты
+    base_unit: tablespoon
+
+  - name: Сахар
+    category: Сахар и подсластители
+    base_unit: gram
+
+  - name: Сухари панировочные
+    category: Крахмалы и панировка
+    base_unit: gram

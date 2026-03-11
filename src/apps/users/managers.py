@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
 from django.apps import apps
 from django.contrib.auth.hashers import make_password
@@ -29,4 +29,4 @@ class UserManager(DjangoUserManager):
             user.password = make_password(password)
         else:
             user.set_unusable_password()
-        return cast(User, user)
+        return user  # type: ignore[return-value]
