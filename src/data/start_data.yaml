@@ -95,15 +95,15 @@ ingredients:
 
   - name: Помидор
     category: Овощи
-    base_unit: piece
+    base_unit: gram
 
   - name: Огурец
     category: Овощи
-    base_unit: piece
+    base_unit: gram
 
   - name: Болгарский перец
     category: Овощи
-    base_unit: piece
+    base_unit: gram
 
   - name: Листья салата ромэн
     category: Зелень
