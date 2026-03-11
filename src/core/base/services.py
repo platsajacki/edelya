@@ -40,3 +40,8 @@ class BaseViewSetService(BaseService):
 
     def get_validators(self) -> list[Callable]:
         return super().get_validators() + [self.validate_serializer]
+
+
+@dataclass
+class BaseViewSetPerformService(BaseService):
+    serializer: BaseSerializer

@@ -1,22 +1,3 @@
-from django.contrib.admin import ModelAdmin
-
-from apps.users.models import User
-from core.admin import admin
-
-
-@admin.register(User)
-class UserAdmin(ModelAdmin):
-    list_display = (
-        'id',
-        'username',
-        'telegram_id',
-        'telegram_username',
-        'is_staff',
-        'is_active',
-    )
-    search_fields = (
-        'username',
-        'telegram_id',
-        'telegram_username',
-    )
-    list_filter = ('is_staff', 'is_active')
+# Admin registrations have been moved to the apps/users/admin/ package.
+# Python prefers the package (admin/) over this module file (admin.py)
+# when both exist with the same name.

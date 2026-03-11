@@ -61,12 +61,10 @@ shell:
 
 TEST ?= src/_tests
 COVERAGE ?= --cov=src --cov-report=term-missing
-
+F ?= -q
 test:
 	make install-hooks
-	pytest $(TEST) --create-db $(COVERAGE) -q
+	pytest $(TEST) --create-db $(COVERAGE) $(F)
 
-tag-win:
-	make check
-	make test
-	powershell -File .\tag-win.ps1
+load-start-data:
+	python src/manage.py load_start_data
