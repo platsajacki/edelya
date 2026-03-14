@@ -6,6 +6,7 @@ dish_categories:
   - name: Основные блюда
   - name: Десерты
   - name: Напитки
+  - name: Другое
 
 ingredient_categories:
   - name: Овощи

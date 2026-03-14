@@ -56,6 +56,13 @@ makemigrations:
 migrate:
 	python src/manage.py migrate
 
+
+APP ?= ''
+NUM ?= ''
+
+rollback-migrate:
+	python src/manage.py migrate $(APP) $(NUM)
+
 shell:
 	python src/manage.py shell
 

@@ -13,7 +13,12 @@ SECRET_KEY = getenv('SECRET_KEY', 'django-insecure-default-key')
 
 DEBUG = bool(int(getenv('DEBUG', 0)))
 
-ALLOWED_HOSTS: list[str] = []
+ALLOWED_HOSTS = getenv('ALLOWED_HOSTS', '').split(', ')
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+]
+CORS_ALLOW_CREDENTIALS = True
 
 DJANGO_APPS = [
     'django.contrib.admin',
@@ -30,6 +35,7 @@ LOCAL_APPS = [
     'apps.users',
 ]
 THIRD_PARTY_APPS = [
+    'corsheaders',
     'django_filters',
     'drf_spectacular',
     'rest_framework',
@@ -39,6 +45,7 @@ INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',

@@ -40,6 +40,12 @@ class CookingEvent(BaseModel):
         verbose_name = 'Событие готовки'
         verbose_name_plural = 'События готовки'
         ordering = ['cooking_date', 'created_at']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['owner', 'dish', 'cooking_date'],
+                name='unique_cooking_event_per_dish_per_day',
+            ),
+        ]
         indexes = [
             models.Index(
                 fields=['owner', 'cooking_date'],

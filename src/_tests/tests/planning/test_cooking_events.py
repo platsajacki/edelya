@@ -377,7 +377,7 @@ class TestCookingEventViewSetPartialUpdate:
         event = cooking_event_with_meal_plan_items
         dates_before = set(MealPlanItem.objects.filter(cooking_event=event).values_list('date', flat=True))
         new_cooking_date = event.cooking_date - timedelta(days=1)
-        with django_assert_num_queries(8):
+        with django_assert_num_queries(9):
             auth_telegram_api_client.patch(
                 self.get_url(str(event.id)), data={'cooking_date': str(new_cooking_date)}, format='json'
             )
