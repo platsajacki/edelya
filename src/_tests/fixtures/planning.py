@@ -87,7 +87,7 @@ def cooking_event_payload(dish_global: Dish) -> dict:
 def meal_plan_item_payload(dish_global: Dish) -> dict:
     return {
         'dish': str(dish_global.id),
-        'date': str(WEEK_START),
+        'eat_dates': [str(WEEK_START)],
         'position': 2,
     }
 

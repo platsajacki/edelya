@@ -4,6 +4,7 @@ from rest_framework import status
 from apps.planning.api.serializers.cooking import CookingEventSerializer, CookingEventWriteSerializer
 from apps.planning.api.serializers.meal_plan import (
     MealPlanItemCreateSerializer,
+    MealPlanItemSerializer,
     MealPlanItemUpdateSerializer,
     WeekDishesSerializer,
 )
@@ -112,13 +113,19 @@ class CookingEventViewSetSchema:
 class MealPlanItemViewSetSchema:
     create = extend_schema(
         tags=[MEAL_PLAN_TAG],
-        summary='Create a meal plan item',
-        description='Create a new manual meal plan item for the authenticated user.',
+        summary='Create meal plan items',
+        description=(
+            'Creates manual meal plan items for the authenticated user. '
+            'Accepts `eat_dates` — a list of dates (YYYY-MM-DD) representing days when the dish will be eaten. '
+            'A separate meal plan item is created for each date. '
+            'Position auto-increments by 100 for each subsequent item starting '
+            'from the provided position (default 100).'
+        ),
         request=MealPlanItemCreateSerializer(),
         responses={
             status.HTTP_201_CREATED: OpenApiResponse(
-                description='The created meal plan item',
-                response=MealPlanItemCreateSerializer(),
+                description='The created meal plan items',
+                response=MealPlanItemSerializer(many=True),
             ),
             **STANDARD_ERROR_RESPONSES,
         },

@@ -1,5 +1,5 @@
-from rest_framework.fields import CurrentUserDefault
-from rest_framework.serializers import DateField, HiddenField, ModelSerializer, Serializer
+from rest_framework.fields import CurrentUserDefault, DateField, HiddenField, ListField
+from rest_framework.serializers import ModelSerializer, Serializer
 
 from apps.dishes.api.serializers.dishes import DishReadSerializer
 from apps.planning.api.serializers.cooking import CookingEventSerializer
@@ -34,6 +34,7 @@ class WeekDishesSerializer(Serializer):
 class MealPlanItemCreateSerializer(ModelSerializer):
     owner = HiddenField(default=CurrentUserDefault())
     is_manual = HiddenField(default=True)
+    eat_dates = ListField(child=DateField(), write_only=True, allow_empty=False)
 
     class Meta:
         model = MealPlanItem
@@ -41,7 +42,7 @@ class MealPlanItemCreateSerializer(ModelSerializer):
             'id',
             'dish',
             'owner',
-            'date',
+            'eat_dates',
             'cooking_event',
             'position',
             'is_manual',
