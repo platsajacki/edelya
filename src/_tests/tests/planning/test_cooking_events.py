@@ -9,7 +9,7 @@ from rest_framework.test import APIClient
 
 from pytest_django.fixtures import DjangoAssertNumQueries
 
-from _tests.fixtures.planning import EVENT_COOKING_DATE
+from _tests.fixtures.planning import WEEK_START
 from apps.dishes.models import Dish
 from apps.planning.api.serializers.cooking import CookingEventSerializer
 from apps.planning.models import CookingEvent, MealPlanItem
@@ -54,15 +54,11 @@ class TestCookingEventViewSetList:
             owner=telegram_user,
             dish=dish_global,
             cooking_date=date(2026, 4, 1),
-            duration_days=1,
-            start_eating_date=date(2026, 4, 1),
         )
         later = CookingEvent.objects.create(
             owner=telegram_user,
             dish=dish_global,
             cooking_date=date(2026, 5, 1),
-            duration_days=1,
-            start_eating_date=date(2026, 5, 1),
         )
         response = auth_telegram_api_client.get(self.list_url)
         assert response.status_code == status.HTTP_200_OK
@@ -140,7 +136,7 @@ class TestCookingEventViewSetCreate:
         auth_telegram_api_client: APIClient,
         cooking_event_payload: dict,
     ) -> None:
-        cooking_event_payload['duration_days'] = 4
+        cooking_event_payload['eat_dates'] = [str(WEEK_START + timedelta(days=i)) for i in range(4)]
         auth_telegram_api_client.post(self.list_url, data=cooking_event_payload, format='json')
         assert MealPlanItem.objects.count() == 4
 
@@ -149,11 +145,10 @@ class TestCookingEventViewSetCreate:
         auth_telegram_api_client: APIClient,
         cooking_event_payload: dict,
     ) -> None:
-        cooking_event_payload['duration_days'] = 3
-        start = EVENT_COOKING_DATE
+        cooking_event_payload['eat_dates'] = [str(WEEK_START + timedelta(days=i)) for i in range(3)]
         auth_telegram_api_client.post(self.list_url, data=cooking_event_payload, format='json')
         dates = sorted(MealPlanItem.objects.values_list('date', flat=True))
-        expected = [start + timedelta(days=i) for i in range(3)]
+        expected = [WEEK_START + timedelta(days=i) for i in range(3)]
         assert list(dates) == expected
 
     def test_meal_plan_items_linked_to_cooking_event(
@@ -163,7 +158,7 @@ class TestCookingEventViewSetCreate:
     ) -> None:
         auth_telegram_api_client.post(self.list_url, data=cooking_event_payload, format='json')
         event = CookingEvent.objects.get()
-        assert MealPlanItem.objects.filter(cooking_event=event).count() == cooking_event_payload['duration_days']
+        assert MealPlanItem.objects.filter(cooking_event=event).count() == len(cooking_event_payload['eat_dates'])
 
     def test_meal_plan_items_are_not_manual(
         self,
@@ -200,7 +195,7 @@ class TestCookingEventViewSetCreate:
         auth_telegram_api_client: APIClient,
         cooking_event_payload: dict,
     ) -> None:
-        cooking_event_payload['start_eating_date'] = str(EVENT_COOKING_DATE - timedelta(days=1))
+        cooking_event_payload['eat_dates'] = [str(WEEK_START - timedelta(days=1))]
         response = auth_telegram_api_client.post(self.list_url, data=cooking_event_payload, format='json')
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
@@ -209,7 +204,7 @@ class TestCookingEventViewSetCreate:
         auth_telegram_api_client: APIClient,
         cooking_event_payload: dict,
     ) -> None:
-        cooking_event_payload['start_eating_date'] = str(EVENT_COOKING_DATE)
+        cooking_event_payload['eat_dates'] = [str(WEEK_START)]
         response = auth_telegram_api_client.post(self.list_url, data=cooking_event_payload, format='json')
         assert response.status_code == status.HTTP_201_CREATED
 
@@ -218,7 +213,7 @@ class TestCookingEventViewSetCreate:
         auth_telegram_api_client: APIClient,
         cooking_event_payload: dict,
     ) -> None:
-        cooking_event_payload['start_eating_date'] = str(EVENT_COOKING_DATE + timedelta(days=2))
+        cooking_event_payload['eat_dates'] = [str(WEEK_START + timedelta(days=2))]
         response = auth_telegram_api_client.post(self.list_url, data=cooking_event_payload, format='json')
         assert response.status_code == status.HTTP_201_CREATED
 
@@ -227,25 +222,25 @@ class TestCookingEventViewSetCreate:
         auth_telegram_api_client: APIClient,
         cooking_event_payload: dict,
     ) -> None:
-        cooking_event_payload['duration_days'] = 0
+        cooking_event_payload['eat_dates'] = []
         response = auth_telegram_api_client.post(self.list_url, data=cooking_event_payload, format='json')
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.status_code == status.HTTP_201_CREATED
 
     def test_duration_days_31_returns_400(
         self,
         auth_telegram_api_client: APIClient,
         cooking_event_payload: dict,
     ) -> None:
-        cooking_event_payload['duration_days'] = 31
+        cooking_event_payload['eat_dates'] = [str(WEEK_START + timedelta(days=i)) for i in range(31)]
         response = auth_telegram_api_client.post(self.list_url, data=cooking_event_payload, format='json')
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.status_code == status.HTTP_201_CREATED
 
     def test_duration_days_1_creates_exactly_one_meal_plan_item(
         self,
         auth_telegram_api_client: APIClient,
         cooking_event_payload: dict,
     ) -> None:
-        cooking_event_payload['duration_days'] = 1
+        cooking_event_payload['eat_dates'] = [str(WEEK_START)]
         response = auth_telegram_api_client.post(self.list_url, data=cooking_event_payload, format='json')
         assert response.status_code == status.HTTP_201_CREATED
         assert MealPlanItem.objects.count() == 1
@@ -255,7 +250,7 @@ class TestCookingEventViewSetCreate:
         auth_telegram_api_client: APIClient,
         cooking_event_payload: dict,
     ) -> None:
-        cooking_event_payload['duration_days'] = 30
+        cooking_event_payload['eat_dates'] = [str(WEEK_START + timedelta(days=i)) for i in range(30)]
         response = auth_telegram_api_client.post(self.list_url, data=cooking_event_payload, format='json')
         assert response.status_code == status.HTTP_201_CREATED
         assert MealPlanItem.objects.count() == 30
@@ -275,14 +270,14 @@ class TestCookingEventViewSetCreate:
     def test_missing_start_eating_date_returns_400(
         self, auth_telegram_api_client: APIClient, cooking_event_payload: dict
     ) -> None:
-        del cooking_event_payload['start_eating_date']
+        del cooking_event_payload['eat_dates']
         response = auth_telegram_api_client.post(self.list_url, data=cooking_event_payload, format='json')
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_missing_duration_days_returns_400(
         self, auth_telegram_api_client: APIClient, cooking_event_payload: dict
     ) -> None:
-        del cooking_event_payload['duration_days']
+        cooking_event_payload['eat_dates'] = ['invalid-date']
         response = auth_telegram_api_client.post(self.list_url, data=cooking_event_payload, format='json')
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
@@ -336,7 +331,9 @@ class TestCookingEventViewSetPartialUpdate:
 
     def test_owner_can_patch_own_event(self, auth_telegram_api_client: APIClient, cooking_event: CookingEvent) -> None:
         response = auth_telegram_api_client.patch(
-            self.get_url(str(cooking_event.id)), data={'notes': 'updated'}, format='json'
+            self.get_url(str(cooking_event.id)),
+            data={'notes': 'updated', 'eat_dates': [str(cooking_event.cooking_date)]},
+            format='json',
         )
         assert response.status_code == status.HTTP_200_OK
 
@@ -363,8 +360,11 @@ class TestCookingEventViewSetPartialUpdate:
     ) -> None:
         event = cooking_event_with_meal_plan_items
         dates_before = set(MealPlanItem.objects.filter(cooking_event=event).values_list('date', flat=True))
+        eat_dates = [str(d) for d in sorted(dates_before)]
         with django_assert_num_queries(8):
-            auth_telegram_api_client.patch(self.get_url(str(event.id)), data={'notes': 'changed note'}, format='json')
+            auth_telegram_api_client.patch(
+                self.get_url(str(event.id)), data={'notes': 'changed note', 'eat_dates': eat_dates}, format='json'
+            )
         dates_after = set(MealPlanItem.objects.filter(cooking_event=event).values_list('date', flat=True))
         assert dates_before == dates_after
 
@@ -377,9 +377,12 @@ class TestCookingEventViewSetPartialUpdate:
         event = cooking_event_with_meal_plan_items
         dates_before = set(MealPlanItem.objects.filter(cooking_event=event).values_list('date', flat=True))
         new_cooking_date = event.cooking_date - timedelta(days=1)
+        eat_dates = [str(d) for d in sorted(dates_before)]
         with django_assert_num_queries(9):
             auth_telegram_api_client.patch(
-                self.get_url(str(event.id)), data={'cooking_date': str(new_cooking_date)}, format='json'
+                self.get_url(str(event.id)),
+                data={'cooking_date': str(new_cooking_date), 'eat_dates': eat_dates},
+                format='json',
             )
         dates_after = set(MealPlanItem.objects.filter(cooking_event=event).values_list('date', flat=True))
         assert dates_before == dates_after
@@ -393,11 +396,11 @@ class TestCookingEventViewSetPartialUpdate:
         event = cooking_event_with_meal_plan_items
         old_dates = sorted(MealPlanItem.objects.filter(cooking_event=event).values_list('date', flat=True))
         shift = timedelta(days=5)
-        new_start = event.start_eating_date + shift
-        with django_assert_num_queries(9):
+        new_eat_dates = [str(d + shift) for d in old_dates]
+        with django_assert_num_queries(10):
             auth_telegram_api_client.patch(
                 self.get_url(str(event.id)),
-                data={'start_eating_date': str(new_start), 'cooking_date': str(event.cooking_date)},
+                data={'eat_dates': new_eat_dates},
                 format='json',
             )
         new_dates = sorted(MealPlanItem.objects.filter(cooking_event=event).values_list('date', flat=True))
@@ -411,14 +414,17 @@ class TestCookingEventViewSetPartialUpdate:
         django_assert_num_queries: DjangoAssertNumQueries,
     ) -> None:
         event = cooking_event_with_meal_plan_items
-        old_count = MealPlanItem.objects.filter(cooking_event=event).count()  # 3
-        new_duration = old_count + 2
+        old_dates = sorted(MealPlanItem.objects.filter(cooking_event=event).values_list('date', flat=True))
+        extra_count = 2
+        new_eat_dates = [str(d) for d in old_dates] + [
+            str(old_dates[-1] + timedelta(days=i + 1)) for i in range(extra_count)
+        ]
         with django_assert_num_queries(9):
             auth_telegram_api_client.patch(
-                self.get_url(str(event.id)), data={'duration_days': new_duration}, format='json'
+                self.get_url(str(event.id)), data={'eat_dates': new_eat_dates}, format='json'
             )
         new_count = MealPlanItem.objects.filter(cooking_event=event).count()
-        assert new_count == new_duration
+        assert new_count == len(old_dates) + extra_count
 
     def test_decreasing_duration_days_removes_last_meal_plan_items(
         self,
@@ -427,17 +433,17 @@ class TestCookingEventViewSetPartialUpdate:
         django_assert_num_queries: DjangoAssertNumQueries,
     ) -> None:
         event = cooking_event_with_meal_plan_items
-        new_duration = event.duration_days - 1  # 2
         old_dates = sorted(MealPlanItem.objects.filter(cooking_event=event).values_list('date', flat=True))
+        new_eat_dates = [str(d) for d in old_dates[:-1]]
         with django_assert_num_queries(9):
             auth_telegram_api_client.patch(
-                self.get_url(str(event.id)), data={'duration_days': new_duration}, format='json'
+                self.get_url(str(event.id)), data={'eat_dates': new_eat_dates}, format='json'
             )
         new_count = MealPlanItem.objects.filter(cooking_event=event).count()
-        assert new_count == new_duration
+        assert new_count == len(old_dates) - 1
         remaining_dates = sorted(MealPlanItem.objects.filter(cooking_event=event).values_list('date', flat=True))
         # Last item (latest date) must have been removed
-        assert remaining_dates == old_dates[:new_duration]
+        assert remaining_dates == old_dates[:-1]
 
     def test_patch_event_without_meal_plan_items_creates_them(
         self,
@@ -447,12 +453,15 @@ class TestCookingEventViewSetPartialUpdate:
     ) -> None:
         # cooking_event fixture does NOT create MealPlanItems (created directly, not via service)
         assert MealPlanItem.objects.filter(cooking_event=cooking_event).count() == 0
+        eat_dates = [str(cooking_event.cooking_date + timedelta(days=i)) for i in range(3)]
         with django_assert_num_queries(9):
             auth_telegram_api_client.patch(
-                self.get_url(str(cooking_event.id)), data={'notes': 'trigger update'}, format='json'
+                self.get_url(str(cooking_event.id)),
+                data={'notes': 'trigger update', 'eat_dates': eat_dates},
+                format='json',
             )
         # updater creates MealPlanItems when none exist
-        assert MealPlanItem.objects.filter(cooking_event=cooking_event).count() == cooking_event.duration_days
+        assert MealPlanItem.objects.filter(cooking_event=cooking_event).count() == 3
 
     def test_start_eating_date_before_cooking_date_returns_400(
         self,
@@ -461,10 +470,7 @@ class TestCookingEventViewSetPartialUpdate:
     ) -> None:
         response = auth_telegram_api_client.patch(
             self.get_url(str(cooking_event.id)),
-            data={
-                'start_eating_date': str(cooking_event.cooking_date - timedelta(days=1)),
-                'cooking_date': str(cooking_event.cooking_date),
-            },
+            data={'eat_dates': [str(cooking_event.cooking_date - timedelta(days=1))]},
             format='json',
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -475,19 +481,20 @@ class TestCookingEventViewSetPartialUpdate:
         cooking_event: CookingEvent,
     ) -> None:
         response = auth_telegram_api_client.patch(
-            self.get_url(str(cooking_event.id)), data={'duration_days': 0}, format='json'
+            self.get_url(str(cooking_event.id)), data={'eat_dates': []}, format='json'
         )
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.status_code == status.HTTP_200_OK
 
     def test_duration_days_31_returns_400(
         self,
         auth_telegram_api_client: APIClient,
         cooking_event: CookingEvent,
     ) -> None:
+        eat_dates = [str(cooking_event.cooking_date + timedelta(days=i)) for i in range(31)]
         response = auth_telegram_api_client.patch(
-            self.get_url(str(cooking_event.id)), data={'duration_days': 31}, format='json'
+            self.get_url(str(cooking_event.id)), data={'eat_dates': eat_dates}, format='json'
         )
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.status_code == status.HTTP_200_OK
 
     def test_response_uses_read_serializer_with_nested_dish(
         self,
@@ -495,7 +502,9 @@ class TestCookingEventViewSetPartialUpdate:
         cooking_event: CookingEvent,
     ) -> None:
         response = auth_telegram_api_client.patch(
-            self.get_url(str(cooking_event.id)), data={'notes': 'check serializer'}, format='json'
+            self.get_url(str(cooking_event.id)),
+            data={'notes': 'check serializer', 'eat_dates': [str(cooking_event.cooking_date)]},
+            format='json',
         )
         assert response.status_code == status.HTTP_200_OK
         assert isinstance(response.data['dish'], dict)
@@ -543,7 +552,7 @@ class TestCookingEventViewSetDelete:
         cooking_event_with_meal_plan_items: CookingEvent,
     ) -> None:
         event = cooking_event_with_meal_plan_items
-        assert MealPlanItem.objects.filter(cooking_event=event).count() == event.duration_days
+        assert MealPlanItem.objects.filter(cooking_event=event).count() == 5
         auth_telegram_api_client.delete(self.get_url(str(event.id)))
         assert not MealPlanItem.objects.filter(cooking_event=event).exists()
 
@@ -578,9 +587,7 @@ class TestCookingEventViewSetQueryCount:
             CookingEvent(
                 owner=telegram_user,
                 dish=dish_global,
-                cooking_date=EVENT_COOKING_DATE + timedelta(days=500 + i * 10),
-                duration_days=1,
-                start_eating_date=EVENT_COOKING_DATE + timedelta(days=500 + i * 10),
+                cooking_date=WEEK_START + timedelta(days=500 + i * 10),
             )
             for i in range(5)
         ]

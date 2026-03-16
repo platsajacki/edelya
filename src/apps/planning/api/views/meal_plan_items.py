@@ -24,7 +24,7 @@ class MealPlanItemViewSet(ModelViewSet):
     def get_serializer_class(self) -> type[ModelSerializer]:
         if self.action == 'create':
             return MealPlanItemCreateSerializer
-        elif self.action in {'update', 'partial_update'}:
+        elif self.action == 'partial_update':
             return MealPlanItemUpdateSerializer
         return MealPlanItemSerializer
 

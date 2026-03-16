@@ -125,7 +125,6 @@ class TestWeekDishesAPIView:
         event = response.data['cooking_events'][0]
         assert str(event['id']) == str(cooking_event.id)
         assert event['cooking_date'] == str(cooking_event.cooking_date)
-        assert event['duration_days'] == cooking_event.duration_days
         assert event['dish']['id'] == str(cooking_event.dish.id)
 
     def test_cooking_event_matches_serializer_output(
@@ -251,8 +250,6 @@ class TestWeekDishesAPIView:
             owner=telegram_user,
             dish=dish_global,
             cooking_date=week_start,
-            duration_days=1,
-            start_eating_date=week_start,
         )
         response = auth_telegram_api_client.get(self.get_url(week_year, week_number))
         assert response.status_code == status.HTTP_200_OK
@@ -267,9 +264,7 @@ class TestWeekDishesAPIView:
         telegram_user: User,
         dish_global: Dish,
     ) -> None:
-        CookingEvent.objects.create(
-            owner=telegram_user, dish=dish_global, cooking_date=week_end, duration_days=1, start_eating_date=week_end
-        )
+        CookingEvent.objects.create(owner=telegram_user, dish=dish_global, cooking_date=week_end)
         response = auth_telegram_api_client.get(self.get_url(week_year, week_number))
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data['cooking_events']) == 1
@@ -284,9 +279,7 @@ class TestWeekDishesAPIView:
         dish_global: Dish,
     ) -> None:
         before = week_start - timedelta(days=1)
-        CookingEvent.objects.create(
-            owner=telegram_user, dish=dish_global, cooking_date=before, duration_days=1, start_eating_date=before
-        )
+        CookingEvent.objects.create(owner=telegram_user, dish=dish_global, cooking_date=before)
         response = auth_telegram_api_client.get(self.get_url(week_year, week_number))
         assert response.status_code == status.HTTP_200_OK
         assert response.data['cooking_events'] == []
@@ -301,9 +294,7 @@ class TestWeekDishesAPIView:
         dish_global: Dish,
     ) -> None:
         after = week_end + timedelta(days=1)
-        CookingEvent.objects.create(
-            owner=telegram_user, dish=dish_global, cooking_date=after, duration_days=1, start_eating_date=after
-        )
+        CookingEvent.objects.create(owner=telegram_user, dish=dish_global, cooking_date=after)
         response = auth_telegram_api_client.get(self.get_url(week_year, week_number))
         assert response.status_code == status.HTTP_200_OK
         assert response.data['cooking_events'] == []

@@ -67,7 +67,9 @@ class CookingEventViewSetSchema:
         summary='Create a cooking event',
         description=(
             'Creates a new cooking event for the authenticated user. '
-            'Automatically generates meal plan items for each day in the eating range.'
+            'Accepts `eat_dates` — a list of dates (YYYY-MM-DD) representing days when the dish will be eaten. '
+            'All `eat_dates` must be on or after `cooking_date`. '
+            'Non-manual meal plan items will be created for each date in `eat_dates`.'
         ),
         request=CookingEventWriteSerializer(),
         responses={
@@ -83,8 +85,9 @@ class CookingEventViewSetSchema:
         summary='Partially update a cooking event',
         description=(
             'Partially update an existing cooking event. '
-            'If the start eating date changes, all related meal plan item dates are shifted accordingly. '
-            'If the duration changes, meal plan items are created or removed to match the new range.'
+            'Provide `eat_dates` (a list of dates) to synchronize meal plan items: '
+            'dates removed from `eat_dates` will be deleted, and new dates will get new non-manual meal plan items. '
+            'All `eat_dates` must be on or after `cooking_date`.'
         ),
         request=CookingEventWriteSerializer(partial=True),
         responses={

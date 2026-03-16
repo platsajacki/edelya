@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date
 
 from django.db import transaction
 
@@ -7,38 +7,24 @@ from apps.planning.models import CookingEvent, MealPlanItem
 
 
 class CookingEventUpdater(CookingEventBaseService):
-    def shift_meal_plan_item_dates(
-        self, cooking_event: CookingEvent, old_start_eating_date: date, meal_plan_items: list[MealPlanItem]
+    def synchronize_meal_plan_items(
+        self, cooking_event: CookingEvent, old_meal_plan_items: list[MealPlanItem], eat_dates: list[date]
     ) -> None:
-        date_diff = cooking_event.start_eating_date - old_start_eating_date
-        for meal_plan_item in meal_plan_items:
-            meal_plan_item.date += date_diff
-        MealPlanItem.objects.bulk_update(meal_plan_items, ['date'])
-
-    def sync_meal_plan_items(
-        self, cooking_event: CookingEvent, old_duration_days: int, meal_plan_items: list[MealPlanItem]
-    ) -> None:
-        duration_days_diff = cooking_event.duration_days - old_duration_days
-        sorted_meal_plan_items = sorted(meal_plan_items, key=lambda x: x.date)
-        if duration_days_diff > 0:
-            max_date = sorted_meal_plan_items[-1].date
-            missing_dates = self.get_meal_plan_item_dates(max_date + timedelta(days=1), duration_days_diff)
-            self.create_meal_plan_items(cooking_event, missing_dates)
-        else:
-            duration_days_abs = abs(duration_days_diff)
-            meal_plan_items_to_delete = sorted_meal_plan_items[-duration_days_abs:]
-            MealPlanItem.objects.filter(id__in=[item.id for item in meal_plan_items_to_delete]).delete()
+        old_dates_set = {item.date for item in old_meal_plan_items}
+        new_dates_set = set(eat_dates)
+        dates_to_delete = old_dates_set - new_dates_set
+        if dates_to_delete:
+            MealPlanItem.objects.filter(cooking_event=cooking_event, date__in=dates_to_delete).delete()
+        dates_to_create = sorted(new_dates_set - old_dates_set)
+        if dates_to_create:
+            self.create_meal_plan_items(cooking_event, dates_to_create)
 
     @transaction.atomic
     def act(self) -> None:
-        old_start_eating_date = self.serializer.instance.start_eating_date
-        old_duration_days = self.serializer.instance.duration_days
         meal_plan_items = list(self.serializer.instance.meal_plan_items.all())
         cooking_event = self.serializer.save()
+        validated_data = self.serializer.validated_data
         if not meal_plan_items:
-            self.create_meal_plan_items(cooking_event, self.get_meal_plan_item_dates_by_cooking_event(cooking_event))
+            self.create_meal_plan_items(cooking_event, validated_data['eat_dates'])
             return
-        if cooking_event.start_eating_date != old_start_eating_date:
-            self.shift_meal_plan_item_dates(cooking_event, old_start_eating_date, meal_plan_items)
-        if cooking_event.duration_days != old_duration_days:
-            self.sync_meal_plan_items(cooking_event, old_duration_days, meal_plan_items)
+        self.synchronize_meal_plan_items(cooking_event, meal_plan_items, validated_data['eat_dates'])
