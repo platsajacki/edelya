@@ -7,29 +7,22 @@ from rest_framework import status
 from rest_framework.response import Response
 
 from apps.planning.api.serializers.meal_plan import MealPlanItemSerializer
+from apps.planning.api.services.base import BaseMealPlanItemCreator
 from apps.planning.models import MealPlanItem
 from core.base.services import BaseViewSetService
 
-POSITION_STEP = 100
-
 
 @dataclass
-class MealPlanItemCreator(BaseViewSetService):
+class MealPlanItemCreator(BaseViewSetService, BaseMealPlanItemCreator):
     queryset: QuerySet = dc_field(default_factory=MealPlanItem.objects.none)
 
     def create_meal_plan_items(self) -> list[MealPlanItem]:
-        position = self.validated_data.get('position', POSITION_STEP)
-        meal_plan_items = [
-            MealPlanItem(
-                owner=self.validated_data['owner'],
-                date=_date,
-                dish=self.validated_data['dish'],
-                position=position + index * POSITION_STEP,
-                is_manual=True,
-            )
-            for index, _date in enumerate(self.validated_data['eat_dates'])
-        ]
-        return MealPlanItem.objects.bulk_create(meal_plan_items, ignore_conflicts=True)
+        return self.create_meal_plan_items_by_dates(
+            owner=self.validated_data['owner'],
+            dish=self.validated_data['dish'],
+            eat_dates=self.validated_data['eat_dates'],
+            is_manual=True,
+        )
 
     @transaction.atomic
     def act(self) -> None:

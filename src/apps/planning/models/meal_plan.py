@@ -57,12 +57,6 @@ class MealPlanItem(BaseModel):
                 name='idx_meal_cooking_event',
             ),
         ]
-        constraints = [
-            models.UniqueConstraint(
-                fields=['owner', 'date', 'position'],
-                name='unique_meal_position_per_day',
-            ),
-        ]
 
     def __str__(self) -> str:
         return f'{self.date}: {self.dish}'

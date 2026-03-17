@@ -378,7 +378,7 @@ class TestCookingEventViewSetPartialUpdate:
         dates_before = set(MealPlanItem.objects.filter(cooking_event=event).values_list('date', flat=True))
         new_cooking_date = event.cooking_date - timedelta(days=1)
         eat_dates = [str(d) for d in sorted(dates_before)]
-        with django_assert_num_queries(9):
+        with django_assert_num_queries(8):
             auth_telegram_api_client.patch(
                 self.get_url(str(event.id)),
                 data={'cooking_date': str(new_cooking_date), 'eat_dates': eat_dates},
@@ -397,7 +397,7 @@ class TestCookingEventViewSetPartialUpdate:
         old_dates = sorted(MealPlanItem.objects.filter(cooking_event=event).values_list('date', flat=True))
         shift = timedelta(days=5)
         new_eat_dates = [str(d + shift) for d in old_dates]
-        with django_assert_num_queries(10):
+        with django_assert_num_queries(11):
             auth_telegram_api_client.patch(
                 self.get_url(str(event.id)),
                 data={'eat_dates': new_eat_dates},
@@ -419,7 +419,7 @@ class TestCookingEventViewSetPartialUpdate:
         new_eat_dates = [str(d) for d in old_dates] + [
             str(old_dates[-1] + timedelta(days=i + 1)) for i in range(extra_count)
         ]
-        with django_assert_num_queries(9):
+        with django_assert_num_queries(10):
             auth_telegram_api_client.patch(
                 self.get_url(str(event.id)), data={'eat_dates': new_eat_dates}, format='json'
             )
@@ -454,7 +454,7 @@ class TestCookingEventViewSetPartialUpdate:
         # cooking_event fixture does NOT create MealPlanItems (created directly, not via service)
         assert MealPlanItem.objects.filter(cooking_event=cooking_event).count() == 0
         eat_dates = [str(cooking_event.cooking_date + timedelta(days=i)) for i in range(3)]
-        with django_assert_num_queries(9):
+        with django_assert_num_queries(10):
             auth_telegram_api_client.patch(
                 self.get_url(str(cooking_event.id)),
                 data={'notes': 'trigger update', 'eat_dates': eat_dates},

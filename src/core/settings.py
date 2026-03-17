@@ -60,10 +60,16 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 
 # Database
+ENGINE = 'django.db.backends.postgresql'
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': ENGINE,
+        'NAME': getenv('POSTGRES_DB', 'edelya'),
+        'USER': getenv('POSTGRES_USER', 'user'),
+        'PASSWORD': getenv('POSTGRES_PASSWORD', 'password'),
+        'HOST': getenv('SQL_HOST', 'localhost'),
+        'PORT': getenv('SQL_PORT', '5432'),
     }
 }
 

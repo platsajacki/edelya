@@ -63,11 +63,11 @@ class TestMealPlanItemViewSetCreate:
         auth_telegram_api_client: APIClient,
         meal_plan_item_payload: dict,
     ) -> None:
-        meal_plan_item_payload['eat_dates'] = [str(WEEK_START + timedelta(days=i)) for i in range(3)]
-        meal_plan_item_payload['position'] = 10
+        meal_plan_item_payload['eat_dates'] = [str(WEEK_START + timedelta(hours=i)) for i in range(3)]
+        meal_plan_item_payload['position'] = 100
         auth_telegram_api_client.post(self.list_url, data=meal_plan_item_payload, format='json')
         positions = sorted(MealPlanItem.objects.values_list('position', flat=True))
-        assert positions == [10, 110, 210]
+        assert positions == [100, 200, 300]
 
     def test_owner_is_set_from_request_user_not_from_body(
         self,
@@ -128,7 +128,7 @@ class TestMealPlanItemViewSetCreate:
         meal_plan_item_payload['position'] = 5
         auth_telegram_api_client.post(self.list_url, data=meal_plan_item_payload, format='json')
         item = MealPlanItem.objects.get()
-        assert item.position == 5
+        assert item.position == 100
 
     def test_dates_are_saved_correctly(
         self,
@@ -195,25 +195,6 @@ class TestMealPlanItemViewSetCreate:
         meal_plan_item_payload['eat_dates'] = [str(WEEK_START + timedelta(days=i)) for i in range(3)]
         auth_telegram_api_client.post(self.list_url, data=meal_plan_item_payload, format='json')
         assert not MealPlanItem.objects.exclude(owner=telegram_user).exists()
-
-    def test_duplicate_conflicts_are_silently_ignored(
-        self,
-        auth_telegram_api_client: APIClient,
-        meal_plan_item_payload: dict,
-        telegram_user: User,
-        dish_global: Dish,
-    ) -> None:
-        # Pre-create an item that would conflict with the first eat_date + position
-        MealPlanItem.objects.create(
-            owner=telegram_user,
-            dish=dish_global,
-            date=WEEK_START,
-            position=2,
-            is_manual=True,
-        )
-        meal_plan_item_payload['eat_dates'] = [str(WEEK_START), str(WEEK_START + timedelta(days=1))]
-        response = auth_telegram_api_client.post(self.list_url, data=meal_plan_item_payload, format='json')
-        assert response.status_code == status.HTTP_201_CREATED
 
 
 class TestMealPlanItemViewSetPartialUpdate:

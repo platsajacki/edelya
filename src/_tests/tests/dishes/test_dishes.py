@@ -653,3 +653,87 @@ class TestDishViewSet:
         url = self.get_detail_url(str(dish_user.id))
         response = auth_telegram_api_client.patch(url, data={}, format='json')
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+
+
+class TestDishCategoryFilterCaseInsensitive:
+    list_url = reverse('api_v1:dishes:dishes:dish-category-list')
+
+    def test_icontains_finds_by_lowercase(
+        self, auth_telegram_api_client: APIClient, dish_category: DishCategory
+    ) -> None:
+        dish_category.name = 'Супы'
+        dish_category.save(update_fields=['name'])
+        response = auth_telegram_api_client.get(self.list_url, data={'name__icontains': 'супы'})
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['count'] == 1
+
+    def test_icontains_finds_by_uppercase(
+        self, auth_telegram_api_client: APIClient, dish_category: DishCategory
+    ) -> None:
+        dish_category.name = 'Супы'
+        dish_category.save(update_fields=['name'])
+        response = auth_telegram_api_client.get(self.list_url, data={'name__icontains': 'СУПЫ'})
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['count'] == 1
+
+    def test_icontains_finds_partial_match(
+        self, auth_telegram_api_client: APIClient, dish_category: DishCategory
+    ) -> None:
+        dish_category.name = 'Первые блюда'
+        dish_category.save(update_fields=['name'])
+        response = auth_telegram_api_client.get(self.list_url, data={'name__icontains': 'перв'})
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['count'] == 1
+
+    def test_icontains_returns_empty_on_no_match(
+        self, auth_telegram_api_client: APIClient, dish_category: DishCategory
+    ) -> None:
+        response = auth_telegram_api_client.get(self.list_url, data={'name__icontains': 'zzzzNotExist'})
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['count'] == 0
+
+    def test_icontains_latin_case_insensitive(
+        self, auth_telegram_api_client: APIClient, dish_category: DishCategory
+    ) -> None:
+        dish_category.name = 'Soups'
+        dish_category.save(update_fields=['name'])
+        response = auth_telegram_api_client.get(self.list_url, data={'name__icontains': 'soups'})
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['count'] == 1
+
+
+class TestDishFilterCaseInsensitive:
+    list_url = reverse('api_v1:dishes:dishes:dish-list')
+
+    def test_icontains_finds_by_lowercase(self, auth_telegram_api_client: APIClient, dish_global: Dish) -> None:
+        dish_global.name = 'Борщ Украинский'
+        dish_global.save(update_fields=['name'])
+        response = auth_telegram_api_client.get(self.list_url, data={'name__icontains': 'борщ'})
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['count'] == 1
+
+    def test_icontains_finds_by_uppercase(self, auth_telegram_api_client: APIClient, dish_global: Dish) -> None:
+        dish_global.name = 'Борщ Украинский'
+        dish_global.save(update_fields=['name'])
+        response = auth_telegram_api_client.get(self.list_url, data={'name__icontains': 'БОРЩ'})
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['count'] == 1
+
+    def test_icontains_finds_partial_middle_match(self, auth_telegram_api_client: APIClient, dish_global: Dish) -> None:
+        dish_global.name = 'Борщ Украинский'
+        dish_global.save(update_fields=['name'])
+        response = auth_telegram_api_client.get(self.list_url, data={'name__icontains': 'украин'})
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['count'] == 1
+
+    def test_icontains_returns_empty_on_no_match(self, auth_telegram_api_client: APIClient, dish_global: Dish) -> None:
+        response = auth_telegram_api_client.get(self.list_url, data={'name__icontains': 'zzzzNotExist'})
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['count'] == 0
+
+    def test_icontains_latin_case_insensitive(self, auth_telegram_api_client: APIClient, dish_global: Dish) -> None:
+        dish_global.name = 'Caesar Salad'
+        dish_global.save(update_fields=['name'])
+        response = auth_telegram_api_client.get(self.list_url, data={'name__icontains': 'caesar'})
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['count'] == 1
