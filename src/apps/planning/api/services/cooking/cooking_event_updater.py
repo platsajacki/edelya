@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 
 from django.db import transaction
 
@@ -19,12 +19,30 @@ class CookingEventUpdater(CookingEventBaseService):
         if dates_to_create:
             self.create_meal_plan_items(cooking_event, dates_to_create)
 
+    def shift_meal_plan_items_dates(self, meal_plan_items: list[MealPlanItem], delta: timedelta) -> None:
+        if delta == timedelta(0):
+            return
+        for item in meal_plan_items:
+            item.date += delta
+        MealPlanItem.objects.bulk_update(meal_plan_items, ['date'])
+
+    def process_meal_plan_items(
+        self, cooking_event: CookingEvent, meal_plan_items: list[MealPlanItem], old_cooking_date: date
+    ) -> None:
+        eat_dates = self.serializer.validated_data.get('eat_dates', [])
+        got_eat_dates = bool(eat_dates)
+        exist_meal_plan_items = bool(meal_plan_items)
+        if got_eat_dates and exist_meal_plan_items:
+            self.synchronize_meal_plan_items(cooking_event, meal_plan_items, eat_dates)
+        elif got_eat_dates and not exist_meal_plan_items:
+            self.create_meal_plan_items(cooking_event, eat_dates)
+        elif not got_eat_dates and exist_meal_plan_items:
+            cooking_date_delta = cooking_event.cooking_date - old_cooking_date
+            self.shift_meal_plan_items_dates(meal_plan_items, cooking_date_delta)
+
     @transaction.atomic
     def act(self) -> None:
         meal_plan_items = list(self.serializer.instance.meal_plan_items.all())
+        old_cooking_date = self.serializer.instance.cooking_date
         cooking_event = self.serializer.save()
-        validated_data = self.serializer.validated_data
-        if not meal_plan_items:
-            self.create_meal_plan_items(cooking_event, validated_data['eat_dates'])
-            return
-        self.synchronize_meal_plan_items(cooking_event, meal_plan_items, validated_data['eat_dates'])
+        self.process_meal_plan_items(cooking_event, meal_plan_items, old_cooking_date)
