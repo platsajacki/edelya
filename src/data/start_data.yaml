@@ -177,3 +177,177 @@ ingredients:
   - name: Сухари панировочные
     category: Крахмалы и панировка
     base_unit: gram
+
+  - name: Сметана
+    category: Кисломолочные продукты
+    base_unit: tablespoon
+
+  - name: Лавровый лист
+    category: Специи и приправы
+    base_unit: piece
+
+dishes:
+  - name: Борщ
+    category: Супы
+    description: Классический борщ с говядиной и свеклой
+    ingredients:
+      - name: Говядина
+        amount: 400
+        position: 1
+      - name: Свекла
+        amount: 200
+        position: 2
+      - name: Картофель
+        amount: 300
+        position: 3
+      - name: Капуста белокочанная
+        amount: 200
+        position: 4
+      - name: Морковь
+        amount: 100
+        position: 5
+      - name: Лук репчатый
+        amount: 100
+        position: 6
+      - name: Чеснок
+        amount: 2
+        position: 7
+      - name: Томатная паста
+        amount: 2
+        position: 8
+      - name: Оливковое масло
+        amount: 30
+        position: 9
+      - name: Уксус
+        amount: 1
+        position: 10
+      - name: Лавровый лист
+        amount: 2
+        position: 11
+      - name: Соль
+        amount: 1
+        position: 12
+      - name: Черный перец
+        amount: 1
+        position: 13
+      - name: Сметана
+        amount: 2
+        position: 14
+        is_optional: true
+
+  - name: Греческий салат
+    category: Салаты
+    description: Свежий салат с овощами и сыром фета
+    ingredients:
+      - name: Помидор
+        amount: 200
+        position: 1
+      - name: Огурец
+        amount: 150
+        position: 2
+      - name: Болгарский перец
+        amount: 100
+        position: 3
+      - name: Лук репчатый
+        amount: 50
+        position: 4
+      - name: Фета
+        amount: 100
+        position: 5
+      - name: Маслины
+        amount: 50
+        position: 6
+      - name: Оливковое масло
+        amount: 30
+        position: 7
+      - name: Соль
+        amount: 1
+        position: 8
+
+  - name: Паста Карбонара
+    category: Основные блюда
+    description: Итальянская паста с панчеттой и пармезаном
+    ingredients:
+      - name: Спагетти
+        amount: 400
+        position: 1
+      - name: Панчетта
+        amount: 150
+        position: 2
+      - name: Яйцо куриное
+        amount: 4
+        position: 3
+      - name: Пармезан
+        amount: 100
+        position: 4
+      - name: Чеснок
+        amount: 2
+        position: 5
+      - name: Оливковое масло
+        amount: 20
+        position: 6
+      - name: Черный перец
+        amount: 2
+        position: 7
+      - name: Соль
+        amount: 1
+        position: 8
+
+  - name: Салат Цезарь
+    category: Салаты
+    description: Салат с куриным филе, пармезаном и гренками
+    ingredients:
+      - name: Куриное филе
+        amount: 300
+        position: 1
+      - name: Листья салата ромэн
+        amount: 200
+        position: 2
+      - name: Пармезан
+        amount: 50
+        position: 3
+      - name: Гренки
+        amount: 80
+        position: 4
+      - name: Яйцо куриное
+        amount: 1
+        position: 5
+      - name: Чеснок
+        amount: 1
+        position: 6
+      - name: Оливковое масло
+        amount: 40
+        position: 7
+      - name: Соль
+        amount: 1
+        position: 8
+      - name: Черный перец
+        amount: 1
+        position: 9
+
+  - name: Сырники
+    category: Завтраки
+    description: Нежные сырники из творога
+    ingredients:
+      - name: Творог
+        amount: 500
+        position: 1
+      - name: Яйцо куриное
+        amount: 2
+        position: 2
+      - name: Мука пшеничная
+        amount: 60
+        position: 3
+      - name: Сахар
+        amount: 40
+        position: 4
+      - name: Соль
+        amount: 1
+        position: 5
+      - name: Оливковое масло
+        amount: 30
+        position: 6
+      - name: Сметана
+        amount: 3
+        position: 7
+        is_optional: true
