@@ -1,3 +1,4 @@
+from rest_framework.exceptions import ValidationError
 from rest_framework.fields import CurrentUserDefault, DateField, HiddenField, ListField
 from rest_framework.serializers import ModelSerializer, Serializer
 
@@ -31,10 +32,29 @@ class WeekDishesSerializer(Serializer):
     cooking_events = CookingEventSerializer(many=True)
 
 
-class MealPlanItemCreateSerializer(ModelSerializer):
+class EatDatesSerializer(ModelSerializer):
+    eat_dates = ListField(child=DateField(), write_only=True, allow_empty=False)
+
+    class Meta:
+        model = MealPlanItem
+        fields = [
+            'id',
+            'eat_dates',
+        ]
+
+    def validate(self, attrs: dict) -> dict:
+        eat_date = attrs.get('date', getattr(self.instance, 'date', None))
+        eat_dates = attrs.get('eat_dates', [])
+        if eat_date and eat_dates and any(d < eat_date for d in eat_dates):
+            raise ValidationError(
+                'All eat_dates must be greater than or equal to the current date of the meal plan item.'
+            )
+        return attrs
+
+
+class MealPlanItemCreateSerializer(EatDatesSerializer):
     owner = HiddenField(default=CurrentUserDefault())
     is_manual = HiddenField(default=True)
-    eat_dates = ListField(child=DateField(), write_only=True, allow_empty=False)
 
     class Meta:
         model = MealPlanItem
@@ -79,3 +99,8 @@ class MealPlanItemUpdateSerializer(ModelSerializer):
             'created_at',
             'updated_at',
         ]
+
+    def validate_date(self, value: DateField) -> DateField:
+        if self.instance and self.instance.cooking_event and value < self.instance.cooking_event.cooking_date:
+            raise ValidationError('Date must be on or after the cooking date of the associated cooking event.')
+        return value
