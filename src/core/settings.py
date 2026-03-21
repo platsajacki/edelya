@@ -65,8 +65,8 @@ DATABASES = {
         'NAME': getenv('POSTGRES_DB', 'edelya'),
         'USER': getenv('POSTGRES_USER', 'user'),
         'PASSWORD': getenv('POSTGRES_PASSWORD', 'password'),
-        'HOST': getenv('SQL_HOST', 'localhost'),
-        'PORT': getenv('SQL_PORT', '5432'),
+        'HOST': getenv('POSTGRES_HOST', 'localhost'),
+        'PORT': getenv('POSTGRES_PORT', '5432'),
     }
 }
 
