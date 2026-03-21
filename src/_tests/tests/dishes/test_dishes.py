@@ -105,6 +105,22 @@ class TestDishViewSet:
         assert response.data['count'] == 0
         assert response.data['results'] == []
 
+    def test_owened_first_puts_global_dishes_last(
+        self,
+        auth_telegram_api_client: APIClient,
+        dish_global: Dish,
+        dish_user: Dish,
+        another_telegram_user: User,
+        dish_category: DishCategory,
+    ) -> None:
+        # create a foreign-owned dish so we have: user-owned, foreign-owned, and global (owner=None)
+        Dish.objects.create(name=dish_user.name, category=dish_category, owner=another_telegram_user)
+        response = auth_telegram_api_client.get(self.list_url, data={'owened_first': 'true'})
+        assert response.status_code == status.HTTP_200_OK
+        results = response.data['results']
+        # the global dish (owner=None) must be last because filter orders owner_id with nulls_last=True
+        assert results[-1]['id'] == str(dish_global.id)
+
     def test_list_returns_global_and_owner_dishes_only(
         self,
         auth_telegram_api_client: APIClient,
@@ -215,6 +231,35 @@ class TestDishViewSet:
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert not Dish.objects.filter(name='No Ingredient Dish').exists()
+
+    def test_only_owned_filters_out_global_and_foreign(
+        self,
+        auth_telegram_api_client: APIClient,
+        dish_global: Dish,
+        dish_user: Dish,
+        another_telegram_user: User,
+        dish_category: DishCategory,
+    ) -> None:
+        # ensure there's a foreign-owned dish present in DB
+        foreign = Dish.objects.create(name='foreign owned dish 2', category=dish_category, owner=another_telegram_user)
+        response = auth_telegram_api_client.get(self.list_url, data={'only_owned': 'true'})
+        assert response.status_code == status.HTTP_200_OK
+        ids = {item['id'] for item in response.data['results']}
+        assert str(dish_user.id) in ids
+        assert str(dish_global.id) not in ids
+        assert str(foreign.id) not in ids
+
+    def test_only_global_returns_only_global_dishes(
+        self,
+        auth_telegram_api_client: APIClient,
+        dish_global: Dish,
+        dish_user: Dish,
+    ) -> None:
+        response = auth_telegram_api_client.get(self.list_url, data={'only_global': 'true'})
+        assert response.status_code == status.HTTP_200_OK
+        ids = {item['id'] for item in response.data['results']}
+        assert str(dish_global.id) in ids
+        assert str(dish_user.id) not in ids
 
     def test_authenticated_client_cannot_create_dish_with_duplicate_name(
         self,

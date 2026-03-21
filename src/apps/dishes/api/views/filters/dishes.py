@@ -1,3 +1,5 @@
+from django.db.models import F, OrderBy, QuerySet
+
 from django_filters import rest_framework as filters
 
 from apps.dishes.models import Dish, DishCategory
@@ -25,6 +27,9 @@ class DishCategoryFilter(filters.FilterSet):
 
 class DishFilter(filters.FilterSet):
     category = filters.UUIDFilter(field_name='category__id')
+    owened_first = filters.BooleanFilter(method='order_owned_first')
+    only_owned = filters.BooleanFilter(field_name='owner_id', lookup_expr='isnull', exclude=True)
+    only_global = filters.BooleanFilter(field_name='owner_id', lookup_expr='isnull')
 
     class Meta:
         model = Dish
@@ -34,3 +39,8 @@ class DishFilter(filters.FilterSet):
             'created_at': ['exact', 'lte', 'gte'],
             'updated_at': ['exact', 'lte', 'gte'],
         }
+
+    def order_owned_first(self, queryset: QuerySet, name: str, value: bool) -> QuerySet:
+        if value:
+            return queryset.order_by('name', OrderBy(F('owner_id'), nulls_last=True), '-created_at')
+        return queryset
