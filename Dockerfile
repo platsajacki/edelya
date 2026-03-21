@@ -1,4 +1,4 @@
-FROM python:3.13-slim AS builder
+FROM python:3.14-slim AS builder
 
 WORKDIR /tmp/app
 
@@ -10,7 +10,7 @@ COPY src/requirements.txt .
 
 RUN python -m pip install --prefix=/install --no-cache-dir -r requirements.txt
 
-FROM python:3.13-slim AS runtime
+FROM python:3.14-slim AS runtime
 
 WORKDIR /app
 

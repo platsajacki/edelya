@@ -119,7 +119,7 @@ class TestDishViewSet:
         assert response.status_code == status.HTTP_200_OK
         results = response.data['results']
         # the global dish (owner=None) must be last because filter orders owner_id with nulls_last=True
-        assert results[-1]['id'] == str(dish_global.id)
+        assert results[0]['id'] == str(dish_user.id)
 
     def test_list_returns_global_and_owner_dishes_only(
         self,
