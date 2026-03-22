@@ -4,6 +4,8 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+from core.logging_handlers import get_logging_dict
+
 load_dotenv()
 
 # Base settings for the Django project.
@@ -136,3 +138,20 @@ TEMPLATES = [
         },
     },
 ]
+
+
+# logging configuration
+LOKI_CONTAINER = getenv('LOKI_CONTAINER', 'loki.loki.svc.cluster.local:3100')
+LOKI_APP_NAME = getenv('LOKI_APP_NAME', 'dev_edelya_backend')
+
+LOG_DIR = BASE_DIR / 'logs'
+LOG_DIR.mkdir(exist_ok=True)
+
+LOGGING = get_logging_dict(
+    log_formatter='[%(asctime)s] %(levelname)s in %(module)s: %(message)s',
+    datetime_formatter='%Y-%m-%d %H:%M:%S',
+    log_dir=LOG_DIR,
+    loki_container=LOKI_CONTAINER,
+    loki_app_name=LOKI_APP_NAME,
+    debug=DEBUG,
+)
