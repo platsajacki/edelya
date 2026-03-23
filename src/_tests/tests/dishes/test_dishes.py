@@ -448,7 +448,7 @@ class TestDishViewSet:
                 'category': str(dish_user_with_ingredient.category.id),
                 'name': dish_user_with_ingredient.name,
                 'dish_ingredients': [
-                    {'ingredient': str(ingredient_global.id), 'amount': '250.500', 'is_optional': True},
+                    {'ingredient': str(ingredient_global.id), 'amount': '250.500', 'is_optional': False},
                 ],
             },
             format='json',
@@ -457,7 +457,49 @@ class TestDishViewSet:
         assert len(response.data['dish_ingredients']) == 1
         item = response.data['dish_ingredients'][0]
         assert Decimal(item['amount']) == Decimal('250.500')
-        assert item['is_optional'] is True
+        assert item['is_optional'] is False
+
+    def test_authenticated_client_cannot_put_dish_making_all_ingredients_optional(
+        self,
+        auth_telegram_api_client: APIClient,
+        dish_user_with_ingredient: Dish,
+        ingredient_global: Ingredient,
+    ) -> None:
+        url = self.get_detail_url(str(dish_user_with_ingredient.id))
+        response = auth_telegram_api_client.put(
+            url,
+            data={
+                'category': str(dish_user_with_ingredient.category.id),
+                'name': dish_user_with_ingredient.name,
+                'dish_ingredients': [
+                    {'ingredient': str(ingredient_global.id), 'amount': '100.000', 'is_optional': True},
+                ],
+            },
+            format='json',
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_authenticated_client_cannot_put_dish_all_optional_after_adding(
+        self,
+        auth_telegram_api_client: APIClient,
+        dish_user_with_ingredient: Dish,
+        ingredient_global: Ingredient,
+        ingredient_user: Ingredient,
+    ) -> None:
+        url = self.get_detail_url(str(dish_user_with_ingredient.id))
+        response = auth_telegram_api_client.put(
+            url,
+            data={
+                'category': str(dish_user_with_ingredient.category.id),
+                'name': dish_user_with_ingredient.name,
+                'dish_ingredients': [
+                    {'ingredient': str(ingredient_global.id), 'amount': '100.000', 'is_optional': True},
+                    {'ingredient': str(ingredient_user.id), 'amount': '50.000', 'is_optional': True},
+                ],
+            },
+            format='json',
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     def test_authenticated_client_can_put_dish_removing_ingredient(
         self,

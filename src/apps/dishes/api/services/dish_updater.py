@@ -41,6 +41,8 @@ class DishUpdater(BaseViewSetService):
             )
             for ingredient_data in dish_ingredients_data
         ]
+        if all(di.is_optional for di in dish_ingredients):
+            raise ValidationError('At least one ingredient must be required.')
         DishIngredient.objects.bulk_create(dish_ingredients)
 
     def create_or_update_dish_ingredients(
@@ -68,9 +70,10 @@ class DishUpdater(BaseViewSetService):
         dish_ingredients_data: list[dict],
         ingredients: dict[UUID, Ingredient],
         existing_by_ingredient: dict[UUID, DishIngredient],
-    ) -> tuple[list[DishIngredient], list[DishIngredient]]:
+    ) -> tuple[list[DishIngredient], list[DishIngredient], list[DishIngredient]]:
         to_create: list[DishIngredient] = []
         to_update: list[DishIngredient] = []
+        unchanged_existing: list[DishIngredient] = []
         for item in dish_ingredients_data:
             ingredient = ingredients[item['ingredient']]
             amount = item['amount']
@@ -90,15 +93,23 @@ class DishUpdater(BaseViewSetService):
                     obj.amount = amount
                     obj.is_optional = is_optional
                     to_update.append(obj)
-        return to_create, to_update
+                else:
+                    unchanged_existing.append(obj)
+        return to_create, to_update, unchanged_existing
 
     def upsert_dish_ingredients_bulk(
         self, dish: Dish, dish_ingredients_data: list[dict], ingredients: dict[UUID, Ingredient]
     ) -> None:
         existing_by_ingredient = self.get_existing_dish_ingredients(dish)
-        to_create, to_update = self.collect_create_and_update_dish_ingredients(
+        to_create, to_update, unchanged_existing = self.collect_create_and_update_dish_ingredients(
             dish, dish_ingredients_data, ingredients, existing_by_ingredient
         )
+        final_items: list[DishIngredient] = []
+        final_items.extend(to_create)
+        final_items.extend(to_update)
+        final_items.extend(unchanged_existing)
+        if all(item.is_optional for item in final_items):
+            raise ValidationError('At least one ingredient must be required.')
         to_delete_ids = [obj.id for obj in existing_by_ingredient.values()]
         if to_delete_ids:
             DishIngredient.objects.filter(id__in=to_delete_ids).delete()
