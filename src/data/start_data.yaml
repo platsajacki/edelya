@@ -189,7 +189,7 @@ ingredients:
 dishes:
   - name: Борщ
     category: Супы
-    description: Классический борщ с говядиной и свеклой
+    recipe: Классический борщ с говядиной и свеклой
     ingredients:
       - name: Говядина
         amount: 400
@@ -237,7 +237,7 @@ dishes:
 
   - name: Греческий салат
     category: Салаты
-    description: Свежий салат с овощами и сыром фета
+    recipe: Свежий салат с овощами и сыром фета
     ingredients:
       - name: Помидор
         amount: 200
@@ -266,7 +266,7 @@ dishes:
 
   - name: Паста Карбонара
     category: Основные блюда
-    description: Итальянская паста с панчеттой и пармезаном
+    recipe: Итальянская паста с панчеттой и пармезаном
     ingredients:
       - name: Спагетти
         amount: 400
@@ -295,7 +295,7 @@ dishes:
 
   - name: Салат Цезарь
     category: Салаты
-    description: Салат с куриным филе, пармезаном и гренками
+    recipe: Салат с куриным филе, пармезаном и гренками
     ingredients:
       - name: Куриное филе
         amount: 300
@@ -327,7 +327,7 @@ dishes:
 
   - name: Сырники
     category: Завтраки
-    description: Нежные сырники из творога
+    recipe: Нежные сырники из творога
     ingredients:
       - name: Творог
         amount: 500

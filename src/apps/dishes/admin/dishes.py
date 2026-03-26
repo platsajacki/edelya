@@ -45,9 +45,9 @@ class DishAdmin(ModelAdmin):
             },
         ),
         (
-            'Description',
+            'Recipe',
             {
-                'fields': ('description',),
+                'fields': ('recipe',),
             },
         ),
         (

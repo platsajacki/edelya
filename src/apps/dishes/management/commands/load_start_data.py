@@ -56,7 +56,7 @@ class Command(BaseCommand):
             dish, _ = Dish.objects.get_or_create(
                 name=item['name'],
                 owner=None,
-                defaults={'category': category, 'description': item.get('description', '')},
+                defaults={'category': category, 'recipe': item.get('description', '')},
             )
             dish_ingredients = []
             for ing_data in ingredients_data:

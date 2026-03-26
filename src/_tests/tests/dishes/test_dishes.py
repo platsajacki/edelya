@@ -396,7 +396,7 @@ class TestDishViewSet:
             url,
             data={
                 'name': 'Updated Dish Name',
-                'description': 'Updated description',
+                'recipe': 'Updated description',
                 'category': str(second_dish_category.id),
                 'dish_ingredients': [
                     {'ingredient': str(ingredient_global.id), 'amount': '100.000', 'is_optional': False}
@@ -406,7 +406,7 @@ class TestDishViewSet:
         )
         assert response.status_code == status.HTTP_200_OK
         assert response.data['name'] == 'Updated Dish Name'
-        assert response.data['description'] == 'Updated description'
+        assert response.data['recipe'] == 'Updated description'
         assert response.data['category']['id'] == str(second_dish_category.id)
 
     def test_authenticated_client_can_put_dish_adding_new_ingredient(

@@ -53,8 +53,8 @@ class Dish(BaseActiveModel):
         verbose_name='Название блюда',
         max_length=255,
     )
-    description = models.TextField(
-        verbose_name='Описание',
+    recipe = models.TextField(
+        verbose_name='Рецепт',
         blank=True,
         default='',
     )

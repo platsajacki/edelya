@@ -50,7 +50,7 @@ class DishReadSerializer(serializers.ModelSerializer):
             'category',
             'dish_ingredients',
             'name',
-            'description',
+            'recipe',
             'is_active',
             'created_at',
             'updated_at',
@@ -90,7 +90,7 @@ class DishWriteSerializer(serializers.ModelSerializer):
             'owner',
             'category',
             'name',
-            'description',
+            'recipe',
             'dish_ingredients',
         ]
 

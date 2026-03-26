@@ -41,7 +41,7 @@ def dish_data(factory: FixtureFactory, dish_category: DishCategory) -> list[dict
             'name': factory.generic.text.word(),
             'owner': None,
             'category': dish_category,
-            'description': '',
+            'recipe': '',
         },
         iterations=10,
     ).create()
