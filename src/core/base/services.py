@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from dataclasses import field as dc_field
 from typing import Any
 
+from django.db.models import Model
 from rest_framework.serializers import BaseSerializer
 
 
@@ -45,3 +46,8 @@ class BaseViewSetService(BaseService):
 @dataclass
 class BaseViewSetPerformService(BaseService):
     serializer: BaseSerializer
+
+
+@dataclass
+class BaseInstanceService(BaseService):
+    instance: Model

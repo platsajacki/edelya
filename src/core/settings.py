@@ -36,6 +36,7 @@ LOCAL_APPS = [
     'apps.a12n',
     'apps.dishes',
     'apps.planning',
+    'apps.shopping',
     'apps.users',
 ]
 THIRD_PARTY_APPS = [
