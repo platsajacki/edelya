@@ -1,17 +1,13 @@
-# from django.urls import include, path
-# from rest_framework.routers import DefaultRouter
+from django.urls import include, path
+from rest_framework.routers import DefaultRouter
 
-# from apps.planning.api.views.cooking import CookingEventViewSet
-# from apps.planning.api.views.meal_plan_items import MealPlanItemViewSet
-# from apps.planning.api.views.weeks import WeekDishesAPIView
+from apps.shopping.api.views.shopping_list import ShoppingListViewSet
 
-# app_name = 'planning'
+app_name = 'shopping'
 
-# planning = DefaultRouter()
-# planning.register(r'cooking-events', CookingEventViewSet, basename='cooking-event')
-# planning.register(r'meal-plan-items', MealPlanItemViewSet, basename='meal-plan-item')
+router = DefaultRouter()
+router.register(r'shopping-lists', ShoppingListViewSet, basename='shopping-list')
 
-# urlpatterns = [
-#     path('planning/year/<int:year>/week/<int:week>/', WeekDishesAPIView.as_view(), name='week-dishes'),
-#     path('planning/', include((planning.urls, 'cooking'), namespace='cooking')),
-# ]
+urlpatterns = [
+    path('shopping/', include((router.urls, 'shopping'), namespace='shopping')),
+]

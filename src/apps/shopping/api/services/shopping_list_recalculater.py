@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+from dataclasses import field as dc_field
 from uuid import UUID
 
 from django.db import transaction
@@ -102,10 +104,16 @@ class ShoppingListRecalculater:
         )
 
 
+@dataclass
 class ShoppingListPerformRecalculater(BaseViewSetPerformService, ShoppingListRecalculater):
+    not_recalculated_fields: set[str] = dc_field(default_factory=set)
+
     @transaction.atomic
     def act(self) -> ShoppingList:
         shopping_list: ShoppingList = self.serializer.save()
+        update_fields = set(self.serializer.validated_data.keys())
+        if not (update_fields - self.not_recalculated_fields):
+            return shopping_list
         self.recalculate_shopping_list_items(shopping_list)
         return shopping_list
 

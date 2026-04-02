@@ -1,10 +1,19 @@
+from typing import Any
+
 from django.db.models import QuerySet
+from rest_framework import status
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.request import Request
+from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from apps.shopping.api.schemas import ShoppingListViewSetSchema
 from apps.shopping.api.serializers.shopping_list import ShoppingListSerializer
-from apps.shopping.api.services.shopping_list_recalculater import ShoppingListPerformRecalculater
+from apps.shopping.api.services.shopping_list_recalculater import (
+    ShoppingListInstanceRecalculater,
+    ShoppingListPerformRecalculater,
+)
 from apps.shopping.api.views.filters.sopping_list import ShoppingListFilter
 from apps.shopping.models import ShoppingList
 from apps.users.models import User
@@ -30,7 +39,13 @@ class ShoppingListViewSet(ModelViewSet):
         ShoppingListPerformRecalculater(serializer=serializer)()
 
     def perform_update(self, serializer: ShoppingListSerializer) -> None:
-        ShoppingListPerformRecalculater(serializer=serializer)()
+        ShoppingListPerformRecalculater(serializer=serializer, not_recalculated_fields={'name'})()
+
+    @action(detail=True, methods=['post'], url_path='recalculate')
+    def recalculate(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        shopping_list = self.get_object()
+        ShoppingListInstanceRecalculater(instance=shopping_list)()
+        return Response({'detail': 'Shopping list recalculated successfully.'}, status=status.HTTP_200_OK)
 
 
 # class ShoppingListItemViewSet(ModelViewSet):

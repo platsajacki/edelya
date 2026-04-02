@@ -1,9 +1,7 @@
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import status
 
-from apps.shopping.api.serializers.shopping_list import (
-    ShoppingListSerializer,
-)
+from apps.shopping.api.serializers.shopping_list import ShoppingListSerializer
 from core.schemas import STANDARD_ERROR_RESPONSES
 
 SHOPPING_LIST_TAG = 'Shopping Lists'
@@ -62,6 +60,27 @@ class ShoppingListViewSetSchema:
         description='Delete a shopping list and its items.',
         responses={
             status.HTTP_204_NO_CONTENT: OpenApiResponse(description='Shopping list deleted successfully'),
+            **STANDARD_ERROR_RESPONSES,
+        },
+    )
+    recalculate = extend_schema(
+        tags=[SHOPPING_LIST_TAG],
+        summary='Recalculate shopping list items',
+        description=(
+            'Triggers a full recalculation of non-manual shopping list items based on '
+            "cooking events that fall within the list's date range. "
+            'Manual items are preserved.'
+        ),
+        request=None,
+        responses={
+            status.HTTP_200_OK: OpenApiResponse(
+                description='Shopping list recalculated successfully',
+                response={
+                    'type': 'object',
+                    'properties': {'detail': {'type': 'string'}},
+                    'example': {'detail': 'Shopping list recalculated successfully.'},
+                },
+            ),
             **STANDARD_ERROR_RESPONSES,
         },
     )

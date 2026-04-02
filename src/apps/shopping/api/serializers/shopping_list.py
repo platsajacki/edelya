@@ -1,13 +1,16 @@
-from rest_framework.serializers import ModelSerializer
+from rest_framework.fields import HiddenField
+from rest_framework.serializers import CurrentUserDefault, ModelSerializer
 
 from apps.dishes.api.serializers.ingredients import IngredientSerializer
 from apps.shopping.models import ShoppingList, ShoppingListItem
 
 
 class ShoppingListSerializer(ModelSerializer):
+    owner = HiddenField(default=CurrentUserDefault())
+
     class Meta:
         model = ShoppingList
-        fields = ['id', 'name', 'date_from', 'date_to']
+        fields = ['id', 'name', 'date_from', 'date_to', 'owner']
 
 
 class ShoppingListItemSerializer(ModelSerializer):
