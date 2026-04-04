@@ -1,7 +1,7 @@
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import status
 
-from apps.shopping.api.serializers.shopping_list import ShoppingListSerializer
+from apps.shopping.api.serializers.shopping_list import ShoppingLisItemtReadSerializer, ShoppingListSerializer
 from core.schemas import STANDARD_ERROR_RESPONSES
 
 SHOPPING_LIST_TAG = 'Shopping Lists'
@@ -81,6 +81,65 @@ class ShoppingListViewSetSchema:
                     'example': {'detail': 'Shopping list recalculated successfully.'},
                 },
             ),
+            **STANDARD_ERROR_RESPONSES,
+        },
+    )
+
+
+SHOPPING_LIST_ITEM_TAG = 'Shopping List Items'
+
+
+class ShoppingListItemViewSetSchema:
+    list = extend_schema(
+        tags=[SHOPPING_LIST_ITEM_TAG],
+        summary='List shopping list items',
+        description='Retrieve all items for the given shopping list.',
+        responses={
+            status.HTTP_200_OK: OpenApiResponse(
+                description='A list of shopping list items', response=ShoppingLisItemtReadSerializer(many=True)
+            ),
+            **STANDARD_ERROR_RESPONSES,
+        },
+    )
+    retrieve = extend_schema(
+        tags=[SHOPPING_LIST_ITEM_TAG],
+        summary='Retrieve a shopping list item',
+        description='Retrieve details of a specific shopping list item.',
+        responses={
+            status.HTTP_200_OK: OpenApiResponse(
+                description='Details of the shopping list item', response=ShoppingLisItemtReadSerializer()
+            ),
+            **STANDARD_ERROR_RESPONSES,
+        },
+    )
+    create = extend_schema(
+        tags=[SHOPPING_LIST_ITEM_TAG],
+        summary='Create a shopping list item',
+        description='Manually add an ingredient item to the shopping list. The item is always marked as manual.',
+        responses={
+            status.HTTP_201_CREATED: OpenApiResponse(
+                description='The created shopping list item', response=ShoppingLisItemtReadSerializer()
+            ),
+            **STANDARD_ERROR_RESPONSES,
+        },
+    )
+    partial_update = extend_schema(
+        tags=[SHOPPING_LIST_ITEM_TAG],
+        summary='Partially update a shopping list item',
+        description='Update fields of a manual shopping list item.',
+        responses={
+            status.HTTP_200_OK: OpenApiResponse(
+                description='The updated shopping list item', response=ShoppingLisItemtReadSerializer()
+            ),
+            **STANDARD_ERROR_RESPONSES,
+        },
+    )
+    destroy = extend_schema(
+        tags=[SHOPPING_LIST_ITEM_TAG],
+        summary='Delete a shopping list item',
+        description='Delete a shopping list item.',
+        responses={
+            status.HTTP_204_NO_CONTENT: OpenApiResponse(description='Item deleted successfully'),
             **STANDARD_ERROR_RESPONSES,
         },
     )

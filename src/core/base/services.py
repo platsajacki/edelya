@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from dataclasses import field as dc_field
 from typing import Any
 
-from django.db.models import Model
+from django.db.models import Model, QuerySet
 from rest_framework.serializers import BaseSerializer
 
 
@@ -51,3 +51,12 @@ class BaseViewSetPerformService(BaseService):
 @dataclass
 class BaseInstanceService(BaseService):
     instance: Model
+
+
+@dataclass
+class PerformActionInstanceRefresher(BaseViewSetPerformService):
+    qs: QuerySet
+
+    def act(self) -> Model:
+        instance = self.serializer.save()
+        return self.qs.get(pk=instance.pk)
