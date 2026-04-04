@@ -16,7 +16,15 @@ class ShoppingListSerializer(ModelSerializer):
 
     class Meta:
         model = ShoppingList
-        fields = ['id', 'name', 'date_from', 'date_to', 'owner']
+        fields = [
+            'id',
+            'name',
+            'date_from',
+            'date_to',
+            'owner',
+            'created_at',
+            'updated_at',
+        ]
 
 
 class ShoppingLisItemtReadSerializer(ModelSerializer):

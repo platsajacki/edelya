@@ -8,6 +8,8 @@ SHOPPING_LIST_TAG = 'Shopping Lists'
 
 
 class ShoppingListViewSetSchema:
+    custom_actions = {'recalculate'}
+
     list = extend_schema(
         tags=[SHOPPING_LIST_TAG],
         summary='List shopping lists',
