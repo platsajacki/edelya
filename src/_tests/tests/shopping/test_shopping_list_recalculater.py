@@ -5,6 +5,8 @@ from datetime import date
 from decimal import Decimal
 from uuid import uuid4
 
+from pytest_django import DjangoAssertNumQueries
+
 from apps.dishes.models import Dish, Ingredient
 from apps.planning.models import CookingEvent
 from apps.shopping.api.services.shopping_list_recalculater import (
@@ -284,29 +286,6 @@ class TestShoppingListRecalculaterRecalculate:
         ShoppingListRecalculater().recalculate_shopping_list_items(shopping_list)
         assert ShoppingListItem.objects.filter(id=manual_shopping_list_item.id).exists()
 
-    def test_preserves_manual_item_while_creating_non_manual_for_same_ingredient(
-        self,
-        shopping_list: ShoppingList,
-        ingredient_global: Ingredient,
-        cooking_event_with_ingredients: CookingEvent,
-    ) -> None:
-        manual = ShoppingListItem.objects.create(
-            shopping_list=shopping_list,
-            owner=shopping_list.owner,
-            ingredient=ingredient_global,
-            amount=Decimal('999.000'),
-            is_manual=True,
-        )
-        ShoppingListRecalculater().recalculate_shopping_list_items(shopping_list)
-        manual.refresh_from_db()
-        assert manual.amount == Decimal('999.000')
-        assert manual.is_manual is True
-        assert ShoppingListItem.objects.filter(
-            shopping_list=shopping_list,
-            ingredient=ingredient_global,
-            is_manual=False,
-        ).exists()
-
     def test_sums_amounts_from_multiple_events_for_same_ingredient(
         self,
         shopping_list: ShoppingList,
@@ -336,6 +315,61 @@ class TestShoppingListRecalculaterRecalculate:
         )
         ShoppingListRecalculater().recalculate_shopping_list_items(shopping_list)
         assert not ShoppingListItem.objects.filter(shopping_list=shopping_list, is_manual=False).exists()
+
+
+class TestShoppingListRecalculaterQueryCount:
+    def test_two_queries_when_no_events_and_no_items(
+        self,
+        shopping_list: ShoppingList,
+        django_assert_num_queries: DjangoAssertNumQueries,
+    ) -> None:
+        with django_assert_num_queries(2):
+            ShoppingListRecalculater().recalculate_shopping_list_items(shopping_list)
+
+    def test_two_queries_when_amounts_unchanged(
+        self,
+        shopping_list: ShoppingList,
+        shopping_list_item: ShoppingListItem,  # amount=100, non-manual
+        cooking_event_with_ingredients: CookingEvent,  # dish ingredient amount=100
+        django_assert_num_queries: DjangoAssertNumQueries,
+    ) -> None:
+        with django_assert_num_queries(2):
+            ShoppingListRecalculater().recalculate_shopping_list_items(shopping_list)
+
+    def test_three_queries_when_new_items_to_create(
+        self,
+        shopping_list: ShoppingList,
+        cooking_event_with_ingredients: CookingEvent,
+        django_assert_num_queries: DjangoAssertNumQueries,
+    ) -> None:
+        with django_assert_num_queries(3):
+            ShoppingListRecalculater().recalculate_shopping_list_items(shopping_list)
+
+    def test_three_queries_when_stale_items_need_update(
+        self,
+        shopping_list: ShoppingList,
+        ingredient_global: Ingredient,
+        cooking_event_with_ingredients: CookingEvent,  # dish ingredient amount=100
+        django_assert_num_queries: DjangoAssertNumQueries,
+    ) -> None:
+        ShoppingListItem.objects.create(
+            shopping_list=shopping_list,
+            owner=shopping_list.owner,
+            ingredient=ingredient_global,
+            amount=Decimal('50.000'),  # stale — differs from event amount
+            is_manual=False,
+        )
+        with django_assert_num_queries(3):
+            ShoppingListRecalculater().recalculate_shopping_list_items(shopping_list)
+
+    def test_three_queries_when_stale_items_to_delete(
+        self,
+        shopping_list: ShoppingList,
+        shopping_list_item: ShoppingListItem,  # non-manual, no events → will be deleted
+        django_assert_num_queries: DjangoAssertNumQueries,
+    ) -> None:
+        with django_assert_num_queries(3):
+            ShoppingListRecalculater().recalculate_shopping_list_items(shopping_list)
 
 
 class TestShoppingListInstanceRecalculater:

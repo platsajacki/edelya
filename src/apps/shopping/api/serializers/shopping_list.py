@@ -83,3 +83,14 @@ class ShoppingListItemWriteSerializer(ShoppingLisItemtReadSerializer):
         if not ingredient:
             raise ValidationError('Ingredient with the given ID does not exist.')
         return ingredient
+
+    def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
+        shopping_list: ShoppingList = attrs.get('shopping_list') or self.instance.shopping_list
+        ingredient: Ingredient = attrs.get('ingredient') or self.instance.ingredient
+        if self.instance:
+            existing_items = shopping_list.items.exclude(pk=self.instance.pk)
+        else:
+            existing_items = shopping_list.items.all()
+        if existing_items.filter(ingredient=ingredient).exists():
+            raise ValidationError('This ingredient is already in the shopping list.')
+        return super().validate(attrs)

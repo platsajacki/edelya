@@ -95,3 +95,9 @@ class ShoppingListItem(BaseModel):
                 name='idx_shop_list_item_owner_list',
             ),
         ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['shopping_list', 'ingredient'],
+                name='unq_ingredient_per_shop_list',
+            ),
+        ]
