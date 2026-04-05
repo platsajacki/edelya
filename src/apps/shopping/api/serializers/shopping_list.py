@@ -6,6 +6,7 @@ from rest_framework.serializers import CurrentUserDefault, ModelSerializer, UUID
 
 from apps.dishes.api.serializers.ingredients import IngredientSerializer
 from apps.dishes.models import Ingredient
+from apps.shopping.constants import MAX_DAYS_TO_SHOPPING_LIST
 from apps.shopping.models import ShoppingList, ShoppingListItem
 from apps.users.models import User
 from core.base.serialisers import CurrentShoppingList
@@ -25,6 +26,15 @@ class ShoppingListSerializer(ModelSerializer):
             'created_at',
             'updated_at',
         ]
+
+    def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
+        date_from = attrs.get('date_from')
+        date_to = attrs.get('date_to')
+        if date_from and date_to and date_from > date_to:
+            raise ValidationError('date_from must be before or equal to date_to.')
+        if date_from and date_to and (date_to - date_from).days > MAX_DAYS_TO_SHOPPING_LIST:
+            raise ValidationError(f'The shopping list cannot span more than {MAX_DAYS_TO_SHOPPING_LIST} days.')
+        return super().validate(attrs)
 
 
 class ShoppingLisItemtReadSerializer(ModelSerializer):
