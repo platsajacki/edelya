@@ -311,6 +311,27 @@ class TestCookingEventViewSetCreate:
         assert response.status_code == status.HTTP_201_CREATED
         assert response.data['notes'] == 'Add extra salt'
 
+    def test_response_contains_color_field(
+        self,
+        auth_telegram_api_client: APIClient,
+        cooking_event_payload: dict,
+    ) -> None:
+        response = auth_telegram_api_client.post(self.list_url, data=cooking_event_payload, format='json')
+        assert response.status_code == status.HTTP_201_CREATED
+        assert 'color' in response.data
+        assert response.data['color']
+
+    def test_all_meal_plan_items_inherit_cooking_event_color(
+        self,
+        auth_telegram_api_client: APIClient,
+        cooking_event_payload: dict,
+    ) -> None:
+        response = auth_telegram_api_client.post(self.list_url, data=cooking_event_payload, format='json')
+        assert response.status_code == status.HTTP_201_CREATED
+        event_color = response.data['color']
+        items_colors = {item['color'] for item in response.data['meal_plan_items']}
+        assert items_colors == {event_color}
+
     def test_put_method_not_allowed_on_list(
         self, auth_telegram_api_client: APIClient, cooking_event_payload: dict
     ) -> None:
@@ -509,6 +530,22 @@ class TestCookingEventViewSetPartialUpdate:
         assert response.status_code == status.HTTP_200_OK
         assert isinstance(response.data['dish'], dict)
         assert str(response.data['dish']['id']) == str(cooking_event.dish.id)
+
+    def test_new_meal_plan_items_added_via_patch_inherit_cooking_event_color(
+        self,
+        auth_telegram_api_client: APIClient,
+        cooking_event: CookingEvent,
+    ) -> None:
+        # cooking_event fixture has no meal plan items; items created via patch must inherit event's color
+        eat_dates = [str(cooking_event.cooking_date + timedelta(days=i)) for i in range(3)]
+        auth_telegram_api_client.patch(
+            self.get_url(str(cooking_event.id)),
+            data={'eat_dates': eat_dates},
+            format='json',
+        )
+        items = MealPlanItem.objects.filter(cooking_event=cooking_event)
+        assert items.count() == 3
+        assert all(item.color == cooking_event.color for item in items)
 
     def test_put_method_not_allowed(self, auth_telegram_api_client: APIClient, cooking_event: CookingEvent) -> None:
         response = auth_telegram_api_client.put(self.get_url(str(cooking_event.id)), data={}, format='json')

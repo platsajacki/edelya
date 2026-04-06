@@ -1,3 +1,4 @@
+from django.core.validators import RegexValidator
 from django.db.models import Q, QuerySet
 from rest_framework.exceptions import ValidationError
 from rest_framework.serializers import BaseSerializer
@@ -56,3 +57,9 @@ class UniqueTogetherWithOperatorValidator:
             qs = qs.exclude(pk=instance.pk)
         if qs.filter(**filter_kwargs).exists():
             raise ValidationError(self.message)
+
+
+class HexColorValidator(RegexValidator):
+    regex = r'^#(?:[0-9a-fA-F]{3}){1,2}$'
+    message = 'Enter a valid hex color code (e.g., #RRGGBB or #RGB).'
+    flags = 0

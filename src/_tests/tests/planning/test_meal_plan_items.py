@@ -11,6 +11,7 @@ from _tests.fixtures.planning import WEEK_START
 from apps.dishes.models import Dish
 from apps.planning.models import CookingEvent, MealPlanItem
 from apps.users.models import User
+from core.constants import DEFAULT_COLORS
 
 
 class TestMealPlanItemViewSetCreate:
@@ -185,6 +186,66 @@ class TestMealPlanItemViewSetCreate:
         meal_plan_item_payload['eat_dates'] = []
         response = auth_telegram_api_client.post(self.list_url, data=meal_plan_item_payload, format='json')
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_created_items_have_color_set(
+        self,
+        auth_telegram_api_client: APIClient,
+        meal_plan_item_payload: dict,
+    ) -> None:
+        response = auth_telegram_api_client.post(self.list_url, data=meal_plan_item_payload, format='json')
+        assert response.status_code == status.HTTP_201_CREATED
+        assert response.data[0]['color']
+
+    def test_all_items_in_batch_share_same_color(
+        self,
+        auth_telegram_api_client: APIClient,
+        meal_plan_item_payload: dict,
+    ) -> None:
+        meal_plan_item_payload['eat_dates'] = [str(WEEK_START + timedelta(days=i)) for i in range(4)]
+        response = auth_telegram_api_client.post(self.list_url, data=meal_plan_item_payload, format='json')
+        assert response.status_code == status.HTTP_201_CREATED
+        colors = {item['color'] for item in response.data}
+        assert len(colors) == 1
+
+    def test_color_cannot_be_overridden_via_request_body(
+        self,
+        auth_telegram_api_client: APIClient,
+        meal_plan_item_payload: dict,
+    ) -> None:
+        meal_plan_item_payload['color'] = '#000000'
+        response = auth_telegram_api_client.post(self.list_url, data=meal_plan_item_payload, format='json')
+        assert response.status_code == status.HTTP_201_CREATED
+        item = MealPlanItem.objects.get()
+        assert item.color != '#000000'
+
+    def test_color_avoids_existing_colors_in_same_week(
+        self,
+        auth_telegram_api_client: APIClient,
+        meal_plan_item_payload: dict,
+        telegram_user: User,
+        dish_global: Dish,
+    ) -> None:
+        # Occupy all DEFAULT_COLORS except the first one in the target week,
+        # leaving exactly one available color so get_random_color becomes deterministic.
+        target_color = DEFAULT_COLORS[0]
+        MealPlanItem.objects.bulk_create(
+            [
+                MealPlanItem(
+                    owner=telegram_user,
+                    dish=dish_global,
+                    date=WEEK_START,
+                    position=100 + i,
+                    is_manual=True,
+                    color=color,
+                )
+                for i, color in enumerate(DEFAULT_COLORS[1:])
+            ]
+        )
+        response = auth_telegram_api_client.post(self.list_url, data=meal_plan_item_payload, format='json')
+        assert response.status_code == status.HTTP_201_CREATED
+        new_item = MealPlanItem.objects.filter(owner=telegram_user, is_manual=True).order_by('-created_at').first()
+        assert new_item is not None
+        assert new_item.color == target_color
 
     def test_all_items_belong_to_request_user(
         self,
@@ -389,6 +450,36 @@ class TestMealPlanItemViewSetPartialUpdate:
         assert response.status_code == status.HTTP_200_OK
         item.refresh_from_db()
         assert item.cooking_event == event
+
+    def test_color_is_read_only_and_cannot_be_changed_via_patch(
+        self,
+        auth_telegram_api_client: APIClient,
+        meal_plan_item: MealPlanItem,
+    ) -> None:
+        # color is read_only in MealPlanItemUpdateSerializer — body value ignored
+        original_color = meal_plan_item.color
+        response = auth_telegram_api_client.patch(
+            self.get_url(str(meal_plan_item.id)),
+            data={'color': '#000000'},
+            format='json',
+        )
+        assert response.status_code == status.HTTP_200_OK
+        meal_plan_item.refresh_from_db()
+        assert meal_plan_item.color == original_color
+
+    def test_color_field_is_present_in_patch_response(
+        self,
+        auth_telegram_api_client: APIClient,
+        meal_plan_item: MealPlanItem,
+    ) -> None:
+        response = auth_telegram_api_client.patch(
+            self.get_url(str(meal_plan_item.id)),
+            data={'position': 5},
+            format='json',
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert 'color' in response.data
+        assert response.data['color']
 
 
 class TestMealPlanItemViewSetDelete:

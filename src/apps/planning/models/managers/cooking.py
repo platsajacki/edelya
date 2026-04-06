@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 from django.db.models import Prefetch
 
 from core.base.managers import BaseManager, BaseQuerySet
+from core.utils import build_weeks_q
 
 if TYPE_CHECKING:
     from apps.planning.models import CookingEvent  # noqa: F401
@@ -44,6 +45,14 @@ class CookingEventQuerySet(BaseQuerySet['CookingEvent']):
     def with_full_info(self) -> CookingEventQuerySet:
         return self.with_dish().with_dish_category().with_meal_plan_items().prefetch_dish_ingredients_full()
 
+    def get_existing_colors_for_dates(self, owner: User, eat_dates: list[date]) -> list[str]:
+        return list(
+            self.for_user(owner)
+            .filter(color__isnull=False)
+            .filter(build_weeks_q(eat_dates))
+            .values_list('color', flat=True)
+        )
+
 
 class CookingEventManager(BaseManager['CookingEvent', CookingEventQuerySet]):
     def get_queryset_class(self) -> type[CookingEventQuerySet]:
@@ -62,3 +71,6 @@ class CookingEventManager(BaseManager['CookingEvent', CookingEventQuerySet]):
 
     def get_for_week(self, user: User, start_week: str | date, end_week: str | date) -> CookingEventQuerySet:
         return self.get_for_user_and_date_range(user, start_week, end_week).with_dish().with_dish_category()
+
+    def get_existing_colors_for_dates(self, owner: User, eat_dates: list[date]) -> list[str]:
+        return self.get_queryset().get_existing_colors_for_dates(owner, eat_dates)

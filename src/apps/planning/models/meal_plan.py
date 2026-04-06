@@ -1,10 +1,10 @@
 from django.db import models
 
 from apps.planning.models.managers.meal_plan import MealPlanItemManager
-from core.base.abstract_models import BaseModel
+from core.base.abstract_models import BaseModel, ColoredModel
 
 
-class MealPlanItem(BaseModel):
+class MealPlanItem(BaseModel, ColoredModel):
     owner = models.ForeignKey(
         'users.User',
         on_delete=models.CASCADE,

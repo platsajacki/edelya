@@ -20,6 +20,7 @@ class MealPlanItemSerializer(ModelSerializer):
             'cooking_event',
             'position',
             'is_manual',
+            'color',
             'created_at',
             'updated_at',
         ]
@@ -66,12 +67,14 @@ class MealPlanItemCreateSerializer(EatDatesSerializer):
             'cooking_event',
             'position',
             'is_manual',
+            'color',
             'created_at',
             'updated_at',
         ]
         read_only_fields = [
             'id',
             'cooking_event',
+            'color',
             'created_at',
             'updated_at',
         ]
@@ -88,6 +91,7 @@ class MealPlanItemUpdateSerializer(ModelSerializer):
             'cooking_event',
             'position',
             'is_manual',
+            'color',
             'created_at',
             'updated_at',
         ]
@@ -96,6 +100,7 @@ class MealPlanItemUpdateSerializer(ModelSerializer):
             'owner',
             'cooking_event',
             'is_manual',
+            'color',
             'created_at',
             'updated_at',
         ]

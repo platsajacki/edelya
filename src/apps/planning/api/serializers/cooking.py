@@ -18,6 +18,7 @@ class LightMealPlanItemSerializer(ModelSerializer):
             'cooking_event',
             'position',
             'is_manual',
+            'color',
             'created_at',
             'updated_at',
         ]
@@ -36,6 +37,7 @@ class CookingEventSerializer(ModelSerializer):
             'owner',
             'cooking_date',
             'notes',
+            'color',
             'created_at',
             'updated_at',
             'meal_plan_items',

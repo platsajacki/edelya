@@ -5,6 +5,7 @@ from django.db.models import Max, Prefetch
 
 from apps.planning.contstants import POSITION_STEP
 from core.base.managers import BaseManager, BaseQuerySet
+from core.utils import build_weeks_q
 
 if TYPE_CHECKING:
     from apps.planning.models import MealPlanItem  # noqa: F401
@@ -53,6 +54,14 @@ class MealPlanItemQuerySet(BaseQuerySet['MealPlanItem']):
             position_by_date.setdefault(_date, position_step)
         return position_by_date
 
+    def get_existing_colors_for_dates(self, owner: User, eat_dates: list[date]) -> list[str]:
+        return list(
+            self.for_user(owner)
+            .filter(color__isnull=False)
+            .filter(build_weeks_q(eat_dates))
+            .values_list('color', flat=True)
+        )
+
 
 class MealPlanItemManager(BaseManager['MealPlanItem', MealPlanItemQuerySet]):
     def get_queryset_class(self) -> type[MealPlanItemQuerySet]:
@@ -76,3 +85,6 @@ class MealPlanItemManager(BaseManager['MealPlanItem', MealPlanItemQuerySet]):
         self, user: User, dates: list[date], position_step: int = 100
     ) -> dict[date, int]:
         return self.get_queryset().get_max_position_for_user_and_dates(user, dates, position_step)
+
+    def get_existing_colors_for_dates(self, owner: User, eat_dates: list[date]) -> list[str]:
+        return self.get_queryset().get_existing_colors_for_dates(owner, eat_dates)
