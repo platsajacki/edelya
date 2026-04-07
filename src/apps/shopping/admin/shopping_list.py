@@ -9,6 +9,7 @@ class ShoppingListItemInline(TabularInline):
     fields = (
         'ingredient',
         'amount',
+        'manual_amount',
         'is_checked',
         'is_manual',
         'position',
@@ -80,6 +81,7 @@ class ShoppingListItemAdmin(ModelAdmin):
                     'shopping_list',
                     'ingredient',
                     'amount',
+                    'manual_amount',
                     'position',
                 )
             },

@@ -63,6 +63,14 @@ class ShoppingListItem(BaseModel):
         verbose_name='Количество',
         max_digits=12,
         decimal_places=3,
+        default=0,
+        validators=[MinValueValidator(0)],
+    )
+    manual_amount = models.DecimalField(
+        verbose_name='Ручное количество',
+        max_digits=12,
+        decimal_places=3,
+        default=0,
         validators=[MinValueValidator(0)],
     )
     is_checked = models.BooleanField(

@@ -32,15 +32,16 @@ class TestShoppingListRecalculaterGetItems:
         assert shopping_list_item.ingredient_id in result
         assert result[shopping_list_item.ingredient_id] == shopping_list_item
 
-    def test_excludes_manual_items(
+    def test_includes_manual_items_keyed_by_ingredient_id(
         self,
         shopping_list: ShoppingList,
         manual_shopping_list_item: ShoppingListItem,
     ) -> None:
         result = ShoppingListRecalculater().get_items(shopping_list)
-        assert manual_shopping_list_item.ingredient_id not in result
+        assert manual_shopping_list_item.ingredient_id in result
+        assert result[manual_shopping_list_item.ingredient_id] == manual_shopping_list_item
 
-    def test_returns_only_non_manual_when_both_types_exist(
+    def test_returns_both_when_both_types_exist(
         self,
         shopping_list: ShoppingList,
         shopping_list_item: ShoppingListItem,
@@ -48,16 +49,15 @@ class TestShoppingListRecalculaterGetItems:
     ) -> None:
         result = ShoppingListRecalculater().get_items(shopping_list)
         assert shopping_list_item.ingredient_id in result
-        assert manual_shopping_list_item.ingredient_id not in result
-        assert len(result) == 1
+        assert manual_shopping_list_item.ingredient_id in result
+        assert len(result) == 2
 
 
 class TestShoppingListRecalculaterProcessExistingItem:
     def test_different_amount_updates_item_and_appends_to_update(self) -> None:
-        item = ShoppingListItem(amount=Decimal('50.000'))
+        item = ShoppingListItem(amount=Decimal('50.000'), manual_amount=Decimal('0.000'))
         ingredient_data: IngredientTotalAmountData = {
             'ingredient_id': uuid4(),
-            'ingredient__base_unit': 'gram',
             'total_amount': Decimal('100.000'),
         }
         to_update: list[ShoppingListItem] = []
@@ -65,11 +65,21 @@ class TestShoppingListRecalculaterProcessExistingItem:
         assert item.amount == Decimal('100.000')
         assert item in to_update
 
-    def test_same_amount_does_not_append_to_update(self) -> None:
-        item = ShoppingListItem(amount=Decimal('100.000'))
+    def test_manual_amount_is_added_to_calculated(self) -> None:
+        item = ShoppingListItem(amount=Decimal('50.000'), manual_amount=Decimal('50.000'))
         ingredient_data: IngredientTotalAmountData = {
             'ingredient_id': uuid4(),
-            'ingredient__base_unit': 'gram',
+            'total_amount': Decimal('100.000'),
+        }
+        to_update: list[ShoppingListItem] = []
+        ShoppingListRecalculater().process_existing_item(ingredient_data, item, to_update)
+        assert item.amount == Decimal('150.000')
+        assert item in to_update
+
+    def test_same_amount_does_not_append_to_update(self) -> None:
+        item = ShoppingListItem(amount=Decimal('100.000'), manual_amount=Decimal('0.000'))
+        ingredient_data: IngredientTotalAmountData = {
+            'ingredient_id': uuid4(),
             'total_amount': Decimal('100.000'),
         }
         to_update: list[ShoppingListItem] = []
@@ -82,7 +92,6 @@ class TestShoppingListRecalculaterProcessNewItem:
         ingredient_id = uuid4()
         ingredient_data: IngredientTotalAmountData = {
             'ingredient_id': ingredient_id,
-            'ingredient__base_unit': 'gram',
             'total_amount': Decimal('150.000'),
         }
         to_create: list[ShoppingListItem] = []
@@ -100,11 +109,42 @@ class TestShoppingListRecalculaterProcessDeletedItems:
         self,
         ingredient_global: Ingredient,
     ) -> None:
-        item = ShoppingListItem(ingredient_id=ingredient_global.id)
+        item = ShoppingListItem(ingredient_id=ingredient_global.id, manual_amount=Decimal('0.000'))
         actual_items_dict = {ingredient_global.id: item}
+        to_update: list[ShoppingListItem] = []
         to_delete: list[ShoppingListItem] = []
-        ShoppingListRecalculater().process_deleted_items([], actual_items_dict, to_delete)
+        ShoppingListRecalculater().process_deleted_items([], actual_items_dict, to_update, to_delete)
         assert item in to_delete
+        assert len(to_update) == 0
+
+    def test_item_with_manual_amount_absent_from_plan_resets_amount(
+        self,
+        ingredient_global: Ingredient,
+    ) -> None:
+        item = ShoppingListItem(
+            ingredient_id=ingredient_global.id, manual_amount=Decimal('100.000'), amount=Decimal('150.000')
+        )
+        actual_items_dict = {ingredient_global.id: item}
+        to_update: list[ShoppingListItem] = []
+        to_delete: list[ShoppingListItem] = []
+        ShoppingListRecalculater().process_deleted_items([], actual_items_dict, to_update, to_delete)
+        assert len(to_delete) == 0
+        assert item in to_update
+        assert item.amount == Decimal('100.000')
+
+    def test_item_with_manual_amount_already_correct_not_added_to_update(
+        self,
+        ingredient_global: Ingredient,
+    ) -> None:
+        item = ShoppingListItem(
+            ingredient_id=ingredient_global.id, manual_amount=Decimal('100.000'), amount=Decimal('100.000')
+        )
+        actual_items_dict = {ingredient_global.id: item}
+        to_update: list[ShoppingListItem] = []
+        to_delete: list[ShoppingListItem] = []
+        ShoppingListRecalculater().process_deleted_items([], actual_items_dict, to_update, to_delete)
+        assert len(to_delete) == 0
+        assert len(to_update) == 0
 
     def test_item_present_in_ingredients_data_is_not_deleted(
         self,
@@ -115,12 +155,12 @@ class TestShoppingListRecalculaterProcessDeletedItems:
         ingredients_data: list[IngredientTotalAmountData] = [
             {
                 'ingredient_id': ingredient_global.id,
-                'ingredient__base_unit': 'gram',
                 'total_amount': Decimal('100.000'),
             }
         ]
+        to_update: list[ShoppingListItem] = []
         to_delete: list[ShoppingListItem] = []
-        ShoppingListRecalculater().process_deleted_items(ingredients_data, actual_items_dict, to_delete)
+        ShoppingListRecalculater().process_deleted_items(ingredients_data, actual_items_dict, to_update, to_delete)
         assert len(to_delete) == 0
 
     def test_empty_ingredients_data_moves_all_items_to_delete(
@@ -128,11 +168,12 @@ class TestShoppingListRecalculaterProcessDeletedItems:
         ingredient_global: Ingredient,
         ingredient_user: Ingredient,
     ) -> None:
-        item1 = ShoppingListItem(ingredient_id=ingredient_global.id)
-        item2 = ShoppingListItem(ingredient_id=ingredient_user.id)
+        item1 = ShoppingListItem(ingredient_id=ingredient_global.id, manual_amount=Decimal('0.000'))
+        item2 = ShoppingListItem(ingredient_id=ingredient_user.id, manual_amount=Decimal('0.000'))
         actual_items_dict = {ingredient_global.id: item1, ingredient_user.id: item2}
+        to_update: list[ShoppingListItem] = []
         to_delete: list[ShoppingListItem] = []
-        ShoppingListRecalculater().process_deleted_items([], actual_items_dict, to_delete)
+        ShoppingListRecalculater().process_deleted_items([], actual_items_dict, to_update, to_delete)
         assert item1 in to_delete
         assert item2 in to_delete
 

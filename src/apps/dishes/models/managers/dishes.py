@@ -51,10 +51,7 @@ class DishIngredientQueryset(ActiveQuerySet['DishIngredient']):
                 dish__cooking_events__cooking_date__range=(shopping_list.date_from, shopping_list.date_to),
                 dish__cooking_events__owner=shopping_list.owner,
             )
-            .values(
-                'ingredient_id',
-                'ingredient__base_unit',
-            )
+            .values('ingredient_id')
             .annotate(total_amount=Sum('amount'))
         )
 

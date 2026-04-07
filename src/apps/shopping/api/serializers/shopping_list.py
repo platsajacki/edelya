@@ -1,7 +1,7 @@
 from typing import Any
 
 from rest_framework.exceptions import ValidationError
-from rest_framework.fields import HiddenField
+from rest_framework.fields import DecimalField, HiddenField
 from rest_framework.serializers import CurrentUserDefault, ModelSerializer, UUIDField
 
 from apps.dishes.api.serializers.ingredients import IngredientSerializer
@@ -47,6 +47,7 @@ class ShoppingLisItemtReadSerializer(ModelSerializer):
             'shopping_list',
             'ingredient',
             'amount',
+            'manual_amount',
             'owner',
             'is_checked',
             'checked_at',
@@ -60,6 +61,7 @@ class ShoppingLisItemtReadSerializer(ModelSerializer):
 
 class ShoppingListItemWriteSerializer(ShoppingLisItemtReadSerializer):
     ingredient = UUIDField()
+    manual_amount = DecimalField(max_digits=12, decimal_places=3, required=True)
     is_manual = HiddenField(default=True)
     owner = HiddenField(default=CurrentUserDefault())
     shopping_list = HiddenField(default=CurrentShoppingList())
@@ -67,6 +69,7 @@ class ShoppingListItemWriteSerializer(ShoppingLisItemtReadSerializer):
     class Meta(ShoppingLisItemtReadSerializer.Meta):
         read_only_fields = [
             'id',
+            'amount',
             'created_at',
             'updated_at',
         ]
@@ -94,3 +97,13 @@ class ShoppingListItemWriteSerializer(ShoppingLisItemtReadSerializer):
         if existing_items.filter(ingredient=ingredient).exists():
             raise ValidationError('This ingredient is already in the shopping list.')
         return super().validate(attrs)
+
+    def create(self, validated_data: dict[str, Any]) -> ShoppingListItem:
+        validated_data['amount'] = validated_data.get('manual_amount', 0)
+        return super().create(validated_data)
+
+    def update(self, instance: ShoppingListItem, validated_data: dict[str, Any]) -> ShoppingListItem:
+        if 'manual_amount' in validated_data:
+            calculated = instance.amount - instance.manual_amount
+            validated_data['amount'] = validated_data['manual_amount'] + calculated
+        return super().update(instance, validated_data)

@@ -30,7 +30,7 @@ def item_detail_url(shopping_list_id: str, item_id: str) -> str:
 def item_payload(ingredient_global: Ingredient) -> dict:
     return {
         'ingredient': str(ingredient_global.id),
-        'amount': '150.000',
+        'manual_amount': '150.000',
     }
 
 
@@ -233,7 +233,7 @@ class TestShoppingListItemViewSetCreate:
         shopping_list: ShoppingList,
         item_payload: dict,
     ) -> None:
-        item_payload.pop('amount')
+        item_payload.pop('manual_amount')
         response = auth_telegram_api_client.post(item_list_url(str(shopping_list.id)), data=item_payload, format='json')
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
@@ -294,7 +294,7 @@ class TestShoppingListItemViewSetPartialUpdate:
     ) -> None:
         response = auth_telegram_api_client.patch(
             item_detail_url(str(shopping_list.id), str(manual_shopping_list_item.id)),
-            data={'amount': '200.000'},
+            data={'manual_amount': '200.000'},
             format='json',
         )
         assert response.status_code == status.HTTP_200_OK

@@ -39,6 +39,7 @@ def manual_shopping_list_item(shopping_list: ShoppingList, ingredient_user: Ingr
         owner=shopping_list.owner,
         ingredient=ingredient_user,
         amount=Decimal('50.000'),
+        manual_amount=Decimal('50.000'),
         is_manual=True,
     )
 
