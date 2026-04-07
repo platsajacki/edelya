@@ -94,3 +94,7 @@ class ShoppingListItemWriteSerializer(ShoppingLisItemtReadSerializer):
         if existing_items.filter(ingredient=ingredient).exists():
             raise ValidationError('This ingredient is already in the shopping list.')
         return super().validate(attrs)
+
+    def update(self, instance: ShoppingListItem, validated_data: dict[str, Any]) -> ShoppingListItem:
+        validated_data.pop('is_manual', None)
+        return super().update(instance, validated_data)

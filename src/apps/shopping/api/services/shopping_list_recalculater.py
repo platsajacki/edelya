@@ -20,8 +20,10 @@ class ShoppingListRecalculater:
         actual_item: ShoppingListItem,
         to_update: list[ShoppingListItem],
     ) -> None:
-        if actual_item.amount != ingredient_data['total_amount']:
-            actual_item.amount = ingredient_data['total_amount']
+        new_amount = ingredient_data['total_amount']
+        if actual_item.amount != new_amount or actual_item.is_manual:
+            actual_item.amount = new_amount
+            actual_item.is_manual = False
             to_update.append(actual_item)
 
     def process_new_item(
@@ -46,9 +48,9 @@ class ShoppingListRecalculater:
         to_delete: list[ShoppingListItem],
     ) -> None:
         ingredient_ids = {ingredient_data['ingredient_id'] for ingredient_data in ingredients_data}
-        for ingredient_id in actual_items_dict:
-            if ingredient_id not in ingredient_ids:
-                to_delete.append(actual_items_dict[ingredient_id])
+        for ingredient_id, item in actual_items_dict.items():
+            if ingredient_id not in ingredient_ids and not item.is_manual:
+                to_delete.append(item)
 
     def process_ingredients_data(
         self,
@@ -78,15 +80,14 @@ class ShoppingListRecalculater:
             to_delete=to_delete,
         )
         if to_update:
-            ShoppingListItem.objects.bulk_update(to_update, ['amount'])
+            ShoppingListItem.objects.bulk_update(to_update, ['amount', 'is_manual'])
         if to_create:
             ShoppingListItem.objects.bulk_create(to_create)
         if to_delete:
             ShoppingListItem.objects.filter(id__in=[item.id for item in to_delete]).delete()
 
     def get_items(self, shopping_list: ShoppingList) -> dict[UUID, ShoppingListItem]:
-        qs = shopping_list.items.filter(is_manual=False)
-        return {item.ingredient_id: item for item in qs}
+        return {item.ingredient_id: item for item in shopping_list.items.all()}
 
     def recalculate_shopping_list_items(self, shopping_list: ShoppingList) -> None:
         actual_items_dict = self.get_items(shopping_list)
