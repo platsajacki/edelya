@@ -4,6 +4,7 @@ from django.db import models
 
 from apps.users.managers import UserManager
 from core.base.abstract_models import BaseModel
+from core.base.validators import dict_validator
 
 ascii_username_validator = ASCIIUsernameValidator()
 
@@ -39,6 +40,11 @@ class User(BaseModel, AbstractUser):
         max_length=255,
         blank=True,
         null=True,
+    )
+    onboarding_data = models.JSONField(
+        verbose_name='Onboarding Data',
+        default=dict,
+        validators=[dict_validator],
     )
 
     objects: UserManager = UserManager()  # type: ignore[misc]
