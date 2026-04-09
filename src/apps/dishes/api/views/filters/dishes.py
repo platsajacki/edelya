@@ -42,5 +42,5 @@ class DishFilter(filters.FilterSet):
 
     def order_owned_first(self, queryset: QuerySet, name: str, value: bool) -> QuerySet:
         if value:
-            return queryset.order_by(OrderBy(F('owner_id'), nulls_last=True), 'name', '-created_at')
+            return queryset.order_by(OrderBy(F('owner_id'), nulls_last=True))
         return queryset
