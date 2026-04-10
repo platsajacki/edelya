@@ -30,6 +30,14 @@ class DishFilter(filters.FilterSet):
     owened_first = filters.BooleanFilter(method='order_owned_first')
     only_owned = filters.BooleanFilter(field_name='owner_id', lookup_expr='isnull', exclude=True)
     only_global = filters.BooleanFilter(field_name='owner_id', lookup_expr='isnull')
+    ordering = filters.OrderingFilter(
+        fields=(
+            ('id', 'id'),
+            ('name', 'name'),
+            ('created_at', 'created_at'),
+            ('updated_at', 'updated_at'),
+        )
+    )
 
     class Meta:
         model = Dish
