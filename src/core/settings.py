@@ -37,6 +37,7 @@ LOCAL_APPS = [
     'apps.dishes',
     'apps.planning',
     'apps.shopping',
+    'apps.subscriptions',
     'apps.users',
 ]
 THIRD_PARTY_APPS = [

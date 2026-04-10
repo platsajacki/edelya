@@ -1,0 +1,1 @@
+BASIC_TARIFF_NAME = 'Basic'
