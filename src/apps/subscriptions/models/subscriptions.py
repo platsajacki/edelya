@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from django.db import models
 from django.utils import timezone
 
+from apps.subscriptions.models.managers import SubscriptionManager
 from apps.subscriptions.models.model_enums import SubscriptionStatus
 from core.base.abstract_models import BaseModel
 
@@ -59,6 +60,8 @@ class Subscription(BaseModel):
         null=True,
         blank=True,
     )
+
+    objects: SubscriptionManager = SubscriptionManager()
 
     class Meta:
         verbose_name = 'Subscription'

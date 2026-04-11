@@ -9,13 +9,13 @@ from apps.planning.api.services.cooking.cooking_event_creator import CookingEven
 from apps.planning.api.services.cooking.cooking_event_updater import CookingEventUpdater
 from apps.planning.models import CookingEvent
 from core.base.decorators import extend_schema_view_from_class
-from core.base.permissions import OwnerObjectPermission
+from core.base.permissions import CanUseBaseFeatures, OwnerObjectPermission
 
 
 @extend_schema_view_from_class(CookingEventViewSetSchema)
 class CookingEventViewSet(ModelViewSet):
     queryset = CookingEvent.objects.none()
-    permission_classes = [IsAuthenticated & OwnerObjectPermission]
+    permission_classes = [IsAuthenticated & OwnerObjectPermission & CanUseBaseFeatures]
     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
     lookup_url_kwarg = 'cooking_event_id'
 

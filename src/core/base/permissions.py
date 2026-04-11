@@ -11,3 +11,14 @@ class OwnerObjectPermission(BasePermission):
         if obj.owner is None and request.method in SAFE_METHODS:
             return True
         return obj.owner == request.user
+
+
+class CanUseBaseFeatures(BasePermission):
+    def has_permission(self, request: Request, view: APIView) -> bool:
+        subscription = getattr(request.user, 'subscription', None)
+        if subscription is None:
+            return False
+        tariff = getattr(subscription, 'tariff', None)
+        if tariff is None:
+            return False
+        return bool(tariff.can_use_base_features)

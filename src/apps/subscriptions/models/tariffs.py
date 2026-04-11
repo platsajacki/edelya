@@ -1,5 +1,6 @@
 from django.db import models
 
+from apps.subscriptions.models.managers import TariffManager
 from apps.subscriptions.models.model_enums import BillingPeriod
 from core.base.abstract_models import BaseModel
 
@@ -26,6 +27,10 @@ class Tariff(BaseModel):
         choices=BillingPeriod.choices,
         default=BillingPeriod.MONTHLY,
     )
+    published = models.BooleanField(
+        verbose_name='Published',
+        default=False,
+    )
     is_active = models.BooleanField(
         verbose_name='Is Active',
         default=True,
@@ -41,6 +46,8 @@ class Tariff(BaseModel):
     can_create_ai_recipes = models.BooleanField(
         verbose_name='Can Create AI Recipes',
     )
+
+    objects: TariffManager = TariffManager()
 
     class Meta:
         verbose_name = 'Tariff'
