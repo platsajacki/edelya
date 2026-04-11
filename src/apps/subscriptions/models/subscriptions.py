@@ -14,50 +14,50 @@ class Subscription(BaseModel):
         'users.User',
         on_delete=models.CASCADE,
         related_name='subscription',
-        verbose_name='User',
+        verbose_name='Пользователь',
     )
     tariff = models.ForeignKey(
         'subscriptions.Tariff',
         on_delete=models.PROTECT,
         related_name='subscriptions',
-        verbose_name='Tariff',
+        verbose_name='Тариф',
     )
     status = models.CharField(
-        verbose_name='Status',
+        verbose_name='Статус',
         max_length=20,
         choices=SubscriptionStatus.choices,
         default=SubscriptionStatus.TRIAL,
     )
     trial_started_at = models.DateTimeField(
-        verbose_name='Trial Started At',
+        verbose_name='Пробный период начался в',
         null=True,
         blank=True,
     )
     days_in_trial = models.PositiveIntegerField(
-        verbose_name='Days in Trial',
+        verbose_name='Дней в пробном периоде',
         default=DEFAULT_TRIAL_DAYS,
     )
     trial_ended_at = models.DateTimeField(
-        verbose_name='Trial Ended At',
+        verbose_name='Пробный период закончился в',
         null=True,
         blank=True,
     )
     current_period_start = models.DateTimeField(
-        verbose_name='Current Period Start',
+        verbose_name='Текущий период начался в',
         null=True,
         blank=True,
     )
     current_period_end = models.DateTimeField(
-        verbose_name='Current Period End',
+        verbose_name='Текущий период закончился в',
         null=True,
         blank=True,
     )
     auto_renew = models.BooleanField(
-        verbose_name='Auto Renew',
+        verbose_name='Автопродление',
         default=True,
     )
     cancelled_at = models.DateTimeField(
-        verbose_name='Cancelled At',
+        verbose_name='Отменено в',
         null=True,
         blank=True,
     )
@@ -65,8 +65,8 @@ class Subscription(BaseModel):
     objects: SubscriptionManager = SubscriptionManager()
 
     class Meta:
-        verbose_name = 'Subscription'
-        verbose_name_plural = 'Subscriptions'
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
 
     def __str__(self) -> str:
         return f'{self.user} — {self.status}'

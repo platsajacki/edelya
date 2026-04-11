@@ -31,16 +31,9 @@ class TestHasActiveTrial:
         api_client: APIClient,
         telegram_user: User,
     ) -> None:
-        trial_tariff = Tariff.objects.create(
-            name='Trial no base',
-            price='0.00',
-            is_trial_tariff=True,
-            trial_days=DEFAULT_TRIAL_DAYS,
-            published=True,
-            is_active=True,
-            can_use_base_features=False,
-            can_create_ai_recipes=False,
-        )
+        trial_tariff = Tariff.objects.get(is_trial_tariff=True)
+        trial_tariff.can_use_base_features = False
+        trial_tariff.save(update_fields=['can_use_base_features'])
         Subscription.objects.create(
             user=telegram_user,
             tariff=trial_tariff,
@@ -57,16 +50,9 @@ class TestHasActiveTrial:
         api_client: APIClient,
         telegram_user: User,
     ) -> None:
-        trial_tariff = Tariff.objects.create(
-            name='Trial no base',
-            price='0.00',
-            is_trial_tariff=True,
-            trial_days=DEFAULT_TRIAL_DAYS,
-            published=True,
-            is_active=True,
-            can_use_base_features=False,
-            can_create_ai_recipes=False,
-        )
+        trial_tariff = Tariff.objects.get(is_trial_tariff=True)
+        trial_tariff.can_use_base_features = False
+        trial_tariff.save(update_fields=['can_use_base_features'])
         Subscription.objects.create(
             user=telegram_user,
             tariff=trial_tariff,

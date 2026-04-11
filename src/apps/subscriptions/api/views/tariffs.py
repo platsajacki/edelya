@@ -1,4 +1,7 @@
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.request import Request
+from rest_framework.response import Response
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -16,3 +19,7 @@ class TariffViewSet(ReadOnlyModelViewSet):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     lookup_url_kwarg = 'tariff_id'
+
+    @action(detail=False, methods=['get'], url_path='trial-duration')
+    def trial_duration(self, request: Request) -> Response:
+        return Response({'trial_duration': Tariff.objects.trial_duration()})

@@ -18,7 +18,7 @@ class SubscriptionGetter(BaseService):
     authenticated_user: User = dc_field(init=False)
 
     def _validate_user(self) -> None:
-        if not isinstance(self.request.user, User):
+        if not isinstance(self.request.user, User) and self.request.user.is_authenticated:
             raise AuthenticationFailed('User must be authenticated.')
         self.authenticated_user = self.request.user
 

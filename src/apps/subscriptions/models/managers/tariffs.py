@@ -32,3 +32,7 @@ class TariffManager(ActiveManager['Tariff', TariffQuerySet]):
 
     def get_trial_tariff(self) -> Tariff:
         return self.get_queryset().get_trial_tariff()
+
+    def trial_duration(self) -> int:
+        trial_tariff = self.get_trial_tariff()
+        return trial_tariff.trial_days

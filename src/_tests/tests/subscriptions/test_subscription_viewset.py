@@ -142,6 +142,8 @@ class TestStartTrial:
         api_client: APIClient,
         telegram_user: User,
     ) -> None:
+        # Deactivate the migration-seeded trial tariff to simulate no available trial
+        Tariff.objects.filter(is_trial_tariff=True).update(is_active=False)
         api_client.force_authenticate(user=telegram_user)
         response = api_client.post(START_TRIAL_URL)
         assert response.status_code == status.HTTP_404_NOT_FOUND

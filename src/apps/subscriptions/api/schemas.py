@@ -10,6 +10,8 @@ TARIFF_TAG = 'Tariffs'
 
 
 class TariffViewSetSchema:
+    custom_actions = {'trial_duration'}
+
     list = extend_schema(
         tags=[TARIFF_TAG],
         summary='List tariffs',
@@ -30,6 +32,24 @@ class TariffViewSetSchema:
             status.HTTP_200_OK: OpenApiResponse(
                 description='Tariff details',
                 response=TariffSerializer(),
+            ),
+            **STANDARD_ERROR_RESPONSES,
+        },
+    )
+    trial_duration = extend_schema(
+        tags=[TARIFF_TAG],
+        summary='Get trial duration',
+        description='Retrieve the duration of the trial period in days.',
+        responses={
+            status.HTTP_200_OK: OpenApiResponse(
+                description='Trial duration in days',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'trial_duration': {'type': 'integer'},
+                    },
+                    'required': ['trial_duration'],
+                },
             ),
             **STANDARD_ERROR_RESPONSES,
         },

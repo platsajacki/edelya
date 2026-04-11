@@ -100,4 +100,5 @@ class Migration(migrations.Migration):
                 'verbose_name_plural': 'Subscriptions',
             },
         ),
+        migrations.RunPython(create_initial_tariffs, delete_initial_tariffs),
     ]

@@ -36,17 +36,20 @@ def no_base_features_tariff() -> Tariff:
 
 @pytest.fixture
 def trial_tariff() -> Tariff:
-    return Tariff.objects.create(
-        name='Trial',
-        price='0.00',
-        billing_period=BillingPeriod.MONTHLY,
-        published=True,
-        is_active=True,
+    tariff, _ = Tariff.objects.get_or_create(
         is_trial_tariff=True,
-        trial_days=DEFAULT_TRIAL_DAYS,
-        can_use_base_features=True,
-        can_create_ai_recipes=True,
+        defaults={
+            'name': 'Trial',
+            'price': '0.00',
+            'billing_period': BillingPeriod.MONTHLY,
+            'published': True,
+            'is_active': True,
+            'trial_days': DEFAULT_TRIAL_DAYS,
+            'can_use_base_features': True,
+            'can_create_ai_recipes': True,
+        },
     )
+    return tariff
 
 
 @pytest.fixture
