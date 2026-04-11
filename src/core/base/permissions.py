@@ -22,3 +22,11 @@ class CanUseBaseFeatures(BasePermission):
         if tariff is None:
             return False
         return bool(tariff.can_use_base_features)
+
+
+class HasActiveTrial(BasePermission):
+    def has_permission(self, request: Request, view: APIView) -> bool:
+        subscription = getattr(request.user, 'subscription', None)
+        if subscription is None:
+            return False
+        return subscription.is_active and subscription.tariff.is_trial_tariff

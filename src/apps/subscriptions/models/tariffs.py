@@ -1,5 +1,6 @@
 from django.db import models
 
+from apps.subscriptions.constants import DEFAULT_TRIAL_DAYS
 from apps.subscriptions.models.managers import TariffManager
 from apps.subscriptions.models.model_enums import BillingPeriod
 from core.base.abstract_models import BaseModel
@@ -27,6 +28,14 @@ class Tariff(BaseModel):
         choices=BillingPeriod.choices,
         default=BillingPeriod.MONTHLY,
     )
+    is_trial_tariff = models.BooleanField(
+        verbose_name='Is Trial Tariff',
+        default=False,
+    )
+    trial_days = models.PositiveIntegerField(
+        verbose_name='Trial Days',
+        default=DEFAULT_TRIAL_DAYS,
+    )
     published = models.BooleanField(
         verbose_name='Published',
         default=False,
@@ -53,6 +62,13 @@ class Tariff(BaseModel):
         verbose_name = 'Tariff'
         verbose_name_plural = 'Tariffs'
         ordering = ['sort_order', 'price']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['is_trial_tariff'],
+                condition=models.Q(is_trial_tariff=True, is_active=True),
+                name='unique_trial_tariff',
+            )
+        ]
 
     def __str__(self) -> str:
         return self.name

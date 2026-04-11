@@ -16,13 +16,13 @@ from apps.planning.api.serializers.meal_plan import (
 from apps.planning.api.services.meal_plan.meal_plan_item_creator import MealPlanItemCreator
 from apps.planning.models import MealPlanItem
 from core.base.decorators import extend_schema_view_from_class
-from core.base.permissions import CanUseBaseFeatures, OwnerObjectPermission
+from core.base.permissions import CanUseBaseFeatures, HasActiveTrial, OwnerObjectPermission
 
 
 @extend_schema_view_from_class(MealPlanItemViewSetSchema)
 class MealPlanItemViewSet(ModelViewSet):
     queryset = MealPlanItem.objects.none()
-    permission_classes = [IsAuthenticated & OwnerObjectPermission & CanUseBaseFeatures]
+    permission_classes = [IsAuthenticated & OwnerObjectPermission & (HasActiveTrial | CanUseBaseFeatures)]
     http_method_names = ['post', 'patch', 'delete']
     lookup_url_kwarg = 'meal_plan_item_id'
 

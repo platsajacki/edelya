@@ -13,6 +13,12 @@ class TariffQuerySet(ActiveQuerySet['Tariff']):
     def with_subscriptions(self) -> TariffQuerySet:
         return self.prefetch_related('subscriptions')
 
+    def trial(self) -> TariffQuerySet:
+        return self.filter(is_trial_tariff=True)
+
+    def get_trial_tariff(self) -> Tariff:
+        return self.trial().actived().get()
+
 
 class TariffManager(ActiveManager['Tariff', TariffQuerySet]):
     def get_queryset_class(self) -> type[TariffQuerySet]:
@@ -23,3 +29,6 @@ class TariffManager(ActiveManager['Tariff', TariffQuerySet]):
 
     def actived(self) -> TariffQuerySet:
         return self.get_queryset().actived()
+
+    def get_trial_tariff(self) -> Tariff:
+        return self.get_queryset().get_trial_tariff()

@@ -6,7 +6,7 @@ from apps.users.api.schemas import OnboardingDataViewSchema
 from apps.users.api.serializers.users import OnboardingDataSerializer
 from apps.users.models.users import User
 from core.base.decorators import extend_schema_view_from_class
-from core.base.permissions import CanUseBaseFeatures
+from core.base.permissions import CanUseBaseFeatures, HasActiveTrial
 
 
 @extend_schema_view_from_class(OnboardingDataViewSchema)
@@ -14,7 +14,7 @@ class OnboardingDataViewSet(RetrieveAPIView, UpdateAPIView):
     queryset = User.objects.none()
     serializer_class = OnboardingDataSerializer
     http_method_names = ['get', 'patch']
-    permission_classes = [IsAuthenticated & CanUseBaseFeatures]
+    permission_classes = [IsAuthenticated & (HasActiveTrial | CanUseBaseFeatures)]
 
     def get_object(self) -> User:
         if isinstance(self.request.user, User):

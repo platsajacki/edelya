@@ -8,6 +8,7 @@ api_urlpatterns_v1 = [
     path('', include(('apps.dishes.api.urls', 'dishes'), namespace='dishes')),
     path('', include(('apps.planning.api.urls', 'planning'), namespace='planning')),
     path('', include(('apps.shopping.api.urls', 'shopping'), namespace='shopping')),
+    path('', include(('apps.subscriptions.api.urls', 'subscriptions'), namespace='subscriptions')),
 ]
 
 urlpatterns = [

@@ -8,14 +8,14 @@ from apps.dishes.api.views.filters.ingredient import IngredientCategoryFilter, I
 from apps.dishes.models import Ingredient, IngredientCategory
 from apps.users.models import User
 from core.base.decorators import extend_schema_view_from_class
-from core.base.permissions import CanUseBaseFeatures, OwnerObjectPermission
+from core.base.permissions import CanUseBaseFeatures, HasActiveTrial, OwnerObjectPermission
 
 
 @extend_schema_view_from_class(IngredientCategoryViewSetSchema)
 class IngredientCategoryViewSet(ReadOnlyModelViewSet):
     queryset = IngredientCategory.objects.actived()
     serializer_class = IngredientCategorySerializer
-    permission_classes = [IsAuthenticated & CanUseBaseFeatures]
+    permission_classes = [IsAuthenticated & (HasActiveTrial | CanUseBaseFeatures)]
     filterset_class = IngredientCategoryFilter
     lookup_url_kwarg = 'ingredient_category_id'
 
@@ -24,7 +24,7 @@ class IngredientCategoryViewSet(ReadOnlyModelViewSet):
 class IngredientViewSet(ModelViewSet):
     queryset = Ingredient.objects.none()
     serializer_class = IngredientSerializer
-    permission_classes = [IsAuthenticated & OwnerObjectPermission & CanUseBaseFeatures]
+    permission_classes = [IsAuthenticated & OwnerObjectPermission & (HasActiveTrial | CanUseBaseFeatures)]
     filterset_class = IngredientFilter
     lookup_url_kwarg = 'ingredient_id'
 

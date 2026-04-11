@@ -22,7 +22,7 @@ class TariffAdmin(ModelAdmin):
         (
             'Features',
             {
-                'fields': ('can_use_base_features', 'can_create_ai_recipes'),
+                'fields': ('can_use_base_features', 'can_create_ai_recipes', 'is_trial_tariff', 'trial_days'),
             },
         ),
         (
@@ -34,7 +34,15 @@ class TariffAdmin(ModelAdmin):
         ),
     )
     readonly_fields = ('id', 'created_at', 'updated_at')
-    list_display = ('id', 'name', 'price', 'billing_period', 'is_active', 'sort_order')
+    list_display = (
+        'id',
+        'name',
+        'price',
+        'billing_period',
+        'is_active',
+        'is_trial_tariff',
+        'sort_order',
+    )
     list_filter = ('is_active', 'billing_period')
     search_fields = ('name',)
     ordering = ('sort_order', 'price')

@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from django.db import models
 from django.utils import timezone
 
+from apps.subscriptions.constants import DEFAULT_TRIAL_DAYS
 from apps.subscriptions.models.managers import SubscriptionManager
 from apps.subscriptions.models.model_enums import SubscriptionStatus
 from core.base.abstract_models import BaseModel
@@ -34,7 +35,7 @@ class Subscription(BaseModel):
     )
     days_in_trial = models.PositiveIntegerField(
         verbose_name='Days in Trial',
-        default=14,
+        default=DEFAULT_TRIAL_DAYS,
     )
     trial_ended_at = models.DateTimeField(
         verbose_name='Trial Ended At',

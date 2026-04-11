@@ -23,7 +23,7 @@ from apps.shopping.models import ShoppingList
 from apps.shopping.models.shopping_list import ShoppingListItem
 from apps.users.models import User
 from core.base.decorators import extend_schema_view_from_class
-from core.base.permissions import CanUseBaseFeatures, OwnerObjectPermission
+from core.base.permissions import CanUseBaseFeatures, HasActiveTrial, OwnerObjectPermission
 from core.base.services import PerformActionInstanceRefresher
 
 
@@ -31,7 +31,7 @@ from core.base.services import PerformActionInstanceRefresher
 class ShoppingListViewSet(ModelViewSet):
     queryset = ShoppingList.objects.none()
     serializer_class = ShoppingListSerializer
-    permission_classes = [IsAuthenticated & OwnerObjectPermission & CanUseBaseFeatures]
+    permission_classes = [IsAuthenticated & OwnerObjectPermission & (HasActiveTrial | CanUseBaseFeatures)]
     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
     lookup_url_kwarg = 'shopping_list_id'
     filterset_class = ShoppingListFilter
@@ -58,7 +58,7 @@ class ShoppingListViewSet(ModelViewSet):
 class ShoppingListItemViewSet(ModelViewSet):
     queryset = ShoppingListItem.objects.none()
     serializer_class = ShoppingLisItemtReadSerializer
-    permission_classes = [IsAuthenticated & OwnerObjectPermission & CanUseBaseFeatures]
+    permission_classes = [IsAuthenticated & OwnerObjectPermission & (HasActiveTrial | CanUseBaseFeatures)]
     http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
     lookup_url_kwarg = 'shopping_list_item_id'
     filterset_class = ShoppingListItemFilter
