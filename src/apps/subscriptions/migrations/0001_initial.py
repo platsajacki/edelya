@@ -29,7 +29,7 @@ def create_initial_tariffs(apps, schema_editor) -> None:
         billing_period='monthly',
         is_trial_tariff=True,
         trial_days=DEFAULT_TRIAL_DAYS,
-        published=True,
+        published=False,
         is_active=True,
         sort_order=0,
         can_use_base_features=True,

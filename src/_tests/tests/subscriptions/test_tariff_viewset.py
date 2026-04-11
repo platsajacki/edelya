@@ -81,7 +81,7 @@ class TestTariffViewSet:
         response = api_client.get(url)
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-    def test_trial_tariff_is_listed(
+    def test_trial_tariff_is_not_listed(
         self,
         api_client: APIClient,
         telegram_user: User,
@@ -91,7 +91,7 @@ class TestTariffViewSet:
         response = api_client.get(TARIFF_LIST_URL)
         assert response.status_code == status.HTTP_200_OK
         result_ids = {item['id'] for item in response.data['results']}
-        assert str(trial_tariff.id) in result_ids
+        assert str(trial_tariff.id) not in result_ids
 
     def test_tariff_response_contains_expected_fields(
         self,
