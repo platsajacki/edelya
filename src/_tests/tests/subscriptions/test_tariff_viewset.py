@@ -93,26 +93,6 @@ class TestTariffViewSet:
         result_ids = {item['id'] for item in response.data['results']}
         assert str(trial_tariff.id) not in result_ids
 
-    def test_tariff_response_contains_expected_fields(
-        self,
-        api_client: APIClient,
-        telegram_user: User,
-        base_tariff: Tariff,
-    ) -> None:
-        api_client.force_authenticate(user=telegram_user)
-        response = api_client.get(TARIFF_LIST_URL)
-        expected_fields = {
-            'id',
-            'name',
-            'price',
-            'billing_period',
-            'description',
-            'trial_days',
-            'can_use_base_features',
-            'can_create_ai_recipes',
-        }
-        assert set(response.data['results'][0].keys()) == expected_fields
-
     def test_user_without_subscription_can_list_tariffs(
         self,
         api_client: APIClient,

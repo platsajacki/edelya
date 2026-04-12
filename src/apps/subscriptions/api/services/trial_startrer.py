@@ -37,12 +37,14 @@ class TrialStarter(BaseService):
             trial_tariff = Tariff.objects.get_trial_tariff()
         except Tariff.DoesNotExist as e:
             raise NotFound('Trial tariff not found.') from e
-        subscription = Subscription.objects.create(
+        subscription = Subscription(
             user=self.authenticated_user,
             tariff=trial_tariff,
             status=SubscriptionStatus.TRIAL,
             trial_started_at=timezone.now(),
             days_in_trial=trial_tariff.trial_days,
         )
+        subscription.trial_ended_at = subscription.get_trial_end_date()
+        subscription.save()
         serializer = self.serializer_class(subscription)
         return Response(serializer.data, status=status.HTTP_201_CREATED)

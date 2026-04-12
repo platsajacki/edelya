@@ -13,7 +13,11 @@ class TariffSerializer(ModelSerializer):
             'billing_period',
             'description',
             'trial_days',
+            'soon',
+            'is_trial_tariff',
+            'sort_order',
             'can_use_base_features',
             'can_create_ai_recipes',
+            'can_have_common_space',
         ]
         read_only_fields = fields

@@ -10,7 +10,7 @@ class TariffAdmin(ModelAdmin):
         (
             'General',
             {
-                'fields': ('published', 'name', 'price', 'billing_period', 'is_active', 'sort_order'),
+                'fields': ('published', 'name', 'price', 'billing_period', 'soon', 'is_active', 'sort_order'),
             },
         ),
         (

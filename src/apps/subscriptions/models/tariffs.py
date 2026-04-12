@@ -44,6 +44,10 @@ class Tariff(BaseModel):
         verbose_name='Активный',
         default=True,
     )
+    soon = models.BooleanField(
+        verbose_name='Скоро будет',
+        default=False,
+    )
     sort_order = models.PositiveIntegerField(
         verbose_name='Порядок сортировки',
         default=0,
@@ -54,6 +58,11 @@ class Tariff(BaseModel):
     )
     can_create_ai_recipes = models.BooleanField(
         verbose_name='Может создавать AI рецепты',
+        default=False,
+    )
+    can_have_common_space = models.BooleanField(
+        verbose_name='Может иметь общее пространство',
+        default=False,
     )
 
     objects: TariffManager = TariffManager()

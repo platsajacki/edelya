@@ -72,6 +72,8 @@ class Subscription(BaseModel):
         return f'{self.user} — {self.status}'
 
     def get_trial_end_date(self) -> datetime:
+        if self.trial_ended_at is not None:
+            return self.trial_ended_at
         if self.trial_started_at is None:
             return timezone.now() + timedelta(days=self.days_in_trial)
         return self.trial_started_at + timedelta(days=self.days_in_trial)
