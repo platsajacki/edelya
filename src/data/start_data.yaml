@@ -20,7 +20,8 @@ ingredient_categories:
 
   - name: Мясо
   - name: Птица
-  - name: Колбасы и мясные изделия
+  - name: Колбасы
+  - name: Mясные изделия
   - name: Рыба
   - name: Морепродукты
 
@@ -38,15 +39,16 @@ ingredient_categories:
   - name: Тесто и основы
   - name: Хлеб и хлебобулочные изделия
 
-  - name: Специи и приправы
-  - name: Соусы и заправки
-  - name: Масла и жиры
-  - name: Уксусы и кислоты
+  - name: Специи
+  - name: Соусы
+  - name: Масла
+  - name: Уксусы
 
   - name: Сахар и подсластители
   - name: Шоколад и какао
   - name: Кондитерские ингредиенты
-  - name: Варенье, джемы и сиропы
+  - name: Варенье
+  - name: Cиропы
 
   - name: Консервы
   - name: Маринады и соленья
@@ -67,7 +69,7 @@ ingredients:
     base_unit: gram
 
   - name: Панчетта
-    category: Колбасы и мясные изделия
+    category: Колбасы
     base_unit: gram
 
   - name: Свекла
@@ -151,23 +153,23 @@ ingredients:
     base_unit: gram
 
   - name: Черный перец
-    category: Специи и приправы
+    category: Специи
     base_unit: pinch
 
   - name: Соль
-    category: Специи и приправы
+    category: Специи
     base_unit: to_taste
 
   - name: Томатная паста
-    category: Соусы и заправки
+    category: Соусы
     base_unit: tablespoon
 
   - name: Оливковое масло
-    category: Масла и жиры
+    category: Масла
     base_unit: milliliter
 
   - name: Уксус
-    category: Уксусы и кислоты
+    category: Уксусы
     base_unit: tablespoon
 
   - name: Сахар
@@ -183,7 +185,7 @@ ingredients:
     base_unit: tablespoon
 
   - name: Лавровый лист
-    category: Специи и приправы
+    category: Специи
     base_unit: piece
 
 dishes:

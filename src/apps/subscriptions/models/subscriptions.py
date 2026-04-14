@@ -61,6 +61,22 @@ class Subscription(BaseModel):
         null=True,
         blank=True,
     )
+    pending_tariff = models.ForeignKey(
+        'subscriptions.Tariff',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='pending_subscriptions',
+        verbose_name='Ожидающий тариф',
+    )
+    payment_method = models.ForeignKey(
+        'subscriptions.PaymentMethod',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='subscriptions',
+        verbose_name='Метод оплаты',
+    )
 
     objects: SubscriptionManager = SubscriptionManager()
 

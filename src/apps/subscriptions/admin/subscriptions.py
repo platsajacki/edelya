@@ -10,7 +10,7 @@ class SubscriptionAdmin(ModelAdmin):
         (
             'General',
             {
-                'fields': ('user', 'tariff', 'status', 'auto_renew'),
+                'fields': ('user', 'tariff', 'pending_tariff', 'status', 'auto_renew', 'payment_method'),
             },
         ),
         (
@@ -44,4 +44,4 @@ class SubscriptionAdmin(ModelAdmin):
     list_filter = ('status', 'auto_renew', 'tariff')
     search_fields = ('user__username', 'user__telegram_username', 'user__telegram_id')
     ordering = ('-created_at',)
-    autocomplete_fields = ('user', 'tariff')
+    autocomplete_fields = ('user', 'tariff', 'pending_tariff', 'payment_method')
