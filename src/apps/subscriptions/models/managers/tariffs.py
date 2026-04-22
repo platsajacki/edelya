@@ -30,6 +30,9 @@ class TariffManager(ActiveManager['Tariff', TariffQuerySet]):
     def actived(self) -> TariffQuerySet:
         return self.get_queryset().actived()
 
+    def actual(self) -> TariffQuerySet:
+        return self.get_queryset().published().actived()
+
     def get_trial_tariff(self) -> Tariff:
         return self.get_queryset().get_trial_tariff()
 

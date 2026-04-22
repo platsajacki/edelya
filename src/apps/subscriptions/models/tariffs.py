@@ -1,4 +1,8 @@
+from datetime import datetime
+
 from django.db import models
+
+from dateutil.relativedelta import relativedelta
 
 from apps.subscriptions.constants import DEFAULT_TRIAL_DAYS
 from apps.subscriptions.models.managers import TariffManager
@@ -81,3 +85,10 @@ class Tariff(BaseModel):
 
     def __str__(self) -> str:
         return self.name
+
+    def get_next_period_end(self, start: datetime) -> datetime:
+        if self.billing_period == BillingPeriod.MONTHLY:
+            return start + relativedelta(months=1)
+        elif self.billing_period == BillingPeriod.YEARLY:
+            return start + relativedelta(years=1)
+        return start + relativedelta(months=1)

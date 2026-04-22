@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from typing import TYPE_CHECKING
 
 from django.db import models
 from django.utils import timezone
@@ -8,15 +9,24 @@ from apps.subscriptions.models.managers import SubscriptionManager
 from apps.subscriptions.models.model_enums import SubscriptionStatus
 from core.base.abstract_models import BaseModel
 
+if TYPE_CHECKING:
+    from apps.subscriptions.models import PaymentMethod, Tariff
+    from apps.users.models import User
+
 
 class Subscription(BaseModel):
-    user = models.OneToOneField(
+    if TYPE_CHECKING:
+        user: User
+        tariff: Tariff
+        pending_tariff: Tariff | None
+        payment_method: PaymentMethod | None
+    user = models.OneToOneField(  # type: ignore[assignment]
         'users.User',
         on_delete=models.CASCADE,
         related_name='subscription',
         verbose_name='Пользователь',
     )
-    tariff = models.ForeignKey(
+    tariff = models.ForeignKey(  # type: ignore[assignment]
         'subscriptions.Tariff',
         on_delete=models.PROTECT,
         related_name='subscriptions',
@@ -61,7 +71,7 @@ class Subscription(BaseModel):
         null=True,
         blank=True,
     )
-    pending_tariff = models.ForeignKey(
+    pending_tariff = models.ForeignKey(  # type: ignore[assignment]
         'subscriptions.Tariff',
         on_delete=models.SET_NULL,
         null=True,
@@ -69,7 +79,7 @@ class Subscription(BaseModel):
         related_name='pending_subscriptions',
         verbose_name='Ожидающий тариф',
     )
-    payment_method = models.ForeignKey(
+    payment_method = models.ForeignKey(  # type: ignore[assignment]
         'subscriptions.PaymentMethod',
         on_delete=models.SET_NULL,
         null=True,

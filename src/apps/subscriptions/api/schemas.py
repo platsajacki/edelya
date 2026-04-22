@@ -57,7 +57,7 @@ class TariffViewSetSchema:
 
 
 class SubscriptionViewSetSchema:
-    custom_actions = {'me', 'start_trial'}
+    custom_actions = {'me', 'start_trial', 'select_tariff'}
 
     me = extend_schema(
         tags=[SUBSCRIPTION_TAG],
@@ -84,6 +84,61 @@ class SubscriptionViewSetSchema:
             status.HTTP_201_CREATED: OpenApiResponse(
                 description='Trial subscription created',
                 response=SubscriptionSerializer(),
+            ),
+            **STANDARD_ERROR_RESPONSES,
+        },
+    )
+    select_tariff = extend_schema(
+        tags=[SUBSCRIPTION_TAG],
+        summary='Select a tariff',
+        description=(
+            'Switch the current subscription to a different tariff.\n\n'
+            '**Possible outcomes depending on the current subscription state:**\n\n'
+            '- **No card on file** — the user is redirected to a card binding page. '
+            'After the card is saved, the selected tariff will be applied automatically.\n\n'
+            '- **Inactive subscription (expired or cancelled)** — the user is redirected to a payment page '
+            'to pay for the selected tariff and re-activate the subscription.\n\n'
+            '- **Active subscription, downgrade (cheaper tariff)** — the new tariff is scheduled '
+            'and will take effect at the start of the next billing cycle. No charge is made now.\n\n'
+            '- **Active subscription, upgrade (more expensive tariff)** — the user is charged a prorated '
+            'amount for the remaining days of the current period, and the new tariff is activated immediately.\n\n'
+            '**Response format:**\n\n'
+            'The `action` field indicates what the client should do:\n'
+            '- `redirect` — open the `confirmation_url` in a browser. '
+            'The `context` field clarifies the reason: `card_binding` or `payment`.\n'
+            '- `success` — no further action needed. '
+            'The updated subscription is included in the `subscription` field.\n\n'
+            'The `description` field always contains a human-readable explanation of what '
+            'happened or what is expected from the user.'
+        ),
+        responses={
+            status.HTTP_200_OK: OpenApiResponse(
+                description='Tariff selection result',
+                response={
+                    'oneOf': [
+                        {
+                            'type': 'object',
+                            'title': 'Redirect',
+                            'properties': {
+                                'action': {'type': 'string', 'enum': ['redirect']},
+                                'confirmation_url': {'type': 'string', 'format': 'uri'},
+                                'context': {'type': 'string', 'enum': ['card_binding', 'payment']},
+                                'description': {'type': 'string'},
+                            },
+                            'required': ['action', 'confirmation_url', 'context', 'description'],
+                        },
+                        {
+                            'type': 'object',
+                            'title': 'Success',
+                            'properties': {
+                                'action': {'type': 'string', 'enum': ['success']},
+                                'subscription': {'type': 'object'},
+                                'description': {'type': 'string'},
+                            },
+                            'required': ['action', 'subscription', 'description'],
+                        },
+                    ]
+                },
             ),
             **STANDARD_ERROR_RESPONSES,
         },

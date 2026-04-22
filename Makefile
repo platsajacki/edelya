@@ -67,11 +67,14 @@ shell:
 	python src/manage.py shell
 
 TEST ?= src/_tests
-COVERAGE ?= --cov=src --cov-report=term-missing
 F ?= -q
 test:
 	make install-hooks
-	pytest $(TEST) --create-db $(COVERAGE) $(F)
+	pytest $(TEST) --create-db $(F)
+
+COVERAGE ?= --cov=src --cov-report=term-missing
+test-cov:
+	pytest $(TEST) --create-db COVERAGE="$(COVERAGE)"
 
 load-start-data:
 	python src/manage.py load_start_data

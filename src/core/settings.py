@@ -6,6 +6,7 @@ from corsheaders.defaults import default_headers
 from dotenv import load_dotenv
 
 from core.logging_handlers import get_logging_dict
+from core.utils import build_redis_retry_policy
 
 load_dotenv()
 
@@ -66,7 +67,7 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 
 # Database
-ENGINE = 'django.db.backends.postgresql'
+ENGINE = 'core.backends.db.postgresql'
 
 DATABASES = {
     'default': {
@@ -78,7 +79,8 @@ DATABASES = {
         'PORT': getenv('POSTGRES_PORT', '5432'),
     }
 }
-
+MAX_DB_CONNECTION_RETRIES = int(getenv('MAX_DB_CONNECTION_RETRIES', '3'))
+DELAY_BETWEEN_DB_RETRIES = float(getenv('DELAY_BETWEEN_DB_RETRIES', '0.2'))
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -101,6 +103,11 @@ AUTH_USER_MODEL = 'users.User'
 
 # Telegram Bot settings
 EDELYA_BOT_TOKEN = getenv('EDELYA_BOT_TOKEN', '')
+
+# YooKassa settings
+YOOKASSA_SHOP_ID = getenv('YOOKASSA_SHOP_ID', '')
+YOOKASSA_SECRET_KEY = getenv('YOOKASSA_SECRET_KEY', '')
+YOOKASSA_RETURN_URL = getenv('YOOKASSA_RETURN_URL', '')
 
 # Rest Framework & JWT settings
 REST_FRAMEWORK = {
@@ -144,6 +151,54 @@ TEMPLATES = [
         },
     },
 ]
+
+# Redis and Celery Settings
+REDIS_HOST = getenv('REDIS_HOST', 'redis://127.0.0.1:6379')
+REDIS_TOTAL_CONNECTION_ATTEMPTS = int(getenv('REDIS_TOTAL_CONNECTION_ATTEMPTS', '5'))
+REDIS_SOCKET_CONNECT_TIMEOUT = float(getenv('REDIS_SOCKET_CONNECT_TIMEOUT', '2'))
+REDIS_SOCKET_TIMEOUT = float(getenv('REDIS_SOCKET_TIMEOUT', '3'))
+REDIS_RETRY_BACKOFF_BASE = float(getenv('REDIS_RETRY_BACKOFF_BASE', '0.3'))
+REDIS_RETRY_BACKOFF_CAP = float(getenv('REDIS_RETRY_BACKOFF_CAP', '1.5'))
+REDIS_RETRY_POLICY = build_redis_retry_policy(
+    attempts=REDIS_TOTAL_CONNECTION_ATTEMPTS, base=REDIS_RETRY_BACKOFF_BASE, cap=REDIS_RETRY_BACKOFF_CAP
+)
+
+REDIS_CACHE_OPTIONS = {
+    'socket_connect_timeout': REDIS_SOCKET_CONNECT_TIMEOUT,
+    'socket_timeout': REDIS_SOCKET_TIMEOUT,
+    'retry_on_timeout': True,
+    'retry': REDIS_RETRY_POLICY,
+}
+
+REDIS_CELERY_RETRY_POLICY = {
+    'interval_start': 0,
+    'interval_step': REDIS_RETRY_BACKOFF_BASE,
+    'interval_max': REDIS_RETRY_BACKOFF_CAP,
+    'max_retries': REDIS_TOTAL_CONNECTION_ATTEMPTS,
+}
+
+if not DEBUG:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': f'{REDIS_HOST}/1',
+            'OPTIONS': REDIS_CACHE_OPTIONS,
+        }
+    }
+    CELERY_BROKER_URL = f'{REDIS_HOST}/2'
+    CELERY_BACKEND_URL = f'{REDIS_HOST}/3'
+    CELERY_TASK_SERIALIZER = 'json'
+    CELERY_TIMEZONE = TIME_ZONE
+    CELERY_RESULT_EXPIRES = 3600
+    CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+    CELERY_WORKER_HIJACK_ROOT_LOGGER = False
+    CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+    CELERYD_MAX_TASKS_PER_CHILD = 100
+    CELERYD_PREFETCH_MULTIPLIER = 4
+    CELERY_BROKER_TRANSPORT_OPTIONS = {
+        'max_retries': REDIS_TOTAL_CONNECTION_ATTEMPTS,
+        'retry_policy': REDIS_CELERY_RETRY_POLICY,
+    }
 
 
 # logging configuration

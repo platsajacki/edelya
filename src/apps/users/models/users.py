@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.validators import ASCIIUsernameValidator
 from django.db import models
@@ -8,8 +10,14 @@ from core.base.validators import dict_validator
 
 ascii_username_validator = ASCIIUsernameValidator()
 
+if TYPE_CHECKING:
+    from apps.subscriptions.models import Subscription
+
 
 class User(BaseModel, AbstractUser):
+    if TYPE_CHECKING:
+        subscription: Subscription
+
     username = models.CharField(  # type: ignore[assignment]
         verbose_name='Username',
         max_length=150,

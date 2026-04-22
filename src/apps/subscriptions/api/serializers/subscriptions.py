@@ -1,3 +1,4 @@
+from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
 
 from apps.subscriptions.api.serializers.tariffs import TariffSerializer
@@ -24,3 +25,11 @@ class SubscriptionSerializer(ModelSerializer):
             'updated_at',
         ]
         read_only_fields = fields
+
+
+class SubscriptionTariffSelectSerializer(ModelSerializer):
+    tariff_id = serializers.UUIDField()
+
+    class Meta:
+        model = Subscription
+        fields = ['tariff_id']
