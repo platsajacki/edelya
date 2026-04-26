@@ -104,10 +104,13 @@ AUTH_USER_MODEL = 'users.User'
 # Telegram Bot settings
 EDELYA_BOT_TOKEN = getenv('EDELYA_BOT_TOKEN', '')
 
+# Frontend URL
+FRONTEND_URL = getenv('FRONTEND_URL', '')
+
 # YooKassa settings
 YOOKASSA_SHOP_ID = getenv('YOOKASSA_SHOP_ID', '')
 YOOKASSA_SECRET_KEY = getenv('YOOKASSA_SECRET_KEY', '')
-YOOKASSA_RETURN_URL = getenv('YOOKASSA_RETURN_URL', '')
+YOOKASSA_RETURN_URL = f'{FRONTEND_URL.rstrip("/")}/#/cabinet?payment_return=1' if FRONTEND_URL else ''
 
 # Rest Framework & JWT settings
 REST_FRAMEWORK = {
