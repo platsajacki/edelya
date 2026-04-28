@@ -1,12 +1,65 @@
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import status
 
+from apps.subscriptions.api.serializers.payment_methods import PaymentMethodSerializer
 from apps.subscriptions.api.serializers.subscriptions import SubscriptionSerializer
 from apps.subscriptions.api.serializers.tariffs import TariffSerializer
 from core.schemas import STANDARD_ERROR_RESPONSES
 
+PAYMENT_METHOD_TAG = 'Payment Methods'
 SUBSCRIPTION_TAG = 'Subscriptions'
 TARIFF_TAG = 'Tariffs'
+
+
+class PaymentMethodViewSetSchema:
+    create = extend_schema(
+        tags=[PAYMENT_METHOD_TAG],
+        summary='Bind a payment method',
+        description=(
+            'Initiates a card binding flow via YooKassa. '
+            'Returns a `confirmation_url` to redirect the user to for card entry.\n\n'
+            'Returns **409 Conflict** if the user already has a payment method. '
+            'Delete the existing one first before binding a new card.'
+        ),
+        request=None,
+        responses={
+            status.HTTP_200_OK: OpenApiResponse(
+                description='Card binding initiated — redirect the user to `confirmation_url`',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'action': {'type': 'string', 'enum': ['redirect']},
+                        'confirmation_url': {'type': 'string', 'format': 'uri'},
+                        'context': {'type': 'string', 'enum': ['card_binding']},
+                        'description': {'type': 'string'},
+                    },
+                    'required': ['action', 'confirmation_url', 'context', 'description'],
+                },
+            ),
+            **STANDARD_ERROR_RESPONSES,
+        },
+    )
+    retrieve = extend_schema(
+        tags=[PAYMENT_METHOD_TAG],
+        summary='Retrieve payment method',
+        description='Retrieve the saved payment method of the authenticated user.',
+        responses={
+            status.HTTP_200_OK: OpenApiResponse(
+                description='Payment method details',
+                response=PaymentMethodSerializer(),
+            ),
+            **STANDARD_ERROR_RESPONSES,
+        },
+    )
+    destroy = extend_schema(
+        tags=[PAYMENT_METHOD_TAG],
+        summary='Delete payment method',
+        description='Delete the saved payment method of the authenticated user.',
+        responses={
+            status.HTTP_204_NO_CONTENT: OpenApiResponse(description='Payment method deleted'),
+            **STANDARD_ERROR_RESPONSES,
+        },
+    )
 
 
 class TariffViewSetSchema:

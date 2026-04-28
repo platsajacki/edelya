@@ -1,6 +1,7 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
+from apps.subscriptions.api.views.payment_methods import PaymentMethodViewSet
 from apps.subscriptions.api.views.subscriptions import SubscriptionViewSet
 from apps.subscriptions.api.views.tariffs import TariffViewSet
 
@@ -17,5 +18,15 @@ urlpatterns = [
             (router.urls, 'subscriptions'),
             namespace='subscriptions',
         ),
+    ),
+    path(
+        'subscriptions/payment-method/',
+        PaymentMethodViewSet.as_view(),
+        name='payment-method-create',
+    ),
+    path(
+        'subscriptions/payment-method/<uuid:payment_method_id>/',
+        PaymentMethodViewSet.as_view(),
+        name='payment-method-detail',
     ),
 ]

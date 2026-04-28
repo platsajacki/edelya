@@ -4,10 +4,10 @@ from core.base.abstract_models import BaseModel
 
 
 class PaymentMethod(BaseModel):
-    user = models.ForeignKey(
+    user = models.OneToOneField(
         'users.User',
         on_delete=models.CASCADE,
-        related_name='payment_methods',
+        related_name='payment_method',
         verbose_name='Пользователь',
     )
     yookassa_payment_method_id = models.CharField(
