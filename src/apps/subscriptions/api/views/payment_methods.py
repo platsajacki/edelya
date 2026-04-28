@@ -1,6 +1,7 @@
 from typing import Any
 
 from django.db.models import QuerySet
+from rest_framework.exceptions import NotFound
 from rest_framework.generics import CreateAPIView, DestroyAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
@@ -21,10 +22,16 @@ class PaymentMethodViewSet(RetrieveAPIView, DestroyAPIView, CreateAPIView):
     serializer_class = PaymentMethodSerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
-    lookup_url_kwarg = 'payment_method_id'
 
     def get_queryset(self) -> QuerySet:
         return PaymentMethod.objects.filter(user=self.request.user)
+
+    def get_object(self) -> PaymentMethod:
+        try:
+            obj = self.get_queryset().get()
+        except (PaymentMethod.DoesNotExist, PaymentMethod.MultipleObjectsReturned) as e:
+            raise NotFound('No payment method found for the authenticated user.') from e
+        return obj
 
     def create(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         result = PaymentMethodBinder(user=request.user)()

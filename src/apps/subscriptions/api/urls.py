@@ -22,11 +22,6 @@ urlpatterns = [
     path(
         'subscriptions/payment-method/',
         PaymentMethodViewSet.as_view(),
-        name='payment-method-create',
-    ),
-    path(
-        'subscriptions/payment-method/<uuid:payment_method_id>/',
-        PaymentMethodViewSet.as_view(),
-        name='payment-method-detail',
+        name='payment-method',
     ),
 ]

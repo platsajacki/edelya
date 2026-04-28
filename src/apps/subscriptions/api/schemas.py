@@ -16,15 +16,14 @@ class PaymentMethodViewSetSchema:
         tags=[PAYMENT_METHOD_TAG],
         summary='Bind a payment method',
         description=(
-            'Initiates a card binding flow via YooKassa. '
-            'Returns a `confirmation_url` to redirect the user to for card entry.\n\n'
-            'Returns **409 Conflict** if the user already has a payment method. '
-            'Delete the existing one first before binding a new card.'
+            'Initiates a YooKassa card binding flow. '
+            'Returns a `confirmation_url` to redirect the user to for card entry. '
+            'Returns **409** if a payment method already exists — delete it first.'
         ),
         request=None,
         responses={
             status.HTTP_200_OK: OpenApiResponse(
-                description='Card binding initiated — redirect the user to `confirmation_url`',
+                description='Card binding initiated — open `confirmation_url` in a browser or WebView',
                 response={
                     'type': 'object',
                     'properties': {
@@ -42,10 +41,10 @@ class PaymentMethodViewSetSchema:
     retrieve = extend_schema(
         tags=[PAYMENT_METHOD_TAG],
         summary='Retrieve payment method',
-        description='Retrieve the saved payment method of the authenticated user.',
+        description='Returns the saved payment method of the authenticated user. Returns **404** if no card is bound.',
         responses={
             status.HTTP_200_OK: OpenApiResponse(
-                description='Payment method details',
+                description='Saved payment method',
                 response=PaymentMethodSerializer(),
             ),
             **STANDARD_ERROR_RESPONSES,
@@ -54,7 +53,10 @@ class PaymentMethodViewSetSchema:
     destroy = extend_schema(
         tags=[PAYMENT_METHOD_TAG],
         summary='Delete payment method',
-        description='Delete the saved payment method of the authenticated user.',
+        description=(
+            'Deletes the saved payment method of the authenticated user. '
+            'Deleting a card while an active paid subscription is running will prevent automatic renewal.'
+        ),
         responses={
             status.HTTP_204_NO_CONTENT: OpenApiResponse(description='Payment method deleted'),
             **STANDARD_ERROR_RESPONSES,

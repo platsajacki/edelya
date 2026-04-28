@@ -1,7 +1,5 @@
 from pytest_mock import MockType
 
-import uuid
-
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
@@ -9,16 +7,12 @@ from rest_framework.test import APIClient
 from apps.subscriptions.models import PaymentMethod
 from apps.users.models import User
 
-PAYMENT_METHOD_CREATE_URL = reverse('api_v1:subscriptions:payment-method-create')
-
-
-def payment_method_detail_url(payment_method_id: uuid.UUID) -> str:
-    return reverse('api_v1:subscriptions:payment-method-detail', kwargs={'payment_method_id': payment_method_id})
+PAYMENT_METHOD_URL = reverse('api_v1:subscriptions:payment-method')
 
 
 class TestPaymentMethodCreate:
     def test_anon_user_gets_401(self, api_client: APIClient) -> None:
-        response = api_client.post(PAYMENT_METHOD_CREATE_URL)
+        response = api_client.post(PAYMENT_METHOD_URL)
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     def test_authenticated_user_gets_200(
@@ -29,7 +23,7 @@ class TestPaymentMethodCreate:
     ) -> None:
         mock_yookassa_payment_method_create.return_value.confirmation.confirmation_url = 'https://yookassa.ru/pay'
         api_client.force_authenticate(user=telegram_user)
-        response = api_client.post(PAYMENT_METHOD_CREATE_URL)
+        response = api_client.post(PAYMENT_METHOD_URL)
         assert response.status_code == status.HTTP_200_OK
 
     def test_response_is_redirect_with_card_binding_context(
@@ -40,7 +34,7 @@ class TestPaymentMethodCreate:
     ) -> None:
         mock_yookassa_payment_method_create.return_value.confirmation.confirmation_url = 'https://yookassa.ru/pay'
         api_client.force_authenticate(user=telegram_user)
-        response = api_client.post(PAYMENT_METHOD_CREATE_URL)
+        response = api_client.post(PAYMENT_METHOD_URL)
         assert response.data['action'] == 'redirect'
         assert response.data['context'] == 'card_binding'
         assert response.data['confirmation_url'] == 'https://yookassa.ru/pay'
@@ -52,7 +46,7 @@ class TestPaymentMethodCreate:
         active_payment_method: PaymentMethod,
     ) -> None:
         api_client.force_authenticate(user=telegram_user)
-        response = api_client.post(PAYMENT_METHOD_CREATE_URL)
+        response = api_client.post(PAYMENT_METHOD_URL)
         assert response.status_code == status.HTTP_409_CONFLICT
 
     def test_yookassa_not_called_when_method_exists(
@@ -63,7 +57,7 @@ class TestPaymentMethodCreate:
         mock_yookassa_payment_method_create: MockType,
     ) -> None:
         api_client.force_authenticate(user=telegram_user)
-        api_client.post(PAYMENT_METHOD_CREATE_URL)
+        api_client.post(PAYMENT_METHOD_URL)
         mock_yookassa_payment_method_create.assert_not_called()
 
     def test_yookassa_service_is_called(
@@ -74,13 +68,13 @@ class TestPaymentMethodCreate:
     ) -> None:
         mock_yookassa_payment_method_create.return_value.confirmation.confirmation_url = 'https://yookassa.ru/pay'
         api_client.force_authenticate(user=telegram_user)
-        api_client.post(PAYMENT_METHOD_CREATE_URL)
+        api_client.post(PAYMENT_METHOD_URL)
         mock_yookassa_payment_method_create.assert_called_once()
 
 
 class TestPaymentMethodRetrieve:
-    def test_anon_user_gets_401(self, api_client: APIClient, active_payment_method: PaymentMethod) -> None:
-        response = api_client.get(payment_method_detail_url(active_payment_method.id))
+    def test_anon_user_gets_401(self, api_client: APIClient) -> None:
+        response = api_client.get(PAYMENT_METHOD_URL)
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     def test_owner_gets_200(
@@ -90,7 +84,7 @@ class TestPaymentMethodRetrieve:
         active_payment_method: PaymentMethod,
     ) -> None:
         api_client.force_authenticate(user=telegram_user)
-        response = api_client.get(payment_method_detail_url(active_payment_method.id))
+        response = api_client.get(PAYMENT_METHOD_URL)
         assert response.status_code == status.HTTP_200_OK
 
     def test_response_contains_expected_fields(
@@ -100,35 +94,35 @@ class TestPaymentMethodRetrieve:
         active_payment_method: PaymentMethod,
     ) -> None:
         api_client.force_authenticate(user=telegram_user)
-        response = api_client.get(payment_method_detail_url(active_payment_method.id))
+        response = api_client.get(PAYMENT_METHOD_URL)
         assert response.data['id'] == str(active_payment_method.id)
         assert response.data['card_last4'] == active_payment_method.card_last4
         assert response.data['card_type'] == active_payment_method.card_type
         assert response.data['is_active'] == active_payment_method.is_active
 
-    def test_another_users_payment_method_gets_404(
+    def test_user_without_payment_method_gets_404(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+    ) -> None:
+        api_client.force_authenticate(user=telegram_user)
+        response = api_client.get(PAYMENT_METHOD_URL)
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_another_user_cannot_see_others_method(
         self,
         api_client: APIClient,
         another_telegram_user: User,
         active_payment_method: PaymentMethod,
     ) -> None:
         api_client.force_authenticate(user=another_telegram_user)
-        response = api_client.get(payment_method_detail_url(active_payment_method.id))
-        assert response.status_code == status.HTTP_404_NOT_FOUND
-
-    def test_nonexistent_id_gets_404(
-        self,
-        api_client: APIClient,
-        telegram_user: User,
-    ) -> None:
-        api_client.force_authenticate(user=telegram_user)
-        response = api_client.get(payment_method_detail_url(uuid.uuid4()))
+        response = api_client.get(PAYMENT_METHOD_URL)
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
 class TestPaymentMethodDestroy:
-    def test_anon_user_gets_401(self, api_client: APIClient, active_payment_method: PaymentMethod) -> None:
-        response = api_client.delete(payment_method_detail_url(active_payment_method.id))
+    def test_anon_user_gets_401(self, api_client: APIClient) -> None:
+        response = api_client.delete(PAYMENT_METHOD_URL)
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     def test_owner_gets_204(
@@ -138,7 +132,7 @@ class TestPaymentMethodDestroy:
         active_payment_method: PaymentMethod,
     ) -> None:
         api_client.force_authenticate(user=telegram_user)
-        response = api_client.delete(payment_method_detail_url(active_payment_method.id))
+        response = api_client.delete(PAYMENT_METHOD_URL)
         assert response.status_code == status.HTTP_204_NO_CONTENT
 
     def test_payment_method_is_deleted(
@@ -148,24 +142,24 @@ class TestPaymentMethodDestroy:
         active_payment_method: PaymentMethod,
     ) -> None:
         api_client.force_authenticate(user=telegram_user)
-        api_client.delete(payment_method_detail_url(active_payment_method.id))
+        api_client.delete(PAYMENT_METHOD_URL)
         assert not PaymentMethod.objects.filter(id=active_payment_method.id).exists()
 
-    def test_another_users_payment_method_gets_404(
+    def test_user_without_payment_method_gets_404(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+    ) -> None:
+        api_client.force_authenticate(user=telegram_user)
+        response = api_client.delete(PAYMENT_METHOD_URL)
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_another_user_cannot_delete_others_method(
         self,
         api_client: APIClient,
         another_telegram_user: User,
         active_payment_method: PaymentMethod,
     ) -> None:
         api_client.force_authenticate(user=another_telegram_user)
-        response = api_client.delete(payment_method_detail_url(active_payment_method.id))
-        assert response.status_code == status.HTTP_404_NOT_FOUND
-
-    def test_nonexistent_id_gets_404(
-        self,
-        api_client: APIClient,
-        telegram_user: User,
-    ) -> None:
-        api_client.force_authenticate(user=telegram_user)
-        response = api_client.delete(payment_method_detail_url(uuid.uuid4()))
+        response = api_client.delete(PAYMENT_METHOD_URL)
         assert response.status_code == status.HTTP_404_NOT_FOUND
