@@ -12,7 +12,7 @@ TARIFF_TAG = 'Tariffs'
 
 
 class PaymentMethodViewSetSchema:
-    create = extend_schema(
+    get = extend_schema(
         tags=[PAYMENT_METHOD_TAG],
         summary='Bind a payment method',
         description=(
@@ -38,7 +38,7 @@ class PaymentMethodViewSetSchema:
             **STANDARD_ERROR_RESPONSES,
         },
     )
-    retrieve = extend_schema(
+    post = extend_schema(
         tags=[PAYMENT_METHOD_TAG],
         summary='Retrieve payment method',
         description='Returns the saved payment method of the authenticated user. Returns **404** if no card is bound.',
@@ -50,7 +50,7 @@ class PaymentMethodViewSetSchema:
             **STANDARD_ERROR_RESPONSES,
         },
     )
-    destroy = extend_schema(
+    delete = extend_schema(
         tags=[PAYMENT_METHOD_TAG],
         summary='Delete payment method',
         description=(
