@@ -1,4 +1,5 @@
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
@@ -9,6 +10,7 @@ from apps.users.models import User
 SUBSCRIPTION_ME_URL = reverse('api_v1:subscriptions:subscriptions:subscription-me')
 START_TRIAL_URL = reverse('api_v1:subscriptions:subscriptions:subscription-start-trial')
 CANCEL_URL = reverse('api_v1:subscriptions:subscriptions:subscription-cancel')
+RESUME_URL = reverse('api_v1:subscriptions:subscriptions:subscription-resume')
 
 
 class TestSubscriptionMe:
@@ -76,6 +78,7 @@ class TestSubscriptionMe:
             'current_period_start',
             'current_period_end',
             'auto_renew',
+            'cancelled_at',
             'is_active',
             'created_at',
             'updated_at',
@@ -320,6 +323,7 @@ class TestCancelSubscription:
     ) -> None:
         """ACTIVE + cancelled_at already set → cancellation already in progress."""
         from django.utils import timezone
+
         active_subscription.cancelled_at = timezone.now()
         active_subscription.auto_renew = False
         active_subscription.save(update_fields=['cancelled_at', 'auto_renew'])
@@ -337,3 +341,116 @@ class TestCancelSubscription:
         response = api_client.post(CANCEL_URL)
         assert response.data['id'] == str(active_subscription.id)
         assert response.data['auto_renew'] is False
+
+
+class TestResumeSubscription:
+    def test_anon_user_gets_401(self, api_client: APIClient) -> None:
+        response = api_client.post(RESUME_URL)
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_user_without_subscription_gets_404(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+    ) -> None:
+        api_client.force_authenticate(user=telegram_user)
+        response = api_client.post(RESUME_URL)
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_resume_active_pending_cancellation_returns_200(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        active_subscription: Subscription,
+    ) -> None:
+        active_subscription.cancelled_at = timezone.now()
+        active_subscription.auto_renew = False
+        active_subscription.save(update_fields=['cancelled_at', 'auto_renew'])
+        api_client.force_authenticate(user=telegram_user)
+        response = api_client.post(RESUME_URL)
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_resume_sets_auto_renew_true(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        active_subscription: Subscription,
+    ) -> None:
+        active_subscription.cancelled_at = timezone.now()
+        active_subscription.auto_renew = False
+        active_subscription.save(update_fields=['cancelled_at', 'auto_renew'])
+        api_client.force_authenticate(user=telegram_user)
+        api_client.post(RESUME_URL)
+        active_subscription.refresh_from_db()
+        assert active_subscription.auto_renew is True
+
+    def test_resume_clears_cancelled_at(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        active_subscription: Subscription,
+    ) -> None:
+        active_subscription.cancelled_at = timezone.now()
+        active_subscription.auto_renew = False
+        active_subscription.save(update_fields=['cancelled_at', 'auto_renew'])
+        api_client.force_authenticate(user=telegram_user)
+        api_client.post(RESUME_URL)
+        active_subscription.refresh_from_db()
+        assert active_subscription.cancelled_at is None
+
+    def test_resume_trial_pending_cancellation_returns_200(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        trial_subscription: Subscription,
+    ) -> None:
+        trial_subscription.cancelled_at = timezone.now()
+        trial_subscription.auto_renew = False
+        trial_subscription.save(update_fields=['cancelled_at', 'auto_renew'])
+        api_client.force_authenticate(user=telegram_user)
+        response = api_client.post(RESUME_URL)
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_resume_subscription_not_pending_cancellation_gets_400(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        active_subscription: Subscription,
+    ) -> None:
+        """ACTIVE with cancelled_at=None — nothing to resume."""
+        api_client.force_authenticate(user=telegram_user)
+        response = api_client.post(RESUME_URL)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_resume_expired_subscription_gets_400(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        base_tariff: Tariff,
+    ) -> None:
+        from django.utils import timezone
+
+        Subscription.objects.create(
+            user=telegram_user,
+            tariff=base_tariff,
+            status=SubscriptionStatus.EXPIRED,
+            cancelled_at=timezone.now(),
+            auto_renew=False,
+        )
+        api_client.force_authenticate(user=telegram_user)
+        response = api_client.post(RESUME_URL)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_resume_response_contains_subscription_data(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        active_subscription: Subscription,
+    ) -> None:
+        active_subscription.cancelled_at = timezone.now()
+        active_subscription.auto_renew = False
+        active_subscription.save(update_fields=['cancelled_at', 'auto_renew'])
+        api_client.force_authenticate(user=telegram_user)
+        response = api_client.post(RESUME_URL)
+        assert response.data['id'] == str(active_subscription.id)
+        assert response.data['auto_renew'] is True

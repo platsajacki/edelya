@@ -20,6 +20,7 @@ class SubscriptionSerializer(ModelSerializer):
             'current_period_start',
             'current_period_end',
             'auto_renew',
+            'cancelled_at',
             'is_active',
             'created_at',
             'updated_at',

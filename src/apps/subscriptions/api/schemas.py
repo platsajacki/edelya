@@ -112,7 +112,7 @@ class TariffViewSetSchema:
 
 
 class SubscriptionViewSetSchema:
-    custom_actions = {'me', 'start_trial', 'select_tariff', 'cancel'}
+    custom_actions = {'me', 'start_trial', 'select_tariff', 'cancel', 'resume'}
 
     me = extend_schema(
         tags=[SUBSCRIPTION_TAG],
@@ -213,6 +213,25 @@ class SubscriptionViewSetSchema:
         responses={
             status.HTTP_200_OK: OpenApiResponse(
                 description='Subscription cancelled',
+                response=SubscriptionSerializer(),
+            ),
+            **STANDARD_ERROR_RESPONSES,
+        },
+    )
+    resume = extend_schema(
+        tags=[SUBSCRIPTION_TAG],
+        summary='Resume subscription',
+        description=(
+            'Undo a pending cancellation.\n\n'
+            'Sets `auto_renew` back to `True` and clears `cancelled_at`. '
+            'The subscription continues as normal at the end of the current billing period.\n\n'
+            'Returns **400** if `cancelled_at` is not set (nothing to resume), '
+            'or if the subscription status is not `active` or `trial`.'
+        ),
+        request=None,
+        responses={
+            status.HTTP_200_OK: OpenApiResponse(
+                description='Cancellation undone — subscription will continue',
                 response=SubscriptionSerializer(),
             ),
             **STANDARD_ERROR_RESPONSES,
