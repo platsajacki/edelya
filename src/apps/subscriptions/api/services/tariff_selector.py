@@ -179,7 +179,7 @@ class TariffSwitcher(TariffService):
             status=PaymentStatus(yookassa_status),
             idempotence_key=self.idempotence_key,
             yookassa_payment_id=yookassa_payment_id,
-            metadata={'tariff_id': str(self.tariff.id)},
+            metadata={'tariff_id': str(self.tariff.id), 'is_upgrade': True},
         )
 
     def update_subscription_to_downgrade(self, subscription: Subscription) -> None:

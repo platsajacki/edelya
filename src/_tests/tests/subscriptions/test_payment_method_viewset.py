@@ -1,10 +1,14 @@
 from pytest_mock import MockType
 
+from unittest.mock import MagicMock
+
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from apps.subscriptions.models import PaymentMethod
+from apps.subscriptions.models import PaymentMethod, Subscription
+from apps.subscriptions.models.model_enums import PaymentStatus, PaymentType
+from apps.subscriptions.models.payments import Payment
 from apps.users.models import User
 
 PAYMENT_METHOD_URL = reverse('api_v1:subscriptions:payment-method')
@@ -19,8 +23,10 @@ class TestPaymentMethodCreate:
         self,
         api_client: APIClient,
         telegram_user: User,
+        trial_subscription: Subscription,
         mock_yookassa_payment_method_create: MockType,
     ) -> None:
+        mock_yookassa_payment_method_create.return_value.id = 'yoo-pm-new-001'
         mock_yookassa_payment_method_create.return_value.confirmation.confirmation_url = 'https://yookassa.ru/pay'
         api_client.force_authenticate(user=telegram_user)
         response = api_client.post(PAYMENT_METHOD_URL)
@@ -30,8 +36,10 @@ class TestPaymentMethodCreate:
         self,
         api_client: APIClient,
         telegram_user: User,
+        trial_subscription: Subscription,
         mock_yookassa_payment_method_create: MockType,
     ) -> None:
+        mock_yookassa_payment_method_create.return_value.id = 'yoo-pm-new-002'
         mock_yookassa_payment_method_create.return_value.confirmation.confirmation_url = 'https://yookassa.ru/pay'
         api_client.force_authenticate(user=telegram_user)
         response = api_client.post(PAYMENT_METHOD_URL)
@@ -64,12 +72,36 @@ class TestPaymentMethodCreate:
         self,
         api_client: APIClient,
         telegram_user: User,
+        trial_subscription: Subscription,
         mock_yookassa_payment_method_create: MockType,
     ) -> None:
+        mock_yookassa_payment_method_create.return_value.id = 'yoo-pm-new-003'
         mock_yookassa_payment_method_create.return_value.confirmation.confirmation_url = 'https://yookassa.ru/pay'
         api_client.force_authenticate(user=telegram_user)
         api_client.post(PAYMENT_METHOD_URL)
         mock_yookassa_payment_method_create.assert_called_once()
+
+    def test_creates_zero_amount_binding_payment_record(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        trial_subscription: Subscription,
+        mock_yookassa_payment_method_create: MockType,
+    ) -> None:
+        """PaymentMethodBinder creates a Payment(ZERO_AMOUNT_BINDING) linked to user's subscription."""
+        fake_pm = MagicMock()
+        fake_pm.id = 'yoo-pm-binding-abc'
+        fake_pm.confirmation.confirmation_url = 'https://yookassa.ru/pay'
+        mock_yookassa_payment_method_create.return_value = fake_pm
+        api_client.force_authenticate(user=telegram_user)
+        api_client.post(PAYMENT_METHOD_URL)
+        payment = Payment.objects.get(yookassa_payment_id='yoo-pm-binding-abc')
+        assert payment.subscription == trial_subscription
+        assert payment.user == telegram_user
+        assert payment.amount == 0
+        assert payment.payment_type == PaymentType.ZERO_AMOUNT_BINDING
+        assert payment.status == PaymentStatus.PENDING
+        assert payment.metadata == {}
 
 
 class TestPaymentMethodRetrieve:
