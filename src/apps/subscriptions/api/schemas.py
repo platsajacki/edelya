@@ -112,7 +112,7 @@ class TariffViewSetSchema:
 
 
 class SubscriptionViewSetSchema:
-    custom_actions = {'me', 'start_trial', 'select_tariff'}
+    custom_actions = {'me', 'start_trial', 'select_tariff', 'cancel'}
 
     me = extend_schema(
         tags=[SUBSCRIPTION_TAG],
@@ -194,6 +194,26 @@ class SubscriptionViewSetSchema:
                         },
                     ]
                 },
+            ),
+            **STANDARD_ERROR_RESPONSES,
+        },
+    )
+    cancel = extend_schema(
+        tags=[SUBSCRIPTION_TAG],
+        summary='Cancel subscription',
+        description=(
+            'Cancel the current subscription.\n\n'
+            '- **TRIAL** — the pending tariff is cleared and automatic conversion to a paid plan is disabled.\n\n'
+            '- **ACTIVE** — `auto_renew` is set to `False`. Access continues until the end of the current '
+            'billing period, after which the subscription transitions to `expired`.\n\n'
+            'Returns **400** if the subscription status is `cancelled`, `expired`, or `past_due`, '
+            'or if cancellation is already in progress (`cancelled_at` is set).'
+        ),
+        request=None,
+        responses={
+            status.HTTP_200_OK: OpenApiResponse(
+                description='Subscription cancelled',
+                response=SubscriptionSerializer(),
             ),
             **STANDARD_ERROR_RESPONSES,
         },

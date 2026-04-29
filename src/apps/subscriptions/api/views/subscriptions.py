@@ -10,6 +10,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from apps.subscriptions.api.schemas import SubscriptionViewSetSchema
 from apps.subscriptions.api.serializers.subscriptions import SubscriptionSerializer, SubscriptionTariffSelectSerializer
+from apps.subscriptions.api.services.subscription_canceller import SubscriptionCanceller
 from apps.subscriptions.api.services.subscription_getter import SubscriptionGetter
 from apps.subscriptions.api.services.tariff_selector import TariffSelector
 from apps.subscriptions.api.services.trial_startrer import TrialStarter
@@ -39,3 +40,7 @@ class SubscriptionViewSet(GenericViewSet):
     def select_tariff(self, request: Request) -> Response:
         serializer = self.get_serializer(data=request.data)
         return TariffSelector(request=request, serializer=serializer)()
+
+    @action(detail=False, methods=['post'], url_path='cancel')
+    def cancel(self, request: Request) -> Response:
+        return SubscriptionCanceller(request=request, serializer_class=self.get_serializer_class())()
