@@ -4,6 +4,7 @@ from rest_framework.routers import DefaultRouter
 from apps.subscriptions.api.views.payment_methods import PaymentMethodViewSet
 from apps.subscriptions.api.views.subscriptions import SubscriptionViewSet
 from apps.subscriptions.api.views.tariffs import TariffViewSet
+from apps.subscriptions.api.views.webhooks import YookassaWebhookView
 
 app_name = 'subscriptions'
 
@@ -23,5 +24,10 @@ urlpatterns = [
         'subscriptions/payment-method/',
         PaymentMethodViewSet.as_view(),
         name='payment-method',
+    ),
+    path(
+        'subscriptions/webhooks/yookassa/',
+        YookassaWebhookView.as_view(),
+        name='yookassa-webhook',
     ),
 ]

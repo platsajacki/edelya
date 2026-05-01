@@ -1,4 +1,4 @@
-from logging import Handler, LogRecord, getLogger
+from logging import Handler, LogRecord, StreamHandler, getLogger
 from os import getenv
 from pathlib import Path
 
@@ -19,6 +19,7 @@ MAX_MESSAGE_LENGTH = 4096
 loki_logger = getLogger('loki')
 tg_logger = getLogger('tg')
 only_internal_logger = getLogger('only_internal_logger')
+only_internal_logger.addHandler(StreamHandler())
 
 
 class TelegramHandler(Handler):

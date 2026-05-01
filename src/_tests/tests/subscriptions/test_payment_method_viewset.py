@@ -101,7 +101,7 @@ class TestPaymentMethodCreate:
         assert payment.amount == 0
         assert payment.payment_type == PaymentType.ZERO_AMOUNT_BINDING
         assert payment.status == PaymentStatus.PENDING
-        assert payment.metadata == {}
+        assert payment.metadata == {'action': 'card_binding'}
 
 
 class TestPaymentMethodRetrieve:

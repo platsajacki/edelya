@@ -16,6 +16,7 @@ from apps.subscriptions.models import Subscription, Tariff
 from apps.subscriptions.models.model_enums import PaymentStatus, PaymentType, SubscriptionStatus
 from apps.subscriptions.models.payment_methods import PaymentMethod
 from apps.subscriptions.models.payments import Payment
+from apps.subscriptions.services.webhook_handler import WebhookAction
 from apps.subscriptions.services.yookassa_payments import yookassa_service
 from apps.users.models import User
 from core.base.exceptions import ConflictError
@@ -85,7 +86,8 @@ class TrialTariffBinder(TariffService):
         yookassa_payment = yookassa_service.create_payment_method_binding(idempotence_key=self.idempotence_key)
         confirmation_url = yookassa_payment.confirmation.confirmation_url
         self.create_pending_payment(
-            yookassa_payment_id=yookassa_payment.id, metadata={'tariff_id': str(self.tariff.id)}
+            yookassa_payment_id=yookassa_payment.id,
+            metadata={'action': WebhookAction.TRIAL_CARD_BINDING, 'tariff_id': str(self.tariff.id)},
         )
         return RedirectResponse(
             action=ResponseAction.REDIRECT.value,
@@ -135,7 +137,8 @@ class TariffActivator(TariffService):
         )
         confirmation_url = yookassa_payment.confirmation.confirmation_url
         self.create_pending_payment(
-            yookassa_payment_id=yookassa_payment.id, metadata={'tariff_id': str(self.tariff.id)}
+            yookassa_payment_id=yookassa_payment.id,
+            metadata={'action': WebhookAction.FIRST_PAYMENT, 'tariff_id': str(self.tariff.id)},
         )
         return RedirectResponse(
             action=ResponseAction.REDIRECT.value,

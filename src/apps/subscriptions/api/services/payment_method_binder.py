@@ -8,6 +8,7 @@ from apps.subscriptions.api.services.tariff_selector import RedirectContext, Red
 from apps.subscriptions.models import PaymentMethod
 from apps.subscriptions.models.model_enums import PaymentStatus, PaymentType
 from apps.subscriptions.models.payments import Payment
+from apps.subscriptions.services.webhook_handler import WebhookAction
 from apps.subscriptions.services.yookassa_payments import yookassa_service
 from apps.users.models import User
 from core.base.exceptions import ConflictError
@@ -34,7 +35,7 @@ class PaymentMethodBinder(BaseService):
             status=PaymentStatus.PENDING,
             idempotence_key=self.idempotence_key,
             yookassa_payment_id=yookassa_payment.id,
-            metadata={},
+            metadata={'action': WebhookAction.CARD_BINDING},
         )
         return RedirectResponse(
             action=ResponseAction.REDIRECT.value,
