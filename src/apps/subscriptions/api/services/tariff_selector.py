@@ -134,6 +134,7 @@ class TariffActivator(TariffService):
             amount=self.tariff.price,
             save_payment_method=True,
             idempotence_key=self.idempotence_key,
+            description=f'Подписка «{self.tariff.name}»',
         )
         confirmation_url = yookassa_payment.confirmation.confirmation_url
         self.create_pending_payment(
@@ -214,6 +215,7 @@ class TariffSwitcher(TariffService):
                 amount=proration,
                 payment_method_id=payment_method.yookassa_payment_method_id,
                 idempotence_key=self.idempotence_key,
+                description=f'Смена тарифа на «{self.tariff.name}»',
                 metadata={'tariff_id': str(self.tariff.id)},
             )
             self.create_upgrade_payment(
