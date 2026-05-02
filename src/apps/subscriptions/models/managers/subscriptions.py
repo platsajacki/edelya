@@ -13,7 +13,7 @@ class SubscriptionQuerySet(BaseQuerySet['Subscription']):
         return self.filter(user=user)
 
     def with_tariff(self) -> SubscriptionQuerySet:
-        return self.select_related('tariff')
+        return self.select_related('tariff', 'pending_tariff')
 
     def with_user(self) -> SubscriptionQuerySet:
         return self.select_related('user')
