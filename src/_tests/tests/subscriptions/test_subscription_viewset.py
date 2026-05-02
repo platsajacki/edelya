@@ -72,6 +72,7 @@ class TestSubscriptionMe:
             'id',
             'status',
             'tariff',
+            'pending_tariff',
             'trial_started_at',
             'days_in_trial',
             'trial_ended_at',

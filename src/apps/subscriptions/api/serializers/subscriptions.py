@@ -7,6 +7,7 @@ from apps.subscriptions.models import Subscription
 
 class SubscriptionSerializer(ModelSerializer):
     tariff = TariffSerializer(read_only=True)
+    pending_tariff = TariffSerializer(read_only=True)
 
     class Meta:
         model = Subscription
@@ -14,6 +15,7 @@ class SubscriptionSerializer(ModelSerializer):
             'id',
             'status',
             'tariff',
+            'pending_tariff',
             'trial_started_at',
             'days_in_trial',
             'trial_ended_at',
