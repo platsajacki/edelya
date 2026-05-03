@@ -486,6 +486,51 @@ class TestSelectTariff:
         assert payment.status == PaymentStatus.PENDING
         assert payment.metadata['tariff_id'] == str(paid_tariff.id)
 
+    @pytest.mark.parametrize('sub_status', [SubscriptionStatus.EXPIRED, SubscriptionStatus.CANCELLED])
+    def test_expired_or_cancelled_same_tariff_redirects_to_payment(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        base_tariff: Tariff,
+        mock_yookassa_payment_create: MockType,
+        sub_status: SubscriptionStatus,
+    ) -> None:
+        """EXPIRED/CANCELLED with the same tariff → allowed, redirects to payment (not 409)."""
+        fake_payment = MagicMock()
+        fake_payment.id = 'yoo-same-tariff-reactivate'
+        fake_payment.confirmation.confirmation_url = 'https://yookassa.ru/pay/reactivate'
+        mock_yookassa_payment_create.return_value = fake_payment
+        Subscription.objects.create(
+            user=telegram_user,
+            tariff=base_tariff,
+            status=sub_status,
+        )
+        api_client.force_authenticate(user=telegram_user)
+        response = api_client.post(
+            SELECT_TARIFF_URL,
+            data={'tariff_id': str(base_tariff.id)},
+            format='json',
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['action'] == 'redirect'
+        assert response.data['context'] == 'payment'
+
+    def test_active_same_tariff_still_gets_409(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        active_subscription: Subscription,
+        base_tariff: Tariff,
+    ) -> None:
+        """ACTIVE subscription with the same tariff still returns 409."""
+        api_client.force_authenticate(user=telegram_user)
+        response = api_client.post(
+            SELECT_TARIFF_URL,
+            data={'tariff_id': str(base_tariff.id)},
+            format='json',
+        )
+        assert response.status_code == status.HTTP_409_CONFLICT
+
     def test_get_method_not_allowed(
         self,
         api_client: APIClient,

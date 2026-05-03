@@ -297,6 +297,7 @@ class TariffSelector(BaseViewSetService):
     def act(self) -> Response:
         tariff = self.get_tariff()
         subscription = self.user.subscription
-        self.check_current_subscription(tariff)
+        if subscription.status not in (SubscriptionStatus.EXPIRED, SubscriptionStatus.CANCELLED):
+            self.check_current_subscription(tariff)
         result = self._get_sub_service(subscription, tariff)()
         return Response(result)
