@@ -2,13 +2,12 @@ from dataclasses import dataclass
 from dataclasses import field as dc_field
 
 from django.db import transaction
-from rest_framework.exceptions import AuthenticationFailed, NotFound, ValidationError
+from rest_framework.exceptions import AuthenticationFailed, NotFound
 from rest_framework.request import Request
 from rest_framework.response import Response
 
 from apps.subscriptions.api.serializers.subscriptions import SubscriptionSerializer
 from apps.subscriptions.models import Subscription
-from apps.subscriptions.models.model_enums import SubscriptionStatus
 from apps.users.models import User
 from core.base.services import BaseService
 
@@ -30,8 +29,6 @@ class SubscriptionResumer(BaseService):
             self.subscription = Subscription.objects.with_tariff().get(user=self.authenticated_user)
         except Subscription.DoesNotExist as e:
             raise NotFound('No subscription found.') from e
-        if self.subscription.status not in (SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIAL):
-            raise ValidationError('Subscription cannot be resumed in current status.')
 
     def get_validators(self) -> list:
         return super().get_validators() + [self._validate_user, self._validate_subscription]
