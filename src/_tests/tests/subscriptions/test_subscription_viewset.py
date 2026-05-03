@@ -271,7 +271,7 @@ class TestCancelSubscription:
         trial_subscription.refresh_from_db()
         assert trial_subscription.auto_renew is False
 
-    def test_cancel_expired_subscription_gets_400(
+    def test_cancel_expired_subscription_gets_200(
         self,
         api_client: APIClient,
         telegram_user: User,
@@ -284,9 +284,9 @@ class TestCancelSubscription:
         )
         api_client.force_authenticate(user=telegram_user)
         response = api_client.post(CANCEL_URL)
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.status_code == status.HTTP_200_OK
 
-    def test_cancel_past_due_subscription_gets_400(
+    def test_cancel_past_due_subscription_gets_200(
         self,
         api_client: APIClient,
         telegram_user: User,
@@ -299,7 +299,7 @@ class TestCancelSubscription:
         )
         api_client.force_authenticate(user=telegram_user)
         response = api_client.post(CANCEL_URL)
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.status_code == status.HTTP_200_OK
 
     def test_cancel_cancelled_subscription_gets_400(
         self,

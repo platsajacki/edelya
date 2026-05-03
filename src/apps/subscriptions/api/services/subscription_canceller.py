@@ -35,8 +35,6 @@ class SubscriptionCanceller(BaseService):
             raise ValidationError('Subscription is already cancelled.')
         if self.subscription.cancelled_at is not None:
             raise ValidationError('Subscription is already in the process of cancellation.')
-        if self.subscription.status not in (SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIAL):
-            raise ValidationError('Subscription cannot be cancelled in current status.')
 
     def get_validators(self) -> list:
         return super().get_validators() + [self._validate_user, self._validate_subscription]
