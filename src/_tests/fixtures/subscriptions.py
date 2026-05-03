@@ -230,6 +230,26 @@ def pending_payment_recurring(
 
 
 @pytest.fixture
+def pending_payment_upgrade(
+    telegram_user: User,
+    active_subscription_with_period: Subscription,
+    upgrade_tariff: Tariff,
+    active_payment_method: PaymentMethod,
+) -> Payment:
+    return Payment.objects.create(
+        subscription=active_subscription_with_period,
+        user=telegram_user,
+        amount='50.00',
+        payment_type=PaymentType.SINGLE_PAYMENT,
+        status=PaymentStatus.PENDING,
+        idempotence_key='55555555-5555-5555-5555-555555555555',
+        yookassa_payment_id='yoo-pay-id-upgrade-001',
+        payment_method=active_payment_method,
+        metadata={'action': WebhookAction.UPGRADE, 'tariff_id': str(upgrade_tariff.id)},
+    )
+
+
+@pytest.fixture
 def expired_subscription(telegram_user: User, paid_tariff: Tariff) -> Subscription:
     return Subscription.objects.create(
         user=telegram_user,

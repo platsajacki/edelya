@@ -313,7 +313,7 @@ class TestSelectTariff:
         assert response.status_code == status.HTTP_200_OK
         assert response.data['action'] == 'success'
         payment = Payment.objects.get(yookassa_payment_id='yoo-upgrade-pay-001')
-        assert payment.payment_type == PaymentType.RECURRING
+        assert payment.payment_type == PaymentType.SINGLE_PAYMENT
         assert payment.status == PaymentStatus.PENDING
         assert payment.user == telegram_user
         assert payment.metadata['tariff_id'] == str(upgrade_tariff.id)
@@ -398,7 +398,7 @@ class TestSelectTariff:
         payment = Payment.objects.get(yookassa_payment_id='yoo-upgrade-pay-canceled')
         assert payment.status == PaymentStatus.CANCELED
 
-    def test_active_upgrade_payment_has_is_upgrade_in_metadata(
+    def test_active_upgrade_payment_has_action_upgrade_in_metadata(
         self,
         api_client: APIClient,
         telegram_user: User,
@@ -406,7 +406,7 @@ class TestSelectTariff:
         upgrade_tariff: Tariff,
         mock_yookassa_payment_create: MockType,
     ) -> None:
-        """Upgrade payment metadata contains is_upgrade=True for webhook handler identification."""
+        """Upgrade payment metadata contains action='upgrade' for webhook handler identification."""
         fake_payment = MagicMock()
         fake_payment.id = 'yoo-upgrade-pay-meta'
         fake_payment.status = 'pending'
@@ -418,7 +418,7 @@ class TestSelectTariff:
             format='json',
         )
         payment = Payment.objects.get(yookassa_payment_id='yoo-upgrade-pay-meta')
-        assert payment.metadata.get('is_upgrade') is True
+        assert payment.metadata.get('action') == 'upgrade'
         assert payment.metadata.get('tariff_id') == str(upgrade_tariff.id)
 
     @pytest.mark.parametrize('sub_status', [SubscriptionStatus.EXPIRED, SubscriptionStatus.CANCELLED])

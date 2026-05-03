@@ -25,3 +25,4 @@ class PaymentType(models.TextChoices):
     FIRST_PAYMENT = 'first_payment', 'First Payment'
     RECURRING = 'recurring', 'Recurring'
     ZERO_AMOUNT_BINDING = 'zero_amount_binding', 'Zero Amount Binding'
+    SINGLE_PAYMENT = 'single_payment', 'Single Payment'

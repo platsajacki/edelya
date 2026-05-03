@@ -20,6 +20,7 @@ class WebhookAction(StrEnum):
     CARD_BINDING = 'card_binding'
     FIRST_PAYMENT = 'first_payment'
     RECURRING = 'recurring'
+    UPGRADE = 'upgrade'
 
 
 class WebhookEventType(StrEnum):
@@ -92,9 +93,12 @@ class PaymentSucceededHandler(BaseService):
         self.payment.paid_at = timezone.now()
         self.payment.payment_method = payment_method
         self.payment.save(update_fields=['status', 'paid_at', 'payment_method'])
-        if self.payment.metadata.get('action') == WebhookAction.FIRST_PAYMENT:
+        action = self.payment.metadata.get('action')
+        if action == WebhookAction.FIRST_PAYMENT:
             tariff = Tariff.objects.get(id=self.payment.metadata['tariff_id'])
             self._activate_subscription(self.payment.subscription, tariff, payment_method)
+        elif action == WebhookAction.UPGRADE:
+            pass  # subscription already updated synchronously during upgrade
         else:
             self._renew_subscription(self.payment.subscription, payment_method)
 

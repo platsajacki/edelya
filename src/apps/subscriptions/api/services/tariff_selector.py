@@ -174,16 +174,26 @@ class TariffSwitcher(TariffService):
         proration = Decimal(remaining_days) / Decimal(total_days) * (new_price - current_price)
         return proration.quantize(Decimal('0.01'))
 
-    def create_upgrade_payment(self, yookassa_payment_id: str, amount: Decimal, yookassa_status: str) -> Payment:
+    def create_upgrade_payment(
+        self,
+        yookassa_payment_id: str,
+        amount: Decimal,
+        yookassa_status: str,
+        payment_method: PaymentMethod,
+    ) -> Payment:
+        status = PaymentStatus(yookassa_status)
+        paid_at = timezone.now() if status == PaymentStatus.SUCCEEDED else None
         return Payment.objects.create(
             subscription=self.user.subscription,
             user=self.user,
             amount=amount,
-            payment_type=PaymentType.RECURRING,
-            status=PaymentStatus(yookassa_status),
+            payment_type=PaymentType.SINGLE_PAYMENT,
+            status=status,
             idempotence_key=self.idempotence_key,
             yookassa_payment_id=yookassa_payment_id,
-            metadata={'tariff_id': str(self.tariff.id), 'is_upgrade': True},
+            payment_method=payment_method,
+            paid_at=paid_at,
+            metadata={'action': WebhookAction.UPGRADE, 'tariff_id': str(self.tariff.id)},
         )
 
     def update_subscription_to_downgrade(self, subscription: Subscription) -> None:
@@ -222,6 +232,7 @@ class TariffSwitcher(TariffService):
                 yookassa_payment_id=yoo_payment.id,
                 amount=proration,
                 yookassa_status=yoo_payment.status,
+                payment_method=payment_method,
             )
             if yoo_payment.status == 'canceled':
                 raise ConflictError('Upgrade payment was canceled')

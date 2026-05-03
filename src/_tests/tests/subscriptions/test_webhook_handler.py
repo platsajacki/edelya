@@ -7,7 +7,7 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from apps.subscriptions.models import PaymentMethod, Subscription, Tariff
-from apps.subscriptions.models.model_enums import PaymentStatus, SubscriptionStatus
+from apps.subscriptions.models.model_enums import PaymentStatus, PaymentType, SubscriptionStatus
 from apps.subscriptions.models.payments import Payment
 from apps.users.models import User
 
@@ -621,3 +621,108 @@ class TestPaymentCanceledHandler:
         api_client.post(WEBHOOK_URL, data=payload, format='json')
         pending_payment_first.refresh_from_db()
         assert pending_payment_first.status == PaymentStatus.CANCELED
+
+
+UPGRADE_SUCCEEDED_PAYLOAD = {
+    'event': 'payment.succeeded',
+    'object': {
+        'id': 'yoo-pay-id-upgrade-001',
+        'status': 'succeeded',
+        'amount': {'value': '50.00', 'currency': 'RUB'},
+        'payment_method': {
+            'id': 'yoo-pm-id-saved-001',
+            'type': 'bank_card',
+            'saved': True,
+            'title': 'Bank card *4242',
+            'card': {'last4': '4242', 'card_type': 'Visa'},
+        },
+        'metadata': {'action': 'upgrade', 'tariff_id': 'some-uuid'},
+    },
+}
+
+
+class TestPaymentSucceededHandlerUpgrade:
+    def test_marks_payment_as_succeeded_with_paid_at(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        active_subscription_with_period: Subscription,
+        upgrade_tariff: Tariff,
+        pending_payment_upgrade: Payment,
+    ) -> None:
+        """payment.succeeded (UPGRADE) переводит Payment в SUCCEEDED и заполняет paid_at."""
+        before = timezone.now()
+        api_client.post(WEBHOOK_URL, data=UPGRADE_SUCCEEDED_PAYLOAD, format='json')
+        pending_payment_upgrade.refresh_from_db()
+        assert pending_payment_upgrade.status == PaymentStatus.SUCCEEDED
+        assert pending_payment_upgrade.paid_at is not None
+        assert pending_payment_upgrade.paid_at >= before
+
+    def test_saves_payment_method_on_payment(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        active_subscription_with_period: Subscription,
+        upgrade_tariff: Tariff,
+        pending_payment_upgrade: Payment,
+    ) -> None:
+        """payment.succeeded (UPGRADE) сохраняет payment_method на Payment."""
+        api_client.post(WEBHOOK_URL, data=UPGRADE_SUCCEEDED_PAYLOAD, format='json')
+        pending_payment_upgrade.refresh_from_db()
+        assert pending_payment_upgrade.payment_method is not None
+        assert pending_payment_upgrade.payment_method.yookassa_payment_method_id == 'yoo-pm-id-saved-001'
+
+    def test_does_not_change_subscription_period(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        active_subscription_with_period: Subscription,
+        upgrade_tariff: Tariff,
+        pending_payment_upgrade: Payment,
+    ) -> None:
+        """payment.succeeded (UPGRADE) не трогает период подписки — он уже был сброшен при апгрейде."""
+        original_period_start = active_subscription_with_period.current_period_start
+        original_period_end = active_subscription_with_period.current_period_end
+        api_client.post(WEBHOOK_URL, data=UPGRADE_SUCCEEDED_PAYLOAD, format='json')
+        active_subscription_with_period.refresh_from_db()
+        assert active_subscription_with_period.current_period_start == original_period_start
+        assert active_subscription_with_period.current_period_end == original_period_end
+
+    def test_does_not_change_subscription_status(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        active_subscription_with_period: Subscription,
+        upgrade_tariff: Tariff,
+        pending_payment_upgrade: Payment,
+    ) -> None:
+        """payment.succeeded (UPGRADE) не меняет статус подписки — она остаётся ACTIVE."""
+        api_client.post(WEBHOOK_URL, data=UPGRADE_SUCCEEDED_PAYLOAD, format='json')
+        active_subscription_with_period.refresh_from_db()
+        assert active_subscription_with_period.status == SubscriptionStatus.ACTIVE
+
+    def test_idempotent_on_repeat_call(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        active_subscription_with_period: Subscription,
+        upgrade_tariff: Tariff,
+        pending_payment_upgrade: Payment,
+    ) -> None:
+        """Повторный payment.succeeded (UPGRADE) не изменяет уже записанные данные."""
+        api_client.post(WEBHOOK_URL, data=UPGRADE_SUCCEEDED_PAYLOAD, format='json')
+        first_paid_at = Payment.objects.get(id=pending_payment_upgrade.id).paid_at
+        api_client.post(WEBHOOK_URL, data=UPGRADE_SUCCEEDED_PAYLOAD, format='json')
+        second_paid_at = Payment.objects.get(id=pending_payment_upgrade.id).paid_at
+        assert first_paid_at == second_paid_at
+
+    def test_payment_type_is_single_payment(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        active_subscription_with_period: Subscription,
+        upgrade_tariff: Tariff,
+        pending_payment_upgrade: Payment,
+    ) -> None:
+        """Апгрейд-платёж имеет тип SINGLE_PAYMENT, а не RECURRING."""
+        assert pending_payment_upgrade.payment_type == PaymentType.SINGLE_PAYMENT
