@@ -323,8 +323,6 @@ class TestCancelSubscription:
         active_subscription: Subscription,
     ) -> None:
         """ACTIVE + cancelled_at already set → cancellation already in progress."""
-        from django.utils import timezone
-
         active_subscription.cancelled_at = timezone.now()
         active_subscription.auto_renew = False
         active_subscription.save(update_fields=['cancelled_at', 'auto_renew'])
@@ -412,7 +410,7 @@ class TestResumeSubscription:
         response = api_client.post(RESUME_URL)
         assert response.status_code == status.HTTP_200_OK
 
-    def test_resume_subscription_not_pending_cancellation_gets_400(
+    def test_resume_subscription_not_pending_cancellation_gets_200(
         self,
         api_client: APIClient,
         telegram_user: User,
@@ -421,7 +419,7 @@ class TestResumeSubscription:
         """ACTIVE with cancelled_at=None — nothing to resume."""
         api_client.force_authenticate(user=telegram_user)
         response = api_client.post(RESUME_URL)
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.status_code == status.HTTP_200_OK
 
     def test_resume_expired_subscription_gets_400(
         self,
@@ -429,8 +427,6 @@ class TestResumeSubscription:
         telegram_user: User,
         base_tariff: Tariff,
     ) -> None:
-        from django.utils import timezone
-
         Subscription.objects.create(
             user=telegram_user,
             tariff=base_tariff,

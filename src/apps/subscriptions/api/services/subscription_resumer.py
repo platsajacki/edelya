@@ -30,8 +30,6 @@ class SubscriptionResumer(BaseService):
             self.subscription = Subscription.objects.with_tariff().get(user=self.authenticated_user)
         except Subscription.DoesNotExist as e:
             raise NotFound('No subscription found.') from e
-        if self.subscription.cancelled_at is None:
-            raise ValidationError('Subscription is not pending cancellation.')
         if self.subscription.status not in (SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIAL):
             raise ValidationError('Subscription cannot be resumed in current status.')
 
