@@ -1,19 +1,32 @@
+from typing import TYPE_CHECKING
 from uuid import uuid4
 
 from django.db import models
 
+from apps.subscriptions.models.managers.payments import PaymentManager
 from apps.subscriptions.models.model_enums import PaymentStatus, PaymentType
 from core.base.abstract_models import BaseModel
 
+if TYPE_CHECKING:
+    from apps.subscriptions.models import (
+        PaymentMethod,  # noqa: F401
+        Subscription,  # noqa: F401
+    )
+    from apps.users.models import User  # noqa: F401
+
 
 class Payment(BaseModel):
-    subscription = models.ForeignKey(
+    if TYPE_CHECKING:
+        subscription: Subscription
+        user: User
+        payment_method: PaymentMethod
+    subscription = models.ForeignKey(  # type: ignore[assignment]
         'subscriptions.Subscription',
         on_delete=models.CASCADE,
         related_name='payments',
         verbose_name='Подписка',
     )
-    user = models.ForeignKey(
+    user = models.ForeignKey(  # type: ignore[assignment]
         'users.User',
         on_delete=models.CASCADE,
         related_name='payments',
@@ -47,7 +60,7 @@ class Payment(BaseModel):
         max_length=32,
         choices=PaymentType.choices,
     )
-    payment_method = models.ForeignKey(
+    payment_method = models.ForeignKey(  # type: ignore[assignment]
         'subscriptions.PaymentMethod',
         on_delete=models.SET_NULL,
         null=True,
@@ -80,6 +93,8 @@ class Payment(BaseModel):
         verbose_name='Метаданные',
         default=dict,
     )
+
+    objects: PaymentManager = PaymentManager()
 
     class Meta:
         verbose_name = 'Платёж'

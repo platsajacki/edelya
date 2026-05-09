@@ -256,3 +256,40 @@ def expired_subscription(telegram_user: User, paid_tariff: Tariff) -> Subscripti
         tariff=paid_tariff,
         status=SubscriptionStatus.EXPIRED,
     )
+
+
+@pytest.fixture
+def trial_subscription_ready_to_charge(
+    telegram_user: User,
+    trial_tariff: Tariff,
+    paid_tariff: Tariff,
+    active_payment_method: PaymentMethod,
+) -> Subscription:
+    """TRIAL subscription whose trial ended 10 minutes ago, ready for charge."""
+    return Subscription.objects.create(
+        user=telegram_user,
+        tariff=trial_tariff,
+        status=SubscriptionStatus.TRIAL,
+        trial_started_at=timezone.now() - timedelta(days=trial_tariff.trial_days),
+        days_in_trial=trial_tariff.trial_days,
+        trial_ended_at=timezone.now() - timedelta(minutes=10),
+        pending_tariff=paid_tariff,
+        payment_method=active_payment_method,
+    )
+
+
+@pytest.fixture
+def pending_recurring_payment_for_trial(
+    telegram_user: User,
+    trial_subscription_ready_to_charge: Subscription,
+) -> Payment:
+    """PENDING RECURRING payment already created for trial_subscription_ready_to_charge."""
+    return Payment.objects.create(
+        subscription=trial_subscription_ready_to_charge,
+        user=telegram_user,
+        amount='99.00',
+        payment_type=PaymentType.RECURRING,
+        status=PaymentStatus.PENDING,
+        idempotence_key='66666666-6666-6666-6666-666666666666',
+        metadata={'action': WebhookAction.FIRST_PAYMENT},
+    )

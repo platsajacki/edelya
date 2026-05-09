@@ -38,3 +38,19 @@ def mock_yookassa_payment_method_create(mocker: MockFixture) -> MockType:
 @pytest.fixture
 def mock_yookassa_payment_method_find_one(mocker: MockFixture) -> MockType:
     return mocker.patch('apps.subscriptions.services.yookassa_payments.YooPaymentMethod.find_one')
+
+
+@pytest.fixture
+def yookassa_succeeded_response(mocker: MockFixture) -> MockType:
+    obj = mocker.MagicMock()
+    obj.status = 'succeeded'
+    obj.cancellation_details = None
+    return obj
+
+
+@pytest.fixture
+def yookassa_canceled_response(mocker: MockFixture) -> MockType:
+    obj = mocker.MagicMock()
+    obj.status = 'canceled'
+    obj.cancellation_details.reason = 'card_expired'
+    return obj

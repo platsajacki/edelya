@@ -1,5 +1,22 @@
+from typing import Any
+
 from rest_framework import status
 from rest_framework.exceptions import APIException
+
+
+class BaseError(Exception):
+    def __init__(self, message: str | None = None, **context: Any) -> None:
+        self.message = message or 'An error occurred during processing.'
+        self.context = context
+
+    def _get_formatted_context(self) -> str:
+        if not self.context:
+            return ''
+        context_str = ', '.join(f'{key}={value!r}' for key, value in self.context.items())
+        return f' Context: {context_str}'
+
+    def __str__(self) -> str:
+        return f'{self.message}{self._get_formatted_context()}'
 
 
 class ConflictError(APIException):

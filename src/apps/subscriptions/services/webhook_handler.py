@@ -155,7 +155,8 @@ class PaymentMethodActiveHandler(BaseService):
         subscription.save(update_fields=update_fields)
         self.payment.status = PaymentStatus.SUCCEEDED
         self.payment.payment_method = payment_method
-        self.payment.save(update_fields=['status', 'payment_method'])
+        self.payment.paid_at = timezone.now()
+        self.payment.save(update_fields=['status', 'payment_method', 'paid_at'])
 
 
 @dataclass
