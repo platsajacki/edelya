@@ -4,7 +4,7 @@ from datetime import timedelta
 
 from django.utils import timezone
 
-from apps.subscriptions.constants import DEFAULT_TRIAL_DAYS
+from apps.subscriptions.constants import DEFAULT_TRIAL_DAYS, GRACE_PERIOD_DAYS
 from apps.subscriptions.models import PaymentMethod, Subscription, Tariff
 from apps.subscriptions.models.model_enums import BillingPeriod, PaymentStatus, PaymentType, SubscriptionStatus
 from apps.subscriptions.models.payments import Payment
@@ -292,4 +292,125 @@ def pending_recurring_payment_for_trial(
         status=PaymentStatus.PENDING,
         idempotence_key='66666666-6666-6666-6666-666666666666',
         metadata={'action': WebhookAction.FIRST_PAYMENT},
+    )
+
+
+@pytest.fixture
+def active_subscription_ready_to_renew(
+    telegram_user: User,
+    paid_tariff: Tariff,
+    active_payment_method: PaymentMethod,
+) -> Subscription:
+    """ACTIVE subscription with auto_renew=True whose period ended 2 minutes ago — within charge window."""
+    now = timezone.now()
+    return Subscription.objects.create(
+        user=telegram_user,
+        tariff=paid_tariff,
+        status=SubscriptionStatus.ACTIVE,
+        auto_renew=True,
+        current_period_start=now - timedelta(days=30),
+        current_period_end=now - timedelta(minutes=2),
+        payment_method=active_payment_method,
+    )
+
+
+@pytest.fixture
+def pending_recurring_payment_for_renewal(
+    telegram_user: User,
+    active_subscription_ready_to_renew: Subscription,
+) -> Payment:
+    """PENDING RECURRING payment already created for active_subscription_ready_to_renew."""
+    return Payment.objects.create(
+        subscription=active_subscription_ready_to_renew,
+        user=telegram_user,
+        amount='99.00',
+        payment_type=PaymentType.RECURRING,
+        status=PaymentStatus.PENDING,
+        idempotence_key='77777777-7777-7777-7777-777777777777',
+        metadata={'action': WebhookAction.RECURRING},
+    )
+
+
+@pytest.fixture
+def past_due_subscription_ready_for_retry(
+    telegram_user: User,
+    paid_tariff: Tariff,
+    active_payment_method: PaymentMethod,
+) -> Subscription:
+    """PAST_DUE subscription whose grace period expires within the next 5 minutes — time for retry."""
+    now = timezone.now()
+    return Subscription.objects.create(
+        user=telegram_user,
+        tariff=paid_tariff,
+        status=SubscriptionStatus.PAST_DUE,
+        current_period_start=now - timedelta(days=30),
+        current_period_end=now - timedelta(days=GRACE_PERIOD_DAYS) + timedelta(minutes=2),
+        payment_method=active_payment_method,
+    )
+
+
+@pytest.fixture
+def pending_recurring_payment_for_past_due(
+    telegram_user: User,
+    past_due_subscription_ready_for_retry: Subscription,
+) -> Payment:
+    """PENDING RECURRING payment already created for past_due_subscription_ready_for_retry."""
+    return Payment.objects.create(
+        subscription=past_due_subscription_ready_for_retry,
+        user=telegram_user,
+        amount='99.00',
+        payment_type=PaymentType.RECURRING,
+        status=PaymentStatus.PENDING,
+        idempotence_key='88888888-8888-8888-8888-888888888888',
+        metadata={'action': WebhookAction.RECURRING},
+    )
+
+
+@pytest.fixture
+def abandoned_trial_subscription(
+    telegram_user: User,
+    trial_tariff: Tariff,
+) -> Subscription:
+    """TRIAL subscription with expired trial and no pending_tariff — will never become ACTIVE."""
+    return Subscription.objects.create(
+        user=telegram_user,
+        tariff=trial_tariff,
+        status=SubscriptionStatus.TRIAL,
+        trial_started_at=timezone.now() - timedelta(days=trial_tariff.trial_days + 1),
+        days_in_trial=trial_tariff.trial_days,
+        trial_ended_at=timezone.now() - timedelta(hours=1),
+        pending_tariff=None,
+    )
+
+
+@pytest.fixture
+def past_due_subscription_for_expiry(
+    telegram_user: User,
+    paid_tariff: Tariff,
+) -> Subscription:
+    """PAST_DUE subscription whose grace period has already expired — ready for final expiry."""
+    now = timezone.now()
+    return Subscription.objects.create(
+        user=telegram_user,
+        tariff=paid_tariff,
+        status=SubscriptionStatus.PAST_DUE,
+        current_period_start=now - timedelta(days=30 + GRACE_PERIOD_DAYS),
+        current_period_end=now - timedelta(days=GRACE_PERIOD_DAYS + 1),
+    )
+
+
+@pytest.fixture
+def cancelled_subscription_ready_to_expire(
+    telegram_user: User,
+    paid_tariff: Tariff,
+) -> Subscription:
+    """ACTIVE subscription with auto_renew=False whose paid period has ended — ready for expiry."""
+    now = timezone.now()
+    return Subscription.objects.create(
+        user=telegram_user,
+        tariff=paid_tariff,
+        status=SubscriptionStatus.ACTIVE,
+        auto_renew=False,
+        current_period_start=now - timedelta(days=31),
+        current_period_end=now - timedelta(days=1),
     )

@@ -1,12 +1,138 @@
 from datetime import datetime
+from uuid import uuid4
+
+from django.db import transaction
+from django.utils import timezone
+
+from yookassa.payment import PaymentResponse
 
 from apps.subscriptions.exceptions import PaymentPendingRecurringError
-from apps.subscriptions.models import Payment, Subscription
+from apps.subscriptions.models import Payment, Subscription, Tariff
+from apps.subscriptions.models.model_enums import PaymentStatus, PaymentType, SubscriptionStatus
+from apps.subscriptions.services.webhook_handler import WebhookAction
+from apps.subscriptions.services.yookassa_payments import yookassa_service
 from core.base.services import TaskService
+from core.logging_handlers import loki_logger
 
 
 class RecurringTaskService(TaskService):
-    def check_pending_recurring_payment(self, subscription: Subscription, created_at__gte: datetime) -> None:
-        has_pending_recurring_payment = Payment.objects.has_pending_recurring_payment(subscription, created_at__gte)
-        if has_pending_recurring_payment:
+    def check_pending_recurring_payment(self, subscription: Subscription) -> None:
+        has_pending = Payment.objects.has_pending_recurring_payment(subscription)
+        if has_pending:
             raise PaymentPendingRecurringError(subscription.id)
+
+    def ensure_current_period_end(self, subscription: Subscription) -> datetime:
+        if subscription.current_period_end is None:
+            raise PaymentPendingRecurringError(
+                subscription.id, 'Cannot process renewal: current_period_end is not set.'
+            )
+        return subscription.current_period_end
+
+    def _apply_tariff(
+        self,
+        subscription: Subscription,
+        tariff: Tariff,
+        period_start: datetime,
+    ) -> None:
+        subscription.tariff = tariff
+        subscription.pending_tariff = None
+        subscription.current_period_start = period_start
+        subscription.current_period_end = tariff.get_next_period_end(period_start)
+
+    def _process_successful_payment(
+        self,
+        payment: Payment,
+        subscription: Subscription,
+    ) -> None:
+        payment.status = PaymentStatus.SUCCEEDED
+        payment.paid_at = timezone.now()
+        payment.save(update_fields=['status', 'paid_at'])
+        subscription.status = SubscriptionStatus.ACTIVE
+        loki_logger.info(
+            self.get_log_msg(
+                f'Processed successful payment {payment.id!r} for subscription {subscription.id!r}. '
+                f'Status set to ACTIVE.'
+            )
+        )
+
+    def _process_failed_payment(
+        self,
+        payment: Payment,
+        subscription: Subscription,
+        cancellation_reason: str | None = None,
+        failed_status: SubscriptionStatus = SubscriptionStatus.PAST_DUE,
+    ) -> None:
+        payment.status = PaymentStatus.CANCELED
+        payment.cancellation_reason = cancellation_reason or 'Unknown reason'
+        payment.save(update_fields=['status', 'cancellation_reason'])
+        subscription.status = failed_status
+        loki_logger.info(
+            self.get_log_msg(
+                f'Cancelled payment {payment.id!r} '
+                f'for subscription {subscription.id!r} due to failed payment. Reason: {cancellation_reason}'
+            )
+        )
+
+    def _save_subscription_after_payment(self, subscription: Subscription) -> None:
+        subscription.save(
+            update_fields=[
+                'status',
+                'tariff',
+                'pending_tariff',
+                'current_period_start',
+                'current_period_end',
+            ],
+        )
+
+    def create_payment(self, subscription: Subscription, tariff: Tariff, action: WebhookAction) -> Payment:
+        return Payment.objects.create(
+            subscription=subscription,
+            user=subscription.user,
+            amount=tariff.price,
+            payment_type=PaymentType.RECURRING,
+            status=PaymentStatus.PENDING,
+            idempotence_key=str(uuid4()),
+            metadata={
+                'action': action,
+                'tariff_id': str(tariff.id),
+            },
+        )
+
+    def try_charge_payment(
+        self, payment: Payment, tariff: Tariff, subscription: Subscription, description: str
+    ) -> PaymentResponse:
+        try:
+            yoo_payment_method_id = getattr(subscription.payment_method, 'yookassa_payment_method_id', None)
+            return yookassa_service.create_payment(
+                amount=tariff.price,
+                payment_method_id=yoo_payment_method_id,
+                capture=True,
+                idempotence_key=str(payment.idempotence_key),
+                description=description,
+                metadata=payment.metadata,
+            )
+        except Exception as e:
+            raise PaymentPendingRecurringError(subscription_id=payment.subscription_id, message=str(e)) from e
+
+    @transaction.atomic
+    def process_payment(
+        self,
+        payment: Payment,
+        tariff: Tariff,
+        subscription: Subscription,
+        succeeded: bool,
+        period_start: datetime,
+        failed_status: SubscriptionStatus,
+        cancellation_reason: str | None = None,
+    ) -> None:
+        self._apply_tariff(subscription=subscription, tariff=tariff, period_start=period_start)
+        if succeeded:
+            self._process_successful_payment(payment, subscription)
+        else:
+            self._process_failed_payment(
+                payment=payment,
+                subscription=subscription,
+                cancellation_reason=cancellation_reason,
+                failed_status=failed_status,
+            )
+        self._save_subscription_after_payment(subscription)

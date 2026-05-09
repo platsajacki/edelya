@@ -1,5 +1,9 @@
 from datetime import date, timedelta
+from importlib import import_module
+from pathlib import Path
+from pkgutil import iter_modules
 from random import choice
+from types import ModuleType
 
 from django.db.models import Q
 
@@ -7,6 +11,23 @@ from redis.backoff import EqualJitterBackoff
 from redis.retry import Retry
 
 from core.constants import DEFAULT_COLORS
+
+
+def import_modules_from_package_dir(
+    package_name: str,
+    package_dir: str | Path,
+    ignore_private: bool = True,
+) -> list[ModuleType]:
+    package_dir = Path(package_dir)
+    imported_modules: list[ModuleType] = []
+    for module_info in iter_modules([str(package_dir)]):
+        module_name = module_info.name
+        if ignore_private and module_name.startswith('_'):
+            continue
+        full_module_name = f'{package_name}.{module_name}'
+        module = import_module(full_module_name)
+        imported_modules.append(module)
+    return imported_modules
 
 
 def normalize_string(s: str) -> str:

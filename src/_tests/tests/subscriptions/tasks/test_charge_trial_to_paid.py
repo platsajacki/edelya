@@ -19,8 +19,10 @@ class TestCreatePayment:
         trial_subscription_ready_to_charge: Subscription,
         paid_tariff: Tariff,
     ) -> None:
-        service = ChargeTrialToPaidService(timezone.now())
-        payment = service.create_payment(trial_subscription_ready_to_charge, paid_tariff)
+        service = ChargeTrialToPaidService()
+        payment = service.create_payment(
+            trial_subscription_ready_to_charge, paid_tariff, action=WebhookAction.FIRST_PAYMENT
+        )
         assert payment.subscription == trial_subscription_ready_to_charge
         assert payment.user == trial_subscription_ready_to_charge.user
         assert payment.amount == paid_tariff.price
@@ -34,9 +36,9 @@ class TestCreatePayment:
         trial_subscription_ready_to_charge: Subscription,
         paid_tariff: Tariff,
     ) -> None:
-        service = ChargeTrialToPaidService(timezone.now())
-        p1 = service.create_payment(trial_subscription_ready_to_charge, paid_tariff)
-        p2 = service.create_payment(trial_subscription_ready_to_charge, paid_tariff)
+        service = ChargeTrialToPaidService()
+        p1 = service.create_payment(trial_subscription_ready_to_charge, paid_tariff, action=WebhookAction.FIRST_PAYMENT)
+        p2 = service.create_payment(trial_subscription_ready_to_charge, paid_tariff, action=WebhookAction.FIRST_PAYMENT)
         assert str(p1.idempotence_key) != str(p2.idempotence_key)
 
 
@@ -49,12 +51,19 @@ class TestTryChargePayment:
         yookassa_succeeded_response: MockType,
     ) -> None:
         mock_create = mocker.patch(
-            'apps.subscriptions.tasks.trials.yookassa_service.create_payment',
+            'apps.subscriptions.tasks.base.yookassa_service.create_payment',
             return_value=yookassa_succeeded_response,
         )
-        service = ChargeTrialToPaidService(timezone.now())
-        payment = service.create_payment(trial_subscription_ready_to_charge, paid_tariff)
-        service.try_charge_payment(payment, paid_tariff, trial_subscription_ready_to_charge)
+        service = ChargeTrialToPaidService()
+        payment = service.create_payment(
+            trial_subscription_ready_to_charge, paid_tariff, action=WebhookAction.FIRST_PAYMENT
+        )
+        service.try_charge_payment(
+            payment,
+            paid_tariff,
+            trial_subscription_ready_to_charge,
+            description=f'Активация подписки "{paid_tariff.name}" после пробного периода',
+        )
         mock_create.assert_called_once()
         call_kwargs = mock_create.call_args.kwargs
         assert call_kwargs['amount'] == paid_tariff.price
@@ -72,10 +81,17 @@ class TestTryChargePayment:
         mock_yookassa_payment_create: MockType,
     ) -> None:
         mock_yookassa_payment_create.side_effect = Exception('network error')
-        service = ChargeTrialToPaidService(timezone.now())
-        payment = service.create_payment(trial_subscription_ready_to_charge, paid_tariff)
+        service = ChargeTrialToPaidService()
+        payment = service.create_payment(
+            trial_subscription_ready_to_charge, paid_tariff, action=WebhookAction.FIRST_PAYMENT
+        )
         with pytest.raises(PaymentPendingRecurringError):
-            service.try_charge_payment(payment, paid_tariff, trial_subscription_ready_to_charge)
+            service.try_charge_payment(
+                payment,
+                paid_tariff,
+                trial_subscription_ready_to_charge,
+                description=f'Активация подписки "{paid_tariff.name}" после пробного периода',
+            )
 
 
 class TestProcessPayment:
@@ -84,9 +100,19 @@ class TestProcessPayment:
         trial_subscription_ready_to_charge: Subscription,
         paid_tariff: Tariff,
     ) -> None:
-        service = ChargeTrialToPaidService(timezone.now())
-        payment = service.create_payment(trial_subscription_ready_to_charge, paid_tariff)
-        service.process_payment(payment, paid_tariff, trial_subscription_ready_to_charge, succeeded=True)
+        service = ChargeTrialToPaidService()
+        payment = service.create_payment(
+            trial_subscription_ready_to_charge, paid_tariff, action=WebhookAction.FIRST_PAYMENT
+        )
+        assert trial_subscription_ready_to_charge.trial_ended_at is not None
+        service.process_payment(
+            payment,
+            paid_tariff,
+            trial_subscription_ready_to_charge,
+            succeeded=True,
+            period_start=trial_subscription_ready_to_charge.trial_ended_at,
+            failed_status=SubscriptionStatus.PAST_DUE,
+        )
         payment.refresh_from_db()
         assert payment.status == PaymentStatus.SUCCEEDED
         assert payment.paid_at is not None
@@ -96,9 +122,19 @@ class TestProcessPayment:
         trial_subscription_ready_to_charge: Subscription,
         paid_tariff: Tariff,
     ) -> None:
-        service = ChargeTrialToPaidService(timezone.now())
-        payment = service.create_payment(trial_subscription_ready_to_charge, paid_tariff)
-        service.process_payment(payment, paid_tariff, trial_subscription_ready_to_charge, succeeded=True)
+        service = ChargeTrialToPaidService()
+        payment = service.create_payment(
+            trial_subscription_ready_to_charge, paid_tariff, action=WebhookAction.FIRST_PAYMENT
+        )
+        assert trial_subscription_ready_to_charge.trial_ended_at is not None
+        service.process_payment(
+            payment,
+            paid_tariff,
+            trial_subscription_ready_to_charge,
+            succeeded=True,
+            period_start=trial_subscription_ready_to_charge.trial_ended_at,
+            failed_status=SubscriptionStatus.PAST_DUE,
+        )
         trial_subscription_ready_to_charge.refresh_from_db()
         assert trial_subscription_ready_to_charge.status == SubscriptionStatus.ACTIVE
         assert trial_subscription_ready_to_charge.tariff == paid_tariff
@@ -112,9 +148,20 @@ class TestProcessPayment:
         trial_subscription_ready_to_charge.trial_ended_at = None
         trial_subscription_ready_to_charge.save(update_fields=['trial_ended_at'])
         before = timezone.now()
-        service = ChargeTrialToPaidService(timezone.now())
-        payment = service.create_payment(trial_subscription_ready_to_charge, paid_tariff)
-        service.process_payment(payment, paid_tariff, trial_subscription_ready_to_charge, succeeded=True)
+        period_start = timezone.now()
+        trial_subscription_ready_to_charge.trial_ended_at = period_start
+        service = ChargeTrialToPaidService()
+        payment = service.create_payment(
+            trial_subscription_ready_to_charge, paid_tariff, action=WebhookAction.FIRST_PAYMENT
+        )
+        service.process_payment(
+            payment,
+            paid_tariff,
+            trial_subscription_ready_to_charge,
+            succeeded=True,
+            period_start=period_start,
+            failed_status=SubscriptionStatus.PAST_DUE,
+        )
         after = timezone.now()
         trial_subscription_ready_to_charge.refresh_from_db()
         assert trial_subscription_ready_to_charge.trial_ended_at is not None
@@ -126,9 +173,19 @@ class TestProcessPayment:
         paid_tariff: Tariff,
     ) -> None:
         original = trial_subscription_ready_to_charge.trial_ended_at
-        service = ChargeTrialToPaidService(timezone.now())
-        payment = service.create_payment(trial_subscription_ready_to_charge, paid_tariff)
-        service.process_payment(payment, paid_tariff, trial_subscription_ready_to_charge, succeeded=True)
+        assert original is not None
+        service = ChargeTrialToPaidService()
+        payment = service.create_payment(
+            trial_subscription_ready_to_charge, paid_tariff, action=WebhookAction.FIRST_PAYMENT
+        )
+        service.process_payment(
+            payment,
+            paid_tariff,
+            trial_subscription_ready_to_charge,
+            succeeded=True,
+            period_start=original,
+            failed_status=SubscriptionStatus.PAST_DUE,
+        )
         trial_subscription_ready_to_charge.refresh_from_db()
         assert trial_subscription_ready_to_charge.trial_ended_at == original
 
@@ -138,9 +195,19 @@ class TestProcessPayment:
         paid_tariff: Tariff,
     ) -> None:
         trial_ended_at = trial_subscription_ready_to_charge.trial_ended_at
-        service = ChargeTrialToPaidService(timezone.now())
-        payment = service.create_payment(trial_subscription_ready_to_charge, paid_tariff)
-        service.process_payment(payment, paid_tariff, trial_subscription_ready_to_charge, succeeded=True)
+        assert trial_ended_at is not None
+        service = ChargeTrialToPaidService()
+        payment = service.create_payment(
+            trial_subscription_ready_to_charge, paid_tariff, action=WebhookAction.FIRST_PAYMENT
+        )
+        service.process_payment(
+            payment,
+            paid_tariff,
+            trial_subscription_ready_to_charge,
+            succeeded=True,
+            period_start=trial_ended_at,
+            failed_status=SubscriptionStatus.PAST_DUE,
+        )
         trial_subscription_ready_to_charge.refresh_from_db()
         assert trial_subscription_ready_to_charge.current_period_start == trial_ended_at
 
@@ -151,9 +218,18 @@ class TestProcessPayment:
     ) -> None:
         assert trial_subscription_ready_to_charge.trial_ended_at is not None
         expected = paid_tariff.get_next_period_end(trial_subscription_ready_to_charge.trial_ended_at)
-        service = ChargeTrialToPaidService(timezone.now())
-        payment = service.create_payment(trial_subscription_ready_to_charge, paid_tariff)
-        service.process_payment(payment, paid_tariff, trial_subscription_ready_to_charge, succeeded=True)
+        service = ChargeTrialToPaidService()
+        payment = service.create_payment(
+            trial_subscription_ready_to_charge, paid_tariff, action=WebhookAction.FIRST_PAYMENT
+        )
+        service.process_payment(
+            payment,
+            paid_tariff,
+            trial_subscription_ready_to_charge,
+            succeeded=True,
+            period_start=trial_subscription_ready_to_charge.trial_ended_at,
+            failed_status=SubscriptionStatus.PAST_DUE,
+        )
         trial_subscription_ready_to_charge.refresh_from_db()
         assert trial_subscription_ready_to_charge.current_period_end == expected
 
@@ -162,13 +238,18 @@ class TestProcessPayment:
         trial_subscription_ready_to_charge: Subscription,
         paid_tariff: Tariff,
     ) -> None:
-        service = ChargeTrialToPaidService(timezone.now())
-        payment = service.create_payment(trial_subscription_ready_to_charge, paid_tariff)
+        service = ChargeTrialToPaidService()
+        payment = service.create_payment(
+            trial_subscription_ready_to_charge, paid_tariff, action=WebhookAction.FIRST_PAYMENT
+        )
+        assert trial_subscription_ready_to_charge.trial_ended_at is not None
         service.process_payment(
             payment,
             paid_tariff,
             trial_subscription_ready_to_charge,
             succeeded=False,
+            period_start=trial_subscription_ready_to_charge.trial_ended_at,
+            failed_status=SubscriptionStatus.PAST_DUE,
             cancellation_reason='card_expired',
         )
         payment.refresh_from_db()
@@ -180,13 +261,18 @@ class TestProcessPayment:
         trial_subscription_ready_to_charge: Subscription,
         paid_tariff: Tariff,
     ) -> None:
-        service = ChargeTrialToPaidService(timezone.now())
-        payment = service.create_payment(trial_subscription_ready_to_charge, paid_tariff)
+        service = ChargeTrialToPaidService()
+        payment = service.create_payment(
+            trial_subscription_ready_to_charge, paid_tariff, action=WebhookAction.FIRST_PAYMENT
+        )
+        assert trial_subscription_ready_to_charge.trial_ended_at is not None
         service.process_payment(
             payment,
             paid_tariff,
             trial_subscription_ready_to_charge,
             succeeded=False,
+            period_start=trial_subscription_ready_to_charge.trial_ended_at,
+            failed_status=SubscriptionStatus.PAST_DUE,
             cancellation_reason='insufficient_funds',
         )
         trial_subscription_ready_to_charge.refresh_from_db()
@@ -198,13 +284,18 @@ class TestProcessPayment:
         paid_tariff: Tariff,
     ) -> None:
         """Tariff is applied even when payment fails."""
-        service = ChargeTrialToPaidService(timezone.now())
-        payment = service.create_payment(trial_subscription_ready_to_charge, paid_tariff)
+        service = ChargeTrialToPaidService()
+        payment = service.create_payment(
+            trial_subscription_ready_to_charge, paid_tariff, action=WebhookAction.FIRST_PAYMENT
+        )
+        assert trial_subscription_ready_to_charge.trial_ended_at is not None
         service.process_payment(
             payment,
             paid_tariff,
             trial_subscription_ready_to_charge,
             succeeded=False,
+            period_start=trial_subscription_ready_to_charge.trial_ended_at,
+            failed_status=SubscriptionStatus.PAST_DUE,
             cancellation_reason='card_expired',
         )
         trial_subscription_ready_to_charge.refresh_from_db()
@@ -215,13 +306,18 @@ class TestProcessPayment:
         trial_subscription_ready_to_charge: Subscription,
         paid_tariff: Tariff,
     ) -> None:
-        service = ChargeTrialToPaidService(timezone.now())
-        payment = service.create_payment(trial_subscription_ready_to_charge, paid_tariff)
+        service = ChargeTrialToPaidService()
+        payment = service.create_payment(
+            trial_subscription_ready_to_charge, paid_tariff, action=WebhookAction.FIRST_PAYMENT
+        )
+        assert trial_subscription_ready_to_charge.trial_ended_at is not None
         service.process_payment(
             payment,
             paid_tariff,
             trial_subscription_ready_to_charge,
             succeeded=False,
+            period_start=trial_subscription_ready_to_charge.trial_ended_at,
+            failed_status=SubscriptionStatus.PAST_DUE,
             cancellation_reason='card_expired',
         )
         trial_subscription_ready_to_charge.refresh_from_db()
@@ -236,13 +332,17 @@ class TestProcessPayment:
         assert trial_subscription_ready_to_charge.trial_ended_at is not None
         trial_ended_at = trial_subscription_ready_to_charge.trial_ended_at
         expected_end = paid_tariff.get_next_period_end(trial_ended_at)
-        service = ChargeTrialToPaidService(timezone.now())
-        payment = service.create_payment(trial_subscription_ready_to_charge, paid_tariff)
+        service = ChargeTrialToPaidService()
+        payment = service.create_payment(
+            trial_subscription_ready_to_charge, paid_tariff, action=WebhookAction.FIRST_PAYMENT
+        )
         service.process_payment(
             payment,
             paid_tariff,
             trial_subscription_ready_to_charge,
             succeeded=False,
+            period_start=trial_ended_at,
+            failed_status=SubscriptionStatus.PAST_DUE,
             cancellation_reason='card_expired',
         )
         trial_subscription_ready_to_charge.refresh_from_db()
@@ -255,8 +355,11 @@ class TestProcessPayment:
         paid_tariff: Tariff,
         mocker: MockFixture,
     ) -> None:
-        service = ChargeTrialToPaidService(timezone.now())
-        payment = service.create_payment(trial_subscription_ready_to_charge, paid_tariff)
+        service = ChargeTrialToPaidService()
+        payment = service.create_payment(
+            trial_subscription_ready_to_charge, paid_tariff, action=WebhookAction.FIRST_PAYMENT
+        )
+        assert trial_subscription_ready_to_charge.trial_ended_at is not None
         mocker.patch.object(trial_subscription_ready_to_charge, 'save', side_effect=Exception('db error'))
         with pytest.raises(Exception, match='db error'):
             service.process_payment(
@@ -264,6 +367,8 @@ class TestProcessPayment:
                 paid_tariff,
                 trial_subscription_ready_to_charge,
                 succeeded=False,
+                period_start=trial_subscription_ready_to_charge.trial_ended_at,
+                failed_status=SubscriptionStatus.PAST_DUE,
                 cancellation_reason='card_expired',
             )
         payment.refresh_from_db()
@@ -279,7 +384,7 @@ class TestProcessSubscription:
         yookassa_succeeded_response: MockType,
     ) -> None:
         mock_yookassa_payment_create.return_value = yookassa_succeeded_response
-        service = ChargeTrialToPaidService(timezone.now())
+        service = ChargeTrialToPaidService()
         service.process_subscription(trial_subscription_ready_to_charge, paid_tariff)
         trial_subscription_ready_to_charge.refresh_from_db()
         assert trial_subscription_ready_to_charge.status == SubscriptionStatus.ACTIVE
@@ -292,7 +397,7 @@ class TestProcessSubscription:
         pending_recurring_payment_for_trial: Payment,
     ) -> None:
         """check_pending_recurring_payment raises PaymentPendingRecurringError — no new payment created."""
-        service = ChargeTrialToPaidService(timezone.now() - timedelta(minutes=10))
+        service = ChargeTrialToPaidService()
         initial_count = Payment.objects.filter(subscription=trial_subscription_ready_to_charge).count()
         with pytest.raises(PaymentPendingRecurringError):
             service.process_subscription(trial_subscription_ready_to_charge, paid_tariff)
@@ -305,7 +410,7 @@ class TestProcessSubscription:
         mock_yookassa_payment_create: MockType,
     ) -> None:
         mock_yookassa_payment_create.side_effect = Exception('gateway timeout')
-        service = ChargeTrialToPaidService(timezone.now())
+        service = ChargeTrialToPaidService()
         service.process_subscription(trial_subscription_ready_to_charge, paid_tariff)
         payment = Payment.objects.filter(
             subscription=trial_subscription_ready_to_charge,
@@ -324,7 +429,7 @@ class TestProcessSubscription:
         yookassa_canceled_response: MockType,
     ) -> None:
         mock_yookassa_payment_create.return_value = yookassa_canceled_response
-        service = ChargeTrialToPaidService(timezone.now())
+        service = ChargeTrialToPaidService()
         service.process_subscription(trial_subscription_ready_to_charge, paid_tariff)
         payment = Payment.objects.filter(
             subscription=trial_subscription_ready_to_charge,
@@ -338,8 +443,7 @@ class TestProcessSubscription:
 
 class TestAct:
     def test_returns_zero_if_no_subscriptions(self) -> None:
-        future = timezone.now() - timedelta(days=1)  # no subscription has trial_ended_at in the past
-        service = ChargeTrialToPaidService(future)
+        service = ChargeTrialToPaidService()
         assert service() == 0
 
     def test_returns_count_of_processed_subscriptions(
@@ -350,7 +454,7 @@ class TestAct:
         yookassa_succeeded_response: MockType,
     ) -> None:
         mock_yookassa_payment_create.return_value = yookassa_succeeded_response
-        service = ChargeTrialToPaidService(timezone.now())
+        service = ChargeTrialToPaidService()
         count = service()
         assert count == 1
 
@@ -361,7 +465,7 @@ class TestAct:
         """pending_tariff=None raises SubscriptionDoesHavePendingTariffError → warning, count stays 0."""
         trial_subscription_ready_to_charge.pending_tariff = None
         trial_subscription_ready_to_charge.save(update_fields=['pending_tariff'])
-        service = ChargeTrialToPaidService(timezone.now())
+        service = ChargeTrialToPaidService()
         count = service()
         assert count == 0
 
@@ -377,7 +481,7 @@ class TestAct:
             'process_subscription',
             side_effect=Exception('unexpected'),
         )
-        service = ChargeTrialToPaidService(timezone.now())
+        service = ChargeTrialToPaidService()
         count = service()
         assert count == 0  # exception was swallowed
 
@@ -391,7 +495,7 @@ class TestAct:
         trial_subscription_ready_to_charge.trial_ended_at = future_trial_end
         trial_subscription_ready_to_charge.save(update_fields=['trial_ended_at'])
         # service window ends now — future trial not included
-        service = ChargeTrialToPaidService(timezone.now())
+        service = ChargeTrialToPaidService()
         count = service()
         assert count == 0
         mock_yookassa_payment_create.assert_not_called()
@@ -408,13 +512,9 @@ class TestProcessTrialToPaidTask:
         result = process_trial_to_paid()
         assert result == 'Charged 1 trials to paid.'
 
-    def test_task_passes_now_plus_5min_to_service(self, mocker: MockFixture) -> None:
-        """Task should pass now + 5 minutes to ChargeTrialToPaidService."""
+    def test_task_calls_service(self, mocker: MockFixture) -> None:
+        """Task creates ChargeTrialToPaidService and invokes it."""
         mock_call = mocker.patch.object(ChargeTrialToPaidService, '__call__', return_value=0)
-        mock_init = mocker.spy(ChargeTrialToPaidService, '__init__')
-        before = timezone.now()
-        process_trial_to_paid()
-        after = timezone.now()
-        passed_dt = mock_init.call_args[0][1]  # first positional arg after self
-        assert before + timedelta(minutes=4, seconds=59) <= passed_dt <= after + timedelta(minutes=5, seconds=1)
+        result = process_trial_to_paid()
         mock_call.assert_called_once()
+        assert result == 'Charged 0 trials to paid.'
