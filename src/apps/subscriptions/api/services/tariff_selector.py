@@ -234,7 +234,7 @@ class TariffSwitcher(TariffService):
                 yookassa_status=yoo_payment.status,
                 payment_method=payment_method,
             )
-            if yoo_payment.status == 'canceled':
+            if yoo_payment.status == PaymentStatus.CANCELED.value:
                 raise ConflictError('Upgrade payment was canceled')
         self.update_subscription_to_upgrade(subscription)
         return SuccessResponse(

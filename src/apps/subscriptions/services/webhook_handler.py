@@ -74,15 +74,27 @@ class PaymentSucceededHandler(BaseService):
         )
 
     def _renew_subscription(self, subscription: Subscription, payment_method: PaymentMethod) -> None:
-        if not subscription.tariff:
+        tariff = subscription.pending_tariff or subscription.tariff
+        if not tariff:
             loki_logger.error('Subscription %s has no tariff during renewal', subscription.id)
             return
         period_start = subscription.current_period_end or timezone.now()
         subscription.status = SubscriptionStatus.ACTIVE
+        subscription.tariff = tariff
+        subscription.pending_tariff = None
         subscription.current_period_start = period_start
-        subscription.current_period_end = subscription.tariff.get_next_period_end(period_start)
+        subscription.current_period_end = tariff.get_next_period_end(period_start)
         subscription.payment_method = payment_method
-        subscription.save(update_fields=['status', 'current_period_start', 'current_period_end', 'payment_method'])
+        subscription.save(
+            update_fields=[
+                'status',
+                'tariff',
+                'pending_tariff',
+                'current_period_start',
+                'current_period_end',
+                'payment_method',
+            ]
+        )
 
     @transaction.atomic
     def act(self) -> None:
@@ -99,8 +111,14 @@ class PaymentSucceededHandler(BaseService):
             self._activate_subscription(self.payment.subscription, tariff, payment_method)
         elif action == WebhookAction.UPGRADE:
             pass  # subscription already updated synchronously during upgrade
-        else:
+        elif action == WebhookAction.RECURRING:
             self._renew_subscription(self.payment.subscription, payment_method)
+        else:
+            loki_logger.warning(
+                'PaymentSucceededHandler: unexpected action %r for payment %s, skipping subscription update',
+                action,
+                self.payment.id,
+            )
 
 
 @dataclass
@@ -165,8 +183,10 @@ class WebhookHandler(BaseService):
     object_data: dict
 
     def _get_payment(self, yookassa_id: str) -> Payment:
-        return Payment.objects.select_related('user', 'subscription', 'subscription__tariff').get(
-            yookassa_payment_id=yookassa_id
+        return (
+            Payment.objects.select_related('user', 'subscription', 'subscription__tariff')
+            .select_for_update()
+            .get(yookassa_payment_id=yookassa_id)
         )
 
     def act(self) -> None:
