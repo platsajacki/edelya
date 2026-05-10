@@ -6,6 +6,7 @@ from random import choice
 from types import ModuleType
 
 from django.db.models import Q
+from rest_framework.request import Request
 
 from redis.backoff import EqualJitterBackoff
 from redis.retry import Retry
@@ -69,3 +70,10 @@ def build_redis_retry_policy(attempts: int, base: float, cap: float) -> Retry:
         raise ValueError('cap must be non-negative')
     backoff = EqualJitterBackoff(cap=cap, base=base)
     return Retry(backoff=backoff, retries=attempts)
+
+
+def get_client_ip(request: Request) -> str | None:
+    forwarded = request.META.get('HTTP_X_FORWARDED_FOR', '')
+    if forwarded:
+        return forwarded.split(',')[0].strip()
+    return request.META.get('REMOTE_ADDR')

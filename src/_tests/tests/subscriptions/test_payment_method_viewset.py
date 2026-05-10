@@ -9,7 +9,8 @@ from rest_framework.test import APIClient
 from apps.subscriptions.models import PaymentMethod, Subscription
 from apps.subscriptions.models.model_enums import PaymentStatus, PaymentType
 from apps.subscriptions.models.payments import Payment
-from apps.users.models import User
+from apps.users.models import ConsentLog, User
+from apps.users.models.model_enums import ConsentAction, ConsentType
 
 PAYMENT_METHOD_URL = reverse('api_v1:subscriptions:payment-method')
 
@@ -195,3 +196,17 @@ class TestPaymentMethodDestroy:
         api_client.force_authenticate(user=another_telegram_user)
         response = api_client.delete(PAYMENT_METHOD_URL)
         assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_delete_creates_revoked_payment_method_storage_log(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        active_payment_method: PaymentMethod,
+    ) -> None:
+        api_client.force_authenticate(user=telegram_user)
+        api_client.delete(PAYMENT_METHOD_URL)
+        assert ConsentLog.objects.filter(
+            user=telegram_user,
+            consent_type=ConsentType.PAYMENT_METHOD_STORAGE,
+            action=ConsentAction.REVOKED,
+        ).exists()

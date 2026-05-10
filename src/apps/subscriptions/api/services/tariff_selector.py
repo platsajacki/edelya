@@ -19,8 +19,12 @@ from apps.subscriptions.models.payments import Payment
 from apps.subscriptions.services.webhook_handler import WebhookAction
 from apps.subscriptions.services.yookassa_payments import yookassa_service
 from apps.users.models import User
+from apps.users.models.consents import ConsentLog
+from apps.users.models.model_enums import ConsentAction, ConsentType
 from core.base.exceptions import ConflictError
 from core.base.services import BaseService, BaseViewSetService
+from core.logging_handlers import loki_logger
+from core.utils import get_client_ip
 
 
 class ResponseAction(Enum):
@@ -294,10 +298,30 @@ class TariffSelector(BaseViewSetService):
             return TariffSwitcher(user=self.user, tariff=tariff)
         raise ConflictError(f'Cannot select tariff for subscription with status {status!r}')
 
+    def create_consent_log(self, tariff: Tariff) -> None:
+        try:
+            if not self.request:
+                loki_logger.error(self.get_log_msg('Request is None, cannot create consent log'))
+                return
+            ConsentLog.objects.create(
+                user=self.user,
+                consent_type=ConsentType.RECURRING_PAYMENTS,
+                action=ConsentAction.GRANTED,
+                metadata={'tariff_id': str(tariff.id), 'action': 'select_tariff'},
+                ip_address=get_client_ip(self.request),
+                user_agent=self.request.headers.get('User-Agent'),
+            )
+        except Exception:
+            loki_logger.error(
+                self.get_log_msg(f'Failed to create consent log for user {self.user.id} and tariff {tariff.id}'),
+                exc_info=True,
+            )
+
     def act(self) -> Response:
         tariff = self.get_tariff()
         subscription = self.user.subscription
         if subscription.status not in (SubscriptionStatus.EXPIRED, SubscriptionStatus.CANCELLED):
             self.check_current_subscription(tariff)
         result = self._get_sub_service(subscription, tariff)()
+        self.create_consent_log(tariff)
         return Response(result)

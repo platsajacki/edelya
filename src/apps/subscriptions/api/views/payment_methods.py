@@ -1,6 +1,7 @@
 from typing import Any
 
 from django.db.models import QuerySet
+from rest_framework import status
 from rest_framework.exceptions import NotFound
 from rest_framework.generics import CreateAPIView, DestroyAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
@@ -12,6 +13,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from apps.subscriptions.api.schemas import PaymentMethodViewSetSchema
 from apps.subscriptions.api.serializers.payment_methods import PaymentMethodSerializer
 from apps.subscriptions.api.services.payment_method_binder import PaymentMethodBinder
+from apps.subscriptions.api.services.payment_method_deleter import PaymentMethodDeleter
 from apps.subscriptions.models import PaymentMethod
 from core.base.decorators import extend_schema_view_from_class
 
@@ -36,3 +38,8 @@ class PaymentMethodViewSet(RetrieveAPIView, DestroyAPIView, CreateAPIView):
     def create(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         result = PaymentMethodBinder(user=request.user)()
         return Response(result)
+
+    def destroy(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        obj = self.get_object()
+        PaymentMethodDeleter(request=request, instance=obj)()
+        return Response(status=status.HTTP_204_NO_CONTENT)

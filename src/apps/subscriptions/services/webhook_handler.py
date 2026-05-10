@@ -11,6 +11,8 @@ from apps.subscriptions.models import Subscription, Tariff
 from apps.subscriptions.models.model_enums import PaymentStatus, SubscriptionStatus
 from apps.subscriptions.models.payment_methods import PaymentMethod
 from apps.subscriptions.models.payments import Payment
+from apps.users.models.consents import ConsentLog
+from apps.users.models.model_enums import ConsentAction, ConsentType
 from core.base.services import BaseService
 from core.logging_handlers import loki_logger
 
@@ -34,10 +36,23 @@ class PaymentSucceededHandler(BaseService):
     payment: Payment
     yoo_payment: PaymentResponse
 
+    def _log_payment_method_storage_consent(self) -> None:
+        try:
+            ConsentLog.objects.create(
+                user=self.payment.user,
+                consent_type=ConsentType.PAYMENT_METHOD_STORAGE,
+                action=ConsentAction.GRANTED,
+            )
+        except Exception:
+            loki_logger.error(
+                self.get_log_msg(f'Failed to log payment method storage consent for user {self.payment.user_id}'),
+                exc_info=True,
+            )
+
     def _upsert_payment_method(self) -> PaymentMethod:
         yookassa_payment_method = self.yoo_payment.payment_method
         card = getattr(yookassa_payment_method, 'card', None)
-        payment_method, _ = PaymentMethod.objects.update_or_create(
+        payment_method, created = PaymentMethod.objects.update_or_create(
             user=self.payment.user,
             defaults={
                 'yookassa_payment_method_id': yookassa_payment_method.id,
@@ -48,6 +63,8 @@ class PaymentSucceededHandler(BaseService):
                 'is_active': True,
             },
         )
+        if created:
+            self._log_payment_method_storage_consent()
         return payment_method
 
     def _activate_subscription(self, subscription: Subscription, tariff: Tariff, payment_method: PaymentMethod) -> None:
@@ -76,7 +93,7 @@ class PaymentSucceededHandler(BaseService):
     def _renew_subscription(self, subscription: Subscription, payment_method: PaymentMethod) -> None:
         tariff = subscription.pending_tariff or subscription.tariff
         if not tariff:
-            loki_logger.error('Subscription %s has no tariff during renewal', subscription.id)
+            loki_logger.error(self.get_log_msg(f'Subscription {subscription.id} has no tariff during renewal'))
             return
         period_start = subscription.current_period_end or timezone.now()
         subscription.status = SubscriptionStatus.ACTIVE

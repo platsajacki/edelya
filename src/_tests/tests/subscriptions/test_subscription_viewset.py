@@ -5,7 +5,8 @@ from rest_framework.test import APIClient
 
 from apps.subscriptions.models import Subscription, Tariff
 from apps.subscriptions.models.model_enums import SubscriptionStatus
-from apps.users.models import User
+from apps.users.models import ConsentLog, User
+from apps.users.models.model_enums import ConsentAction, ConsentType
 
 SUBSCRIPTION_ME_URL = reverse('api_v1:subscriptions:subscriptions:subscription-me')
 START_TRIAL_URL = reverse('api_v1:subscriptions:subscriptions:subscription-start-trial')
@@ -341,6 +342,20 @@ class TestCancelSubscription:
         assert response.data['id'] == str(active_subscription.id)
         assert response.data['auto_renew'] is False
 
+    def test_cancel_creates_revoked_recurring_payments_log(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        active_subscription: Subscription,
+    ) -> None:
+        api_client.force_authenticate(user=telegram_user)
+        api_client.post(CANCEL_URL)
+        assert ConsentLog.objects.filter(
+            user=telegram_user,
+            consent_type=ConsentType.RECURRING_PAYMENTS,
+            action=ConsentAction.REVOKED,
+        ).exists()
+
 
 class TestResumeSubscription:
     def test_anon_user_gets_401(self, api_client: APIClient) -> None:
@@ -451,3 +466,20 @@ class TestResumeSubscription:
         response = api_client.post(RESUME_URL)
         assert response.data['id'] == str(active_subscription.id)
         assert response.data['auto_renew'] is True
+
+    def test_resume_creates_granted_recurring_payments_log(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        active_subscription: Subscription,
+    ) -> None:
+        active_subscription.cancelled_at = timezone.now()
+        active_subscription.auto_renew = False
+        active_subscription.save(update_fields=['cancelled_at', 'auto_renew'])
+        api_client.force_authenticate(user=telegram_user)
+        api_client.post(RESUME_URL)
+        assert ConsentLog.objects.filter(
+            user=telegram_user,
+            consent_type=ConsentType.RECURRING_PAYMENTS,
+            action=ConsentAction.GRANTED,
+        ).exists()

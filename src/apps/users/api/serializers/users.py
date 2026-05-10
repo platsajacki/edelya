@@ -3,6 +3,23 @@ from rest_framework import serializers
 from apps.users.models.users import User
 
 
+class ConsentSerializer(serializers.Serializer):
+    terms_of_service_and_privacy_policy = serializers.BooleanField(
+        required=True,
+        help_text='Consent to Terms of Service and Privacy Policy',
+    )
+    marketing_communications = serializers.BooleanField(
+        required=False,
+        default=False,
+        help_text='Consent to receive marketing communications',
+    )
+
+    def validate_terms_of_service_and_privacy_policy(self, value: bool) -> bool:
+        if not value:
+            raise serializers.ValidationError('You must accept the Terms of Service and Privacy Policy.')
+        return value
+
+
 class OnboardingDataSerializer(serializers.ModelSerializer):
     class Meta:
         model = User

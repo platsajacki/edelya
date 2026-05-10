@@ -54,6 +54,10 @@ class User(BaseModel, AbstractUser):
         default=dict,
         validators=[dict_validator],
     )
+    marketing_communications = models.BooleanField(
+        verbose_name='Marketing Communications',
+        default=False,
+    )
 
     objects: UserManager = UserManager()  # type: ignore[misc]
 
