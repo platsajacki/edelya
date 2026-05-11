@@ -89,15 +89,6 @@ def get_logging_dict(
                 'interval': 1,
                 'backupCount': 7,
             },
-            'celery_file': {
-                'level': 'DEBUG',
-                'class': 'logging.handlers.TimedRotatingFileHandler',
-                'filename': log_dir / 'celery.log',
-                'formatter': 'main',
-                'when': 'midnight',
-                'interval': 1,
-                'backupCount': 7,
-            },
             'telegram_error': {
                 'level': 'DEBUG',
                 'class': 'core.logging_handlers.TelegramHandler',
@@ -122,6 +113,11 @@ def get_logging_dict(
             },
             'only_internal_logger': {
                 'handlers': ['console', 'timed_rotating_file'],
+                'level': 'DEBUG',
+                'propagate': False,
+            },
+            'celery': {
+                'handlers': ['console', 'telegram_error', 'loki'],
                 'level': 'DEBUG',
                 'propagate': False,
             },

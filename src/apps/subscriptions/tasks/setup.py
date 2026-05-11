@@ -1,6 +1,4 @@
-from typing import Any
 
-from celery import signals
 from django_celery_beat.models import CrontabSchedule, IntervalSchedule, PeriodicTask
 
 from apps.subscriptions.tasks.expire import (
@@ -126,8 +124,3 @@ def setup_periodic_tasks() -> str:
     """Создаёт или обновляет периодические задачи в БД. Вызывается при старте воркера."""
     SetupPeriodicTasksService()()
     return 'Periodic tasks set up successfully.'
-
-
-@signals.worker_ready.connect
-def on_worker_ready(**kwargs: Any) -> None:
-    setup_periodic_tasks.delay()

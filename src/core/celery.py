@@ -14,3 +14,10 @@ celery_app.autodiscover_tasks()
 @signals.setup_logging.connect
 def setup_celery_logging(**kwargs: Any) -> Logger:
     return getLogger('celery')
+
+
+@signals.worker_ready.connect
+def on_worker_ready(**kwargs: Any) -> None:
+    from apps.subscriptions.tasks.setup import setup_periodic_tasks
+
+    setup_periodic_tasks.delay()
