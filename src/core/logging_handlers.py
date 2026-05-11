@@ -117,7 +117,7 @@ def get_logging_dict(
                 'propagate': False,
             },
             'celery': {
-                'handlers': ['console', 'loki'],
+                'handlers': ['console', 'timed_rotating_file', 'loki'],
                 'level': 'INFO',
                 'propagate': False,
             },

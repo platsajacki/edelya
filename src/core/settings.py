@@ -181,6 +181,8 @@ REDIS_CELERY_RETRY_POLICY = {
     'max_retries': REDIS_TOTAL_CONNECTION_ATTEMPTS,
 }
 
+TELEGRAM_REDIS_LIMITER_URL = f'{REDIS_HOST}/1'
+
 if not DEBUG:
     CACHES = {
         'default': {
