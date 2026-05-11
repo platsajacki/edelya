@@ -62,9 +62,7 @@ class TestTelegramA12nJWTService:
         assert len(response.data['consents']) > 0
 
     @pytest.mark.usefixtures('mock_tg_validator')
-    def test_new_user_with_consent_creates_tos_and_pp_logs(
-        self, valid_tg_data: dict, api_client: APIClient
-    ) -> None:
+    def test_new_user_with_consent_creates_tos_and_pp_logs(self, valid_tg_data: dict, api_client: APIClient) -> None:
         User.objects.all().delete()
         api_client.post(
             self.url,
@@ -95,9 +93,7 @@ class TestTelegramA12nJWTService:
         ).exists()
 
     @pytest.mark.usefixtures('mock_tg_validator')
-    def test_new_user_with_marketing_true_sets_user_flag(
-        self, valid_tg_data: dict, api_client: APIClient
-    ) -> None:
+    def test_new_user_with_marketing_true_sets_user_flag(self, valid_tg_data: dict, api_client: APIClient) -> None:
         User.objects.all().delete()
         api_client.post(
             self.url,
@@ -108,9 +104,7 @@ class TestTelegramA12nJWTService:
         assert user.marketing_communications is True
 
     @pytest.mark.usefixtures('mock_tg_validator')
-    def test_new_user_with_marketing_false_no_marketing_log(
-        self, valid_tg_data: dict, api_client: APIClient
-    ) -> None:
+    def test_new_user_with_marketing_false_no_marketing_log(self, valid_tg_data: dict, api_client: APIClient) -> None:
         User.objects.all().delete()
         api_client.post(
             self.url,
@@ -118,7 +112,5 @@ class TestTelegramA12nJWTService:
             headers={'X-TG-INIT-DATA': valid_tg_data},
         )
         user = User.objects.get()
-        assert not ConsentLog.objects.filter(
-            user=user, consent_type=ConsentType.MARKETING_COMMUNICATIONS
-        ).exists()
+        assert not ConsentLog.objects.filter(user=user, consent_type=ConsentType.MARKETING_COMMUNICATIONS).exists()
         assert user.marketing_communications is False
