@@ -18,6 +18,6 @@ def setup_celery_logging(**kwargs: Any) -> Logger:
 
 @signals.worker_ready.connect
 def on_worker_ready(**kwargs: Any) -> None:
-    from apps.subscriptions.tasks.setup import SetupPeriodicTasksService
+    from apps.subscriptions.tasks.setup import setup_periodic_tasks
 
-    SetupPeriodicTasksService()()
+    setup_periodic_tasks.delay()

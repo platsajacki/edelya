@@ -8,6 +8,7 @@ from apps.subscriptions.tasks.expire import (
 from apps.subscriptions.tasks.past_due import process_past_due_charge
 from apps.subscriptions.tasks.renewals import process_subscription_renewals
 from apps.subscriptions.tasks.trials import process_trial_to_paid
+from core import celery_app
 from core.base.services import TaskService
 from core.logging_handlers import loki_logger
 
@@ -115,3 +116,10 @@ class SetupPeriodicTasksService(TaskService):
             )
             action = 'Создана' if created else 'Обновлена'
             loki_logger.info(self.get_log_msg(f'{action} периодическая задача: {task_def["name"]!r}'))
+
+
+@celery_app.task
+def setup_periodic_tasks() -> str:
+    """Создаёт или обновляет периодические задачи в БД. Вызывается при старте воркера."""
+    SetupPeriodicTasksService()()
+    return 'Periodic tasks set up successfully.'
