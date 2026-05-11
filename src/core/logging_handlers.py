@@ -117,8 +117,8 @@ def get_logging_dict(
                 'propagate': False,
             },
             'celery': {
-                'handlers': ['console', 'telegram_error', 'loki'],
-                'level': 'DEBUG',
+                'handlers': ['console', 'loki'],
+                'level': 'INFO',
                 'propagate': False,
             },
         },
