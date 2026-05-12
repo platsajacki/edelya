@@ -13,6 +13,7 @@ from apps.a12n.validators import TelegramDataValidator, WebAppUserData
 from apps.users.api.serializers.users import ConsentSerializer
 from apps.users.models import User
 from apps.users.models.consents import ConsentLog
+from apps.users.models.legal_docs import PrivacyPolicyVersion, TermsOfServiceVersion
 from apps.users.models.model_enums import ConsentAction, ConsentType
 from core.base.services import BaseService
 from core.logging_handlers import loki_logger
@@ -47,9 +48,25 @@ class TelegramA12nJWTService(BaseService):
 
     @transaction.atomic
     def _create_consent_logs(self, user: User, marketing: bool, ip: str | None, ua: str | None) -> None:
+        tos_version = TermsOfServiceVersion.objects.current()
+        pp_version = PrivacyPolicyVersion.objects.current()
         logs = [
-            ConsentLog(user=user, consent_type=t, action=ConsentAction.GRANTED, ip_address=ip, user_agent=ua)
-            for t in [ConsentType.TERMS_OF_SERVICE, ConsentType.PRIVACY_POLICY]
+            ConsentLog(
+                user=user,
+                consent_type=ConsentType.TERMS_OF_SERVICE,
+                action=ConsentAction.GRANTED,
+                ip_address=ip,
+                user_agent=ua,
+                terms_of_service_version=tos_version,
+            ),
+            ConsentLog(
+                user=user,
+                consent_type=ConsentType.PRIVACY_POLICY,
+                action=ConsentAction.GRANTED,
+                ip_address=ip,
+                user_agent=ua,
+                privacy_policy_version=pp_version,
+            ),
         ]
         if marketing:
             logs.append(

@@ -1,5 +1,6 @@
 from django.db import models
 
+from apps.users.models.legal_docs import PrivacyPolicyVersion, TermsOfServiceVersion
 from apps.users.models.model_enums import ConsentAction, ConsentType
 from apps.users.models.users import User
 from core.base.abstract_models import BaseModel
@@ -41,6 +42,22 @@ class ConsentLog(BaseModel):
     )
     user_agent = models.TextField(
         'User Agent',
+        blank=True,
+        null=True,
+    )
+    terms_of_service_version = models.ForeignKey(
+        TermsOfServiceVersion,
+        on_delete=models.SET_NULL,
+        related_name='consent_logs',
+        verbose_name='Terms of Service Version',
+        blank=True,
+        null=True,
+    )
+    privacy_policy_version = models.ForeignKey(
+        PrivacyPolicyVersion,
+        on_delete=models.SET_NULL,
+        related_name='consent_logs',
+        verbose_name='Privacy Policy Version',
         blank=True,
         null=True,
     )
