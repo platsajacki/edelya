@@ -46,6 +46,6 @@ class NotificationAdmin(ModelAdmin):
     )
     list_display = ('id', 'user', 'template', 'delivered', 'delivered_at', 'created_at')
     list_filter = ('delivered', 'template')
+    list_select_related = ('user', 'template')
     search_fields = ('user__username', 'user__telegram_username', 'user__telegram_id')
     ordering = ('-created_at',)
-    autocomplete_fields = ()

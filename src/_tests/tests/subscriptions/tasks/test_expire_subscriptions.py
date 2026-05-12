@@ -4,6 +4,8 @@ from datetime import timedelta
 
 from django.utils import timezone
 
+from apps.marketing.models import Notification
+from apps.marketing.models.model_enums import MessageTemplateName
 from apps.subscriptions.models import Subscription, Tariff
 from apps.subscriptions.models.model_enums import SubscriptionStatus
 from apps.subscriptions.tasks.expire import (
@@ -98,8 +100,20 @@ class TestExpirePastDueService:
         service = ExpirePastDueService()
         count = service()
         assert count == 0
+
+    def test_sends_expired_notification(
+        self,
+        past_due_subscription_for_expiry: Subscription,
+    ) -> None:
+        """Истечение PAST_DUE подписки отправляет уведомление пользователю."""
+        ExpirePastDueService()()
+        assert Notification.objects.filter(
+            user=past_due_subscription_for_expiry.user,
+            template__name=MessageTemplateName.SUBSCRIPTION_EXPIRED,
+            delivered=True,
+        ).exists()
         past_due_subscription_for_expiry.refresh_from_db()
-        assert past_due_subscription_for_expiry.status == SubscriptionStatus.PAST_DUE
+        assert past_due_subscription_for_expiry.status == SubscriptionStatus.EXPIRED.value
 
     def test_does_not_expire_active_subscription(
         self,

@@ -6,6 +6,8 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
+from apps.marketing.models import Notification
+from apps.marketing.models.model_enums import MessageTemplateName
 from apps.subscriptions.models import PaymentMethod, Subscription, Tariff
 from apps.subscriptions.models.model_enums import PaymentStatus, PaymentType, SubscriptionStatus
 from apps.subscriptions.models.payments import Payment
@@ -218,6 +220,33 @@ class TestPaymentMethodActiveHandler:
         api_client.post(WEBHOOK_URL, data=payload, format='json')
         api_client.post(WEBHOOK_URL, data=payload, format='json')
         assert PaymentMethod.objects.filter(user=telegram_user).count() == 1
+
+    def test_sends_card_bound_notification(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        pending_payment_zero_amount: Payment,
+    ) -> None:
+        """payment_method.active отправляет уведомление о привязке карты."""
+        api_client.post(
+            WEBHOOK_URL,
+            data={
+                'event': 'payment_method.active',
+                'object': {
+                    'id': 'yoo-pm-id-001',
+                    'type': 'bank_card',
+                    'title': 'Bank card *4242',
+                    'saved': True,
+                    'card': {'last4': '4242', 'card_type': 'Visa'},
+                },
+            },
+            format='json',
+        )
+        assert Notification.objects.filter(
+            user=telegram_user,
+            template__name=MessageTemplateName.SUBSCRIPTION_CARD_BOUND,
+            delivered=True,
+        ).exists()
 
 
 class TestPaymentSucceededHandlerFirstPayment:
@@ -453,6 +482,41 @@ class TestPaymentSucceededHandlerFirstPayment:
         second_paid_at = Payment.objects.get(id=pending_payment_first.id).paid_at
         assert first_paid_at == second_paid_at
 
+    def test_sends_first_payment_notification(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        expired_subscription: Subscription,
+        paid_tariff: Tariff,
+        pending_payment_first: Payment,
+    ) -> None:
+        """payment.succeeded (FIRST_PAYMENT) отправляет уведомление об активации подписки."""
+        api_client.post(
+            WEBHOOK_URL,
+            data={
+                'event': 'payment.succeeded',
+                'object': {
+                    'id': 'yoo-pay-id-001',
+                    'status': 'succeeded',
+                    'amount': {'value': str(paid_tariff.price), 'currency': 'RUB'},
+                    'payment_method': {
+                        'id': 'yoo-pm-id-saved-001',
+                        'type': 'bank_card',
+                        'saved': True,
+                        'title': 'Bank card *4242',
+                        'card': {'last4': '4242', 'card_type': 'Visa'},
+                    },
+                    'metadata': {'action': 'first_payment', 'tariff_id': str(paid_tariff.id)},
+                },
+            },
+            format='json',
+        )
+        assert Notification.objects.filter(
+            user=telegram_user,
+            template__name=MessageTemplateName.SUBSCRIPTION_FIRST_PAYMENT_SUCCEEDED,
+            delivered=True,
+        ).exists()
+
 
 class TestPaymentSucceededHandlerRecurring:
     def test_renews_subscription_period(
@@ -525,6 +589,41 @@ class TestPaymentSucceededHandlerRecurring:
         )
         active_subscription_with_period.refresh_from_db()
         assert active_subscription_with_period.status == SubscriptionStatus.ACTIVE
+
+    def test_sends_recurring_payment_notification(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        active_subscription_with_period: Subscription,
+        paid_tariff: Tariff,
+        pending_payment_recurring: Payment,
+    ) -> None:
+        """payment.succeeded (RECURRING) отправляет уведомление о продлении подписки."""
+        api_client.post(
+            WEBHOOK_URL,
+            data={
+                'event': 'payment.succeeded',
+                'object': {
+                    'id': 'yoo-pay-id-recurring-001',
+                    'status': 'succeeded',
+                    'amount': {'value': str(paid_tariff.price), 'currency': 'RUB'},
+                    'payment_method': {
+                        'id': 'yoo-pm-id-saved-001',
+                        'type': 'bank_card',
+                        'saved': True,
+                        'title': 'Bank card *4242',
+                        'card': {'last4': '4242', 'card_type': 'Visa'},
+                    },
+                    'metadata': {'action': 'recurring'},
+                },
+            },
+            format='json',
+        )
+        assert Notification.objects.filter(
+            user=telegram_user,
+            template__name=MessageTemplateName.SUBSCRIPTION_RECURRING_PAYMENT_SUCCEEDED,
+            delivered=True,
+        ).exists()
 
 
 class TestPaymentCanceledHandler:
@@ -621,6 +720,33 @@ class TestPaymentCanceledHandler:
         api_client.post(WEBHOOK_URL, data=payload, format='json')
         pending_payment_first.refresh_from_db()
         assert pending_payment_first.status == PaymentStatus.CANCELED
+
+    def test_sends_payment_failed_notification(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        expired_subscription: Subscription,
+        paid_tariff: Tariff,
+        pending_payment_first: Payment,
+    ) -> None:
+        """payment.canceled отправляет уведомление о неудачном платеже."""
+        api_client.post(
+            WEBHOOK_URL,
+            data={
+                'event': 'payment.canceled',
+                'object': {
+                    'id': 'yoo-pay-id-001',
+                    'status': 'canceled',
+                    'cancellation_details': {'party': 'yoo_money', 'reason': 'card_expired'},
+                },
+            },
+            format='json',
+        )
+        assert Notification.objects.filter(
+            user=telegram_user,
+            template__name=MessageTemplateName.SUBSCRIPTION_PAYMENT_FAILED,
+            delivered=True,
+        ).exists()
 
 
 UPGRADE_SUCCEEDED_PAYLOAD = {

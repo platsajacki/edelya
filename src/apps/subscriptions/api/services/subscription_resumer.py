@@ -6,6 +6,8 @@ from rest_framework.exceptions import AuthenticationFailed, NotFound, Validation
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from apps.marketing.models.model_enums import MessageTemplateName
+from apps.marketing.services.sender import NotificationSender, fmt_date
 from apps.subscriptions.api.serializers.subscriptions import SubscriptionSerializer
 from apps.subscriptions.models import Subscription
 from apps.subscriptions.models.model_enums import SubscriptionStatus
@@ -62,5 +64,13 @@ class SubscriptionResumer(BaseService):
         self.subscription.cancelled_at = None
         self.subscription.save(update_fields=['auto_renew', 'cancelled_at'])
         self._log_granted_recurring_payments()
+        NotificationSender(
+            self.authenticated_user,
+            MessageTemplateName.SUBSCRIPTION_AUTO_RENEW_RESUMED,
+            {
+                'tariff_name': self.subscription.tariff.name,
+                'period_end': fmt_date(self.subscription.current_period_end),
+            },
+        )()
         serializer = self.serializer_class(self.subscription)
         return Response(serializer.data)

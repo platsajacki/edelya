@@ -70,7 +70,7 @@ TEST ?= src/_tests
 F ?= -q
 test:
 	make install-hooks
-	pytest $(TEST) --create-db $(F)
+	pytest $(TEST) --create-db  --blockage $(F)
 
 COVERAGE ?= --cov=src --cov-report=term-missing
 test-cov:

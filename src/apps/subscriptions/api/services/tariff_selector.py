@@ -11,6 +11,8 @@ from rest_framework.exceptions import NotAuthenticated, NotFound
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from apps.marketing.models.model_enums import MessageTemplateName
+from apps.marketing.services.sender import NotificationSender, fmt_date
 from apps.subscriptions.api.serializers.subscriptions import SubscriptionSerializer
 from apps.subscriptions.models import Subscription, Tariff
 from apps.subscriptions.models.model_enums import PaymentStatus, PaymentType, SubscriptionStatus
@@ -209,6 +211,15 @@ class TariffSwitcher(TariffService):
         if pending and pending.id == self.tariff.id:
             raise ConflictError('You have a pending subscription to this tariff')
         self.update_subscription_to_downgrade(subscription)
+        NotificationSender(
+            self.user,
+            MessageTemplateName.SUBSCRIPTION_TARIFF_DOWNGRADE_SCHEDULED,
+            {
+                'current_tariff_name': subscription.tariff.name,
+                'new_tariff_name': self.tariff.name,
+                'apply_at': fmt_date(subscription.current_period_end),
+            },
+        )()
         return SuccessResponse(
             action=ResponseAction.SUCCESS.value,
             subscription=SubscriptionSerializer(subscription).data,
@@ -241,6 +252,16 @@ class TariffSwitcher(TariffService):
             if yoo_payment.status == PaymentStatus.CANCELED.value:
                 raise ConflictError('Upgrade payment was canceled')
         self.update_subscription_to_upgrade(subscription)
+        NotificationSender(
+            self.user,
+            MessageTemplateName.SUBSCRIPTION_TARIFF_UPGRADED,
+            {
+                'tariff_name': self.tariff.name,
+                'amount': str(proration),
+                'currency': 'RUB',
+                'period_end': fmt_date(subscription.current_period_end),
+            },
+        )()
         return SuccessResponse(
             action=ResponseAction.SUCCESS.value,
             subscription=SubscriptionSerializer(subscription).data,

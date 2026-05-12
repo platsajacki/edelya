@@ -3,6 +3,8 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
+from apps.marketing.models import Notification
+from apps.marketing.models.model_enums import MessageTemplateName
 from apps.subscriptions.models import Subscription, Tariff
 from apps.subscriptions.models.model_enums import SubscriptionStatus
 from apps.users.models import ConsentLog, User
@@ -356,6 +358,21 @@ class TestCancelSubscription:
             action=ConsentAction.REVOKED,
         ).exists()
 
+    def test_cancel_sends_notification(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        active_subscription: Subscription,
+    ) -> None:
+        """Отмена автопродления отправляет уведомление пользователю."""
+        api_client.force_authenticate(user=telegram_user)
+        api_client.post(CANCEL_URL)
+        assert Notification.objects.filter(
+            user=telegram_user,
+            template__name=MessageTemplateName.SUBSCRIPTION_AUTO_RENEW_CANCELLED,
+            delivered=True,
+        ).exists()
+
 
 class TestResumeSubscription:
     def test_anon_user_gets_401(self, api_client: APIClient) -> None:
@@ -482,4 +499,22 @@ class TestResumeSubscription:
             user=telegram_user,
             consent_type=ConsentType.RECURRING_PAYMENTS,
             action=ConsentAction.GRANTED,
+        ).exists()
+
+    def test_resume_sends_notification(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        active_subscription: Subscription,
+    ) -> None:
+        """Восстановление автопродления отправляет уведомление пользователю."""
+        active_subscription.cancelled_at = timezone.now()
+        active_subscription.auto_renew = False
+        active_subscription.save(update_fields=['cancelled_at', 'auto_renew'])
+        api_client.force_authenticate(user=telegram_user)
+        api_client.post(RESUME_URL)
+        assert Notification.objects.filter(
+            user=telegram_user,
+            template__name=MessageTemplateName.SUBSCRIPTION_AUTO_RENEW_RESUMED,
+            delivered=True,
         ).exists()

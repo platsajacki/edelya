@@ -94,7 +94,7 @@ class User(BaseModel, AbstractUser):
         video_file_id: str | None = None,
         document: str | InputFile | None = None,
         anti_flood: bool = True,
-    ) -> None:
+    ) -> bool:
         sender = EdelyaBotSender(
             user=self,
             text=text,

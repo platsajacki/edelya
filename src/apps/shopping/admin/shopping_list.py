@@ -1,4 +1,6 @@
 from django.contrib.admin import ModelAdmin, TabularInline
+from django.db.models import QuerySet
+from django.http import HttpRequest
 
 from apps.shopping.models.shopping_list import ShoppingList, ShoppingListItem
 from core.admin import admin
@@ -15,6 +17,9 @@ class ShoppingListItemInline(TabularInline):
     )
     extra = 1
     ordering = ('position',)
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet:
+        return super().get_queryset(request).select_related('ingredient')
 
 
 @admin.register(ShoppingList)
@@ -60,6 +65,7 @@ class ShoppingListAdmin(ModelAdmin):
         'date_from',
         'date_to',
     )
+    list_select_related = ('owner',)
     search_fields = (
         'name',
         'owner__username',
@@ -120,6 +126,7 @@ class ShoppingListItemAdmin(ModelAdmin):
         'is_checked',
         'is_manual',
     )
+    list_select_related = ('shopping_list', 'ingredient')
     search_fields = (
         'shopping_list__name',
         'ingredient__name',

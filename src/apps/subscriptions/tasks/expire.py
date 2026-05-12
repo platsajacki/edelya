@@ -1,3 +1,5 @@
+from apps.marketing.models.model_enums import MessageTemplateName
+from apps.marketing.services.sender import NotificationSender
 from apps.subscriptions.models import Payment, Subscription
 from apps.subscriptions.models.model_enums import SubscriptionStatus
 from apps.subscriptions.tasks.base import RecurringTaskService
@@ -25,7 +27,11 @@ class ExpirePastDueService(RecurringTaskService):
                 continue
             subscription.status = SubscriptionStatus.EXPIRED
             subscription.save(update_fields=['status'])
-            # TODO: notify_user(subscription.user, event='subscription_expired')
+            NotificationSender(
+                subscription.user,
+                MessageTemplateName.SUBSCRIPTION_EXPIRED,
+                {'tariff_name': subscription.tariff.name},
+            )()
             count += 1
         return count
 

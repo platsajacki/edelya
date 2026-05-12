@@ -48,6 +48,7 @@ class IngredientAdmin(ModelAdmin):
     readonly_fields = ('id', 'created_at', 'updated_at')
     list_display = ('id', 'name', 'category', 'base_unit', 'owner', 'is_active')
     list_filter = ('is_active', 'base_unit', 'category')
+    list_select_related = ('category', 'owner')
     search_fields = ('name', 'owner__username', 'owner__telegram_username')
     ordering = ('name',)
     autocomplete_fields = ('owner', 'category')

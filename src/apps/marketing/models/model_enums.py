@@ -18,6 +18,10 @@ class MessageTemplateName(models.TextChoices):
         'subscription_card_bound',
         'Карта привязана',
     )
+    SUBSCRIPTION_CARD_UNBOUND = (
+        'subscription_card_unbound',
+        'Карта отвязана',
+    )
     SUBSCRIPTION_TARIFF_UPGRADED = (
         'subscription_tariff_upgraded',
         'Тариф повышен',

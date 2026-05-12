@@ -42,6 +42,7 @@ class SubscriptionAdmin(ModelAdmin):
     readonly_fields = ('id', 'created_at', 'updated_at')
     list_display = ('id', 'user', 'tariff', 'status', 'auto_renew', 'trial_started_at', 'current_period_end')
     list_filter = ('status', 'auto_renew', 'tariff')
+    list_select_related = ('user', 'tariff')
     search_fields = ('user__username', 'user__telegram_username', 'user__telegram_id')
     ordering = ('-created_at',)
     autocomplete_fields = ('user', 'tariff', 'pending_tariff', 'payment_method')

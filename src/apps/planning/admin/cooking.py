@@ -30,6 +30,7 @@ class CookingEventAdmin(ModelAdmin):
     readonly_fields = ('id', 'created_at', 'updated_at')
     list_display = ('id', 'owner', 'dish', 'cooking_date')
     list_filter = ('cooking_date',)
+    list_select_related = ('owner', 'dish')
     search_fields = ('owner__username', 'owner__telegram_username', 'dish__name')
     ordering = ('-cooking_date',)
     autocomplete_fields = ('owner', 'dish')

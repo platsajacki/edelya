@@ -48,6 +48,7 @@ class PaymentAdmin(ModelAdmin):
     readonly_fields = ('id', 'idempotence_key', 'created_at', 'updated_at')
     list_display = ('id', 'user', 'subscription', 'payment_type', 'status', 'amount', 'currency', 'paid_at')
     list_filter = ('status', 'payment_type', 'currency')
+    list_select_related = ('user', 'subscription')
     search_fields = ('user__username', 'user__telegram_username', 'yookassa_payment_id')
     ordering = ('-created_at',)
     autocomplete_fields = ('user', 'subscription', 'payment_method')

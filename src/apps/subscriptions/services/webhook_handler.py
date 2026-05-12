@@ -7,6 +7,8 @@ from django.utils import timezone
 from yookassa.payment import PaymentResponse
 from yookassa.payment_method import PaymentMethodResponse
 
+from apps.marketing.models.model_enums import MessageTemplateName
+from apps.marketing.services.sender import NotificationSender, fmt_date
 from apps.subscriptions.models import Subscription, Tariff
 from apps.subscriptions.models.model_enums import PaymentStatus, SubscriptionStatus
 from apps.subscriptions.models.payment_methods import PaymentMethod
@@ -14,7 +16,7 @@ from apps.subscriptions.models.payments import Payment
 from apps.users.models.consents import ConsentLog
 from apps.users.models.model_enums import ConsentAction, ConsentType
 from core.base.services import BaseService
-from core.logging_handlers import loki_logger
+from core.logging_handlers import loki_logger, tg_logger
 
 
 class WebhookAction(StrEnum):
@@ -113,6 +115,13 @@ class PaymentSucceededHandler(BaseService):
             ]
         )
 
+    def send_notification(self, tamplate_name: MessageTemplateName, variables: dict) -> None:
+        NotificationSender(
+            self.payment.user,
+            tamplate_name,
+            variables,
+        )()
+
     @transaction.atomic
     def act(self) -> None:
         if self.payment.status == PaymentStatus.SUCCEEDED:
@@ -126,12 +135,30 @@ class PaymentSucceededHandler(BaseService):
         if action == WebhookAction.FIRST_PAYMENT:
             tariff = Tariff.objects.get(id=self.payment.metadata['tariff_id'])
             self._activate_subscription(self.payment.subscription, tariff, payment_method)
+            self.send_notification(
+                MessageTemplateName.SUBSCRIPTION_FIRST_PAYMENT_SUCCEEDED,
+                {
+                    'tariff_name': tariff.name,
+                    'amount': str(self.payment.amount),
+                    'currency': str(self.payment.currency),
+                    'period_end': fmt_date(self.payment.subscription.current_period_end),
+                },
+            )
         elif action == WebhookAction.UPGRADE:
             pass  # subscription already updated synchronously during upgrade
         elif action == WebhookAction.RECURRING:
             self._renew_subscription(self.payment.subscription, payment_method)
+            self.send_notification(
+                MessageTemplateName.SUBSCRIPTION_RECURRING_PAYMENT_SUCCEEDED,
+                {
+                    'tariff_name': self.payment.subscription.tariff.name,
+                    'amount': str(self.payment.amount),
+                    'currency': str(self.payment.currency),
+                    'period_end': fmt_date(self.payment.subscription.current_period_end),
+                },
+            )
         else:
-            loki_logger.warning(
+            tg_logger.warning(
                 'PaymentSucceededHandler: unexpected action %r for payment %s, skipping subscription update',
                 action,
                 self.payment.id,
@@ -152,6 +179,16 @@ class PaymentCanceledHandler(BaseService):
         self.payment.status = PaymentStatus.CANCELED
         self.payment.cancellation_reason = reason
         self.payment.save(update_fields=['status', 'cancellation_reason'])
+        subscription = self.payment.subscription
+        NotificationSender(
+            self.payment.user,
+            MessageTemplateName.SUBSCRIPTION_PAYMENT_FAILED,
+            {
+                'tariff_name': subscription.tariff.name if subscription and subscription.tariff else '—',
+                'amount': str(self.payment.amount),
+                'currency': str(self.payment.currency),
+            },
+        )()
 
 
 @dataclass
@@ -192,6 +229,11 @@ class PaymentMethodActiveHandler(BaseService):
         self.payment.payment_method = payment_method
         self.payment.paid_at = timezone.now()
         self.payment.save(update_fields=['status', 'payment_method', 'paid_at'])
+        NotificationSender(
+            self.payment.user,
+            MessageTemplateName.SUBSCRIPTION_CARD_BOUND,
+            {'card_name': payment_method.card_name},
+        )()
 
 
 @dataclass

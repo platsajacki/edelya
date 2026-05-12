@@ -14,6 +14,7 @@ pytest_plugins = [
     '_tests.fixtures.dishes',
     '_tests.fixtures.ingredients',
     '_tests.fixtures.main',
+    '_tests.fixtures.marketing',
     '_tests.fixtures.mocks',
     '_tests.fixtures.planning',
     '_tests.fixtures.shopping',

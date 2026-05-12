@@ -54,3 +54,8 @@ def yookassa_canceled_response(mocker: MockFixture) -> MockType:
     obj.status = 'canceled'
     obj.cancellation_details.reason = 'card_expired'
     return obj
+
+
+@pytest.fixture(autouse=True)
+def edelya_bot_send_message_mock(mocker: MockFixture) -> MockType:
+    return mocker.patch('core.telegram.EdelyaBotSender.send_message')

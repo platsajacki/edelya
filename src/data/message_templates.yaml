@@ -49,6 +49,15 @@ message_templates:
     variables_description: |
       card_name — название карты (например, "Visa *1234").
 
+  - name: subscription_card_unbound
+    text_str: |
+      Карта успешно отвязана.
+
+      Карта: {card_name}
+    with_variables: true
+    variables_description: |
+      card_name — название карты (например, "Visa *1234").
+
   - name: subscription_tariff_upgraded
     text_str: |
       Тариф успешно изменён.

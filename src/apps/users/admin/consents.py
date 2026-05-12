@@ -30,6 +30,7 @@ class ConsentLogAdmin(ModelAdmin):
     readonly_fields = ('id', 'created_at', 'updated_at')
     list_display = ('id', 'user', 'consent_type', 'action', 'ip_address', 'created_at')
     list_filter = ('consent_type', 'action')
+    list_select_related = ('user',)
     search_fields = ('user__username', 'user__telegram_username', 'user__telegram_id')
     ordering = ('-created_at',)
     autocomplete_fields = ('user',)

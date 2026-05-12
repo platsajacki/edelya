@@ -10,6 +10,8 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
+from apps.marketing.models import Notification
+from apps.marketing.models.model_enums import MessageTemplateName
 from apps.subscriptions.models import PaymentMethod, Subscription, Tariff
 from apps.subscriptions.models.model_enums import PaymentStatus, PaymentType, SubscriptionStatus
 from apps.subscriptions.models.payments import Payment
@@ -540,3 +542,48 @@ class TestSelectTariff:
         api_client.force_authenticate(user=telegram_user)
         response = api_client.get(SELECT_TARIFF_URL)
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+
+    def test_downgrade_sends_notification(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        active_subscription_with_period: Subscription,
+        base_tariff: Tariff,
+    ) -> None:
+        """ACTIVE даунгрейд отправляет уведомление о запланированном понижении тарифа."""
+        api_client.force_authenticate(user=telegram_user)
+        api_client.post(
+            SELECT_TARIFF_URL,
+            data={'tariff_id': str(base_tariff.id)},
+            format='json',
+        )
+        assert Notification.objects.filter(
+            user=telegram_user,
+            template__name=MessageTemplateName.SUBSCRIPTION_TARIFF_DOWNGRADE_SCHEDULED,
+            delivered=True,
+        ).exists()
+
+    def test_upgrade_sends_notification(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        active_subscription_with_period: Subscription,
+        upgrade_tariff: Tariff,
+        mock_yookassa_payment_create: MockType,
+    ) -> None:
+        """ACTIVE апгрейд отправляет уведомление о повышении тарифа."""
+        fake_payment = MagicMock()
+        fake_payment.id = 'yoo-upgrade-notify-001'
+        fake_payment.status = 'pending'
+        mock_yookassa_payment_create.return_value = fake_payment
+        api_client.force_authenticate(user=telegram_user)
+        api_client.post(
+            SELECT_TARIFF_URL,
+            data={'tariff_id': str(upgrade_tariff.id)},
+            format='json',
+        )
+        assert Notification.objects.filter(
+            user=telegram_user,
+            template__name=MessageTemplateName.SUBSCRIPTION_TARIFF_UPGRADED,
+            delivered=True,
+        ).exists()
