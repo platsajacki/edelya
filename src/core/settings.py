@@ -114,6 +114,11 @@ YOOKASSA_SHOP_ID = getenv('YOOKASSA_SHOP_ID', '')
 YOOKASSA_SECRET_KEY = getenv('YOOKASSA_SECRET_KEY', '')
 YOOKASSA_RETURN_URL = f'{FRONTEND_URL.rstrip("/")}/cabinet?payment_return=1' if FRONTEND_URL else ''
 
+# Tax3r (fiscal check) settings
+TAX3R_URL = getenv('TAX3R_URL', '')
+TAX3R_API_KEY = getenv('TAX3R_API_KEY', '')
+SEND_CHECKS_TO_TAX3R = bool(int(getenv('SEND_CHECKS_TO_TAX3R', '0')))
+
 # Rest Framework & JWT settings
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': ('apps.a12n.authentications.JWTAuthenticationWithSubscription',),

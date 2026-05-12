@@ -9,6 +9,7 @@ from yookassa.payment import PaymentResponse
 from apps.subscriptions.exceptions import PaymentPendingRecurringError
 from apps.subscriptions.models import Payment, Subscription, Tariff
 from apps.subscriptions.models.model_enums import PaymentStatus, PaymentType, SubscriptionStatus
+from apps.subscriptions.services.tax_check import TaxCheckSender
 from apps.subscriptions.services.webhook_handler import WebhookAction
 from apps.subscriptions.services.yookassa_payments import yookassa_service
 from core.base.services import TaskService
@@ -43,6 +44,7 @@ class RecurringTaskService(TaskService):
         self,
         payment: Payment,
         subscription: Subscription,
+        service_name: str,
     ) -> None:
         payment.status = PaymentStatus.SUCCEEDED
         payment.paid_at = timezone.now()
@@ -54,6 +56,7 @@ class RecurringTaskService(TaskService):
                 f'Status set to ACTIVE.'
             )
         )
+        TaxCheckSender(payment, service_name)()
 
     def _process_failed_payment(
         self,
@@ -127,7 +130,9 @@ class RecurringTaskService(TaskService):
     ) -> None:
         self._apply_tariff(subscription=subscription, tariff=tariff, period_start=period_start)
         if succeeded:
-            self._process_successful_payment(payment, subscription)
+            self._process_successful_payment(
+                payment, subscription, service_name=f'Подписка на сервис Edelya — {tariff.name}'
+            )
         else:
             self._process_failed_payment(
                 payment=payment,

@@ -49,6 +49,11 @@ def yookassa_succeeded_response(mocker: MockFixture) -> MockType:
 
 
 @pytest.fixture
+def mock_tax3r_post(mocker: MockFixture) -> MockType:
+    return mocker.patch('core.external_requests.tax3r.requests.post')
+
+
+@pytest.fixture
 def yookassa_canceled_response(mocker: MockFixture) -> MockType:
     obj = mocker.MagicMock()
     obj.status = 'canceled'

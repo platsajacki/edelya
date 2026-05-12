@@ -1,6 +1,9 @@
+from pytest_mock import MockType
+
 from datetime import timedelta
 from unittest.mock import MagicMock
 
+from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
@@ -852,3 +855,115 @@ class TestPaymentSucceededHandlerUpgrade:
     ) -> None:
         """Апгрейд-платёж имеет тип SINGLE_PAYMENT, а не RECURRING."""
         assert pending_payment_upgrade.payment_type == PaymentType.SINGLE_PAYMENT
+
+
+class TestPaymentSucceededTaxCheck:
+    """Verify that TaxCheckSender is triggered on paid webhooks and skipped on zero-amount ones."""
+
+    def _first_payment_payload(self, tariff: Tariff) -> dict:
+        return {
+            'event': 'payment.succeeded',
+            'object': {
+                'id': 'yoo-pay-id-001',
+                'status': 'succeeded',
+                'amount': {'value': str(tariff.price), 'currency': 'RUB'},
+                'payment_method': {
+                    'id': 'yoo-pm-id-saved-001',
+                    'type': 'bank_card',
+                    'saved': True,
+                    'title': 'Bank card *4242',
+                    'card': {'last4': '4242', 'card_type': 'Visa'},
+                },
+                'metadata': {'action': 'first_payment', 'tariff_id': str(tariff.id)},
+            },
+        }
+
+    def _recurring_payload(self) -> dict:
+        return {
+            'event': 'payment.succeeded',
+            'object': {
+                'id': 'yoo-pay-id-recurring-001',
+                'status': 'succeeded',
+                'amount': {'value': '99.00', 'currency': 'RUB'},
+                'payment_method': {
+                    'id': 'yoo-pm-id-saved-001',
+                    'type': 'bank_card',
+                    'saved': True,
+                    'title': 'Bank card *4242',
+                    'card': {'last4': '4242', 'card_type': 'Visa'},
+                },
+                'metadata': {'action': 'recurring'},
+            },
+        }
+
+    def test_sends_tax_check_on_first_payment(
+        self,
+        api_client: APIClient,
+        mock_tax3r_post: MockType,
+        telegram_user: User,
+        expired_subscription: Subscription,
+        paid_tariff: Tariff,
+        pending_payment_first: Payment,
+    ) -> None:
+        """FIRST_PAYMENT triggers one tax check call with service_name containing tariff name."""
+        with override_settings(SEND_CHECKS_TO_TAX3R=True, TAX3R_URL='https://tax3r.example.com', TAX3R_API_KEY='k'):
+            api_client.post(WEBHOOK_URL, data=self._first_payment_payload(paid_tariff), format='json')
+        mock_tax3r_post.assert_called_once()
+        body = mock_tax3r_post.call_args[1]['json']
+        assert paid_tariff.name in body['service_name']
+
+    def test_sends_tax_check_on_recurring(
+        self,
+        api_client: APIClient,
+        mock_tax3r_post: MockType,
+        telegram_user: User,
+        active_subscription_with_period: Subscription,
+        paid_tariff: Tariff,
+        pending_payment_recurring: Payment,
+    ) -> None:
+        """RECURRING triggers one tax check call with service_name containing tariff name."""
+        with override_settings(SEND_CHECKS_TO_TAX3R=True, TAX3R_URL='https://tax3r.example.com', TAX3R_API_KEY='k'):
+            api_client.post(WEBHOOK_URL, data=self._recurring_payload(), format='json')
+        mock_tax3r_post.assert_called_once()
+        body = mock_tax3r_post.call_args[1]['json']
+        assert paid_tariff.name in body['service_name']
+
+    def test_no_tax_check_on_upgrade_action(
+        self,
+        api_client: APIClient,
+        mock_tax3r_post: MockType,
+        telegram_user: User,
+        active_subscription_with_period: Subscription,
+        upgrade_tariff: Tariff,
+        pending_payment_upgrade: Payment,
+    ) -> None:
+        """UPGRADE webhook handler does not call tax check (already handled synchronously)."""
+        with override_settings(SEND_CHECKS_TO_TAX3R=True, TAX3R_URL='https://tax3r.example.com', TAX3R_API_KEY='k'):
+            api_client.post(WEBHOOK_URL, data=UPGRADE_SUCCEEDED_PAYLOAD, format='json')
+        mock_tax3r_post.assert_not_called()
+
+    def test_no_tax_check_on_zero_amount(
+        self,
+        api_client: APIClient,
+        mock_tax3r_post: MockType,
+        telegram_user: User,
+        trial_subscription: Subscription,
+        pending_payment_zero_amount: Payment,
+    ) -> None:
+        """Zero-amount card binding payment → TaxCheckSender skips the call."""
+        with override_settings(SEND_CHECKS_TO_TAX3R=True, TAX3R_URL='https://tax3r.example.com', TAX3R_API_KEY='k'):
+            api_client.post(
+                WEBHOOK_URL,
+                data={
+                    'event': 'payment_method.active',
+                    'object': {
+                        'id': 'yoo-pm-id-001',
+                        'type': 'bank_card',
+                        'title': 'Bank card *4242',
+                        'saved': True,
+                        'card': {'last4': '4242', 'card_type': 'Visa'},
+                    },
+                },
+                format='json',
+            )
+        mock_tax3r_post.assert_not_called()

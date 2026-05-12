@@ -13,6 +13,7 @@ from apps.subscriptions.models import Subscription, Tariff
 from apps.subscriptions.models.model_enums import PaymentStatus, SubscriptionStatus
 from apps.subscriptions.models.payment_methods import PaymentMethod
 from apps.subscriptions.models.payments import Payment
+from apps.subscriptions.services.tax_check import TaxCheckSender
 from apps.users.models.consents import ConsentLog
 from apps.users.models.model_enums import ConsentAction, ConsentType
 from core.base.services import BaseService
@@ -144,6 +145,7 @@ class PaymentSucceededHandler(BaseService):
                     'period_end': fmt_date(self.payment.subscription.current_period_end),
                 },
             )
+            TaxCheckSender(self.payment, f'Первый платеж по подписке на сервис Edelya — {tariff.name}')()
         elif action == WebhookAction.UPGRADE:
             pass  # subscription already updated synchronously during upgrade
         elif action == WebhookAction.RECURRING:
@@ -157,6 +159,8 @@ class PaymentSucceededHandler(BaseService):
                     'period_end': fmt_date(self.payment.subscription.current_period_end),
                 },
             )
+            service_name = f'Рекуррентный платеж по подписке на сервис Edelya — {self.payment.subscription.tariff.name}'
+            TaxCheckSender(self.payment, service_name)()
         else:
             tg_logger.warning(
                 'PaymentSucceededHandler: unexpected action %r for payment %s, skipping subscription update',

@@ -18,6 +18,7 @@ from apps.subscriptions.models import Subscription, Tariff
 from apps.subscriptions.models.model_enums import PaymentStatus, PaymentType, SubscriptionStatus
 from apps.subscriptions.models.payment_methods import PaymentMethod
 from apps.subscriptions.models.payments import Payment
+from apps.subscriptions.services.tax_check import TaxCheckSender
 from apps.subscriptions.services.webhook_handler import WebhookAction
 from apps.subscriptions.services.yookassa_payments import yookassa_service
 from apps.users.models import User
@@ -243,7 +244,7 @@ class TariffSwitcher(TariffService):
                 description=f'Смена тарифа на «{self.tariff.name}»',
                 metadata={'tariff_id': str(self.tariff.id)},
             )
-            self.create_upgrade_payment(
+            payment = self.create_upgrade_payment(
                 yookassa_payment_id=yoo_payment.id,
                 amount=proration,
                 yookassa_status=yoo_payment.status,
@@ -251,6 +252,8 @@ class TariffSwitcher(TariffService):
             )
             if yoo_payment.status == PaymentStatus.CANCELED.value:
                 raise ConflictError('Upgrade payment was canceled')
+            service_name = f'Смена тарифа на «{self.tariff.name}» в подписк сервиса Edelya'
+            TaxCheckSender(payment=payment, service_name=service_name)()
         self.update_subscription_to_upgrade(subscription)
         NotificationSender(
             self.user,
