@@ -116,3 +116,21 @@ message_templates:
     with_variables: true
     variables_description: |
       tariff_name — название тарифа, по которому закончилась подписка.
+
+  - name: subscription_trial_expired
+    text_str: |
+      Пробный период завершился.
+
+      Чтобы продолжить пользоваться сервисом, выберите тариф.
+    with_variables: false
+    variables_description: ''
+
+  - name: subscription_cancelled_expired
+    text_str: |
+      Оплаченный период завершился.
+
+      Тариф: {tariff_name}
+      Подписка приостановлена. Вы можете возобновить её в любой момент.
+    with_variables: true
+    variables_description: |
+      tariff_name — название тарифа.

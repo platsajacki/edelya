@@ -6,6 +6,8 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
+from apps.marketing.models import Notification
+from apps.marketing.models.model_enums import MessageTemplateName
 from apps.subscriptions.models import PaymentMethod, Subscription
 from apps.subscriptions.models.model_enums import PaymentStatus, PaymentType
 from apps.subscriptions.models.payments import Payment
@@ -209,4 +211,19 @@ class TestPaymentMethodDestroy:
             user=telegram_user,
             consent_type=ConsentType.PAYMENT_METHOD_STORAGE,
             action=ConsentAction.REVOKED,
+        ).exists()
+
+    def test_delete_sends_card_unbound_notification(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        active_payment_method: PaymentMethod,
+    ) -> None:
+        """Отвязка карты отправляет уведомление CARD_UNBOUND."""
+        api_client.force_authenticate(user=telegram_user)
+        api_client.delete(PAYMENT_METHOD_URL)
+        assert Notification.objects.filter(
+            user=telegram_user,
+            template__name=MessageTemplateName.SUBSCRIPTION_CARD_UNBOUND,
+            delivered=True,
         ).exists()

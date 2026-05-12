@@ -9,7 +9,17 @@ from core.logging_handlers import loki_logger
 
 class ExpireTrialsService(RecurringTaskService):
     def act(self) -> int:
-        count = Subscription.objects.get_abandoned_trials().update(status=SubscriptionStatus.EXPIRED)
+        subscriptions = Subscription.objects.get_abandoned_trials()
+        count = 0
+        for subscription in subscriptions:
+            subscription.status = SubscriptionStatus.EXPIRED
+            subscription.save(update_fields=['status'])
+            NotificationSender(
+                subscription.user,
+                MessageTemplateName.SUBSCRIPTION_TRIAL_EXPIRED,
+                {},
+            )()
+            count += 1
         return count
 
 
@@ -38,7 +48,17 @@ class ExpirePastDueService(RecurringTaskService):
 
 class ExpireCancelledService(RecurringTaskService):
     def act(self) -> int:
-        count = Subscription.objects.get_cancelled_for_expiry().update(status=SubscriptionStatus.EXPIRED)
+        subscriptions = Subscription.objects.get_cancelled_for_expiry()
+        count = 0
+        for subscription in subscriptions:
+            subscription.status = SubscriptionStatus.EXPIRED
+            subscription.save(update_fields=['status'])
+            NotificationSender(
+                subscription.user,
+                MessageTemplateName.SUBSCRIPTION_CANCELLED_EXPIRED,
+                {'tariff_name': subscription.tariff.name},
+            )()
+            count += 1
         return count
 
 

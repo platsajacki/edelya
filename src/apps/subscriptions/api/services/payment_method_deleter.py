@@ -2,6 +2,8 @@ from dataclasses import dataclass
 
 from rest_framework.request import Request
 
+from apps.marketing.models.model_enums import MessageTemplateName
+from apps.marketing.services.sender import NotificationSender
 from apps.users.models.consents import ConsentLog
 from apps.users.models.model_enums import ConsentAction, ConsentType
 from core.base.services import BaseInstanceService
@@ -33,4 +35,6 @@ class PaymentMethodDeleter(BaseInstanceService):
 
     def act(self) -> None:
         self.create_log()
+        card_name = getattr(self.instance, 'card_name', 'Your card')
         self.instance.delete()
+        NotificationSender(self.request.user, MessageTemplateName.SUBSCRIPTION_CARD_UNBOUND, {'card_name': card_name})()

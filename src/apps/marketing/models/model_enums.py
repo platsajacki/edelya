@@ -42,3 +42,11 @@ class MessageTemplateName(models.TextChoices):
         'subscription_expired',
         'Подписка истекла',
     )
+    SUBSCRIPTION_TRIAL_EXPIRED = (
+        'subscription_trial_expired',
+        'Пробный период истёк',
+    )
+    SUBSCRIPTION_CANCELLED_EXPIRED = (
+        'subscription_cancelled_expired',
+        'Оплаченный период завершился',
+    )

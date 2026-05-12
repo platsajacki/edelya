@@ -65,6 +65,18 @@ class TestExpireTrialsService:
         count = service()
         assert count == 0
 
+    def test_sends_trial_expired_notification(
+        self,
+        abandoned_trial_subscription: Subscription,
+    ) -> None:
+        """Истечение заброшенного триала отправляет уведомление с призывом выбрать тариф."""
+        ExpireTrialsService()()
+        assert Notification.objects.filter(
+            user=abandoned_trial_subscription.user,
+            template__name=MessageTemplateName.SUBSCRIPTION_TRIAL_EXPIRED,
+            delivered=True,
+        ).exists()
+
 
 class TestExpirePastDueService:
     def test_returns_count_of_expired_subscriptions(
@@ -168,6 +180,18 @@ class TestExpireCancelledService:
         service = ExpireCancelledService()
         count = service()
         assert count == 0
+
+    def test_sends_cancelled_expired_notification(
+        self,
+        cancelled_subscription_ready_to_expire: Subscription,
+    ) -> None:
+        """Истечение периода у отменённой подписки отправляет CANCELLED_EXPIRED уведомление."""
+        ExpireCancelledService()()
+        assert Notification.objects.filter(
+            user=cancelled_subscription_ready_to_expire.user,
+            template__name=MessageTemplateName.SUBSCRIPTION_CANCELLED_EXPIRED,
+            delivered=True,
+        ).exists()
 
 
 class TestExpireTrialsWithoutPaymentTask:
