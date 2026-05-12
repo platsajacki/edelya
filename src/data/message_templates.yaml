@@ -1,0 +1,109 @@
+
+message_templates:
+  - name: subscription_first_payment_succeeded
+    text_str: |
+      Подписка успешно активирована.
+
+      Тариф: {tariff_name}
+      Сумма: {amount} {currency}
+      Доступ действует до: {period_end}
+    with_variables: true
+    variables_description: |
+      tariff_name — название тарифа.
+      amount — сумма платежа.
+      currency — валюта платежа.
+      period_end — дата окончания оплаченного периода.
+
+  - name: subscription_recurring_payment_succeeded
+    text_str: |
+      Подписка успешно продлена.
+
+      Тариф: {tariff_name}
+      Списано: {amount} {currency}
+      Новый период действует до: {period_end}
+    with_variables: true
+    variables_description: |
+      tariff_name — название тарифа.
+      amount — сумма списания.
+      currency — валюта списания.
+      period_end — новая дата окончания периода подписки.
+
+  - name: subscription_payment_failed
+    text_str: |
+      Не удалось оплатить подписку.
+
+      Тариф: {tariff_name}
+      Сумма: {amount} {currency}
+    with_variables: true
+    variables_description: |
+      tariff_name — название тарифа.
+      amount — сумма платежа.
+      currency — валюта платежа.
+
+  - name: subscription_card_bound
+    text_str: |
+      Карта успешно привязана.
+
+      Карта: {card_name}
+    with_variables: true
+    variables_description: |
+      card_name — название карты (например, "Visa *1234").
+
+  - name: subscription_tariff_upgraded
+    text_str: |
+      Тариф успешно изменён.
+
+      Новый тариф: {tariff_name}
+      Стоимость: {amount} {currency}
+      Доступ действует до: {period_end}
+    with_variables: true
+    variables_description: |
+      tariff_name — название нового тарифа.
+      amount — стоимость тарифа или сумма платежа за upgrade.
+      currency — валюта.
+      period_end — дата окончания текущего оплаченного периода.
+
+  - name: subscription_tariff_downgrade_scheduled
+    text_str: |
+      Смена тарифа запланирована.
+
+      Текущий тариф: {current_tariff_name}
+      Новый тариф: {new_tariff_name}
+      Он начнёт действовать с: {apply_at}
+    with_variables: true
+    variables_description: |
+      current_tariff_name — название текущего тарифа.
+      new_tariff_name — название тарифа, который будет применён позже.
+      apply_at — дата применения нового тарифа.
+
+  - name: subscription_auto_renew_cancelled
+    text_str: |
+      Автопродление подписки отключено.
+
+      Тариф: {tariff_name}
+      Доступ сохранится до: {period_end}
+    with_variables: true
+    variables_description: |
+      tariff_name — название текущего тарифа.
+      period_end — дата, до которой сохранится доступ.
+
+  - name: subscription_auto_renew_resumed
+    text_str: |
+      Автопродление подписки восстановлено.
+
+      Тариф: {tariff_name}
+      Следующее продление: {period_end}
+    with_variables: true
+    variables_description: |
+      tariff_name — название текущего тарифа.
+      period_end — дата следующего продления или окончания периода.
+
+  - name: subscription_expired
+    text_str: |
+      Подписка истекла.
+
+      Тариф: {tariff_name}
+      Чтобы продолжить пользоваться сервисом, продлите подписку.
+    with_variables: true
+    variables_description: |
+      tariff_name — название тарифа, по которому закончилась подписка.

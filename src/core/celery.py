@@ -18,6 +18,10 @@ def setup_celery_logging(**kwargs: Any) -> Logger:
 
 @signals.worker_ready.connect
 def on_worker_ready(**kwargs: Any) -> None:
+    from apps.marketing.tasks.seed_templates import seed_message_templates
+    from apps.marketing.tasks.validate_templates import validate_message_templates
     from apps.subscriptions.tasks.setup import setup_periodic_tasks
 
+    validate_message_templates.delay()
+    seed_message_templates.delay()
     setup_periodic_tasks.delay()

@@ -36,6 +36,7 @@ DJANGO_APPS = [
 LOCAL_APPS = [
     'apps.a12n',
     'apps.dishes',
+    'apps.marketing',
     'apps.planning',
     'apps.shopping',
     'apps.subscriptions',

@@ -47,4 +47,8 @@ class PaymentMethod(BaseModel):
         verbose_name_plural = 'Методы оплаты'
 
     def __str__(self) -> str:
+        return self.card_name
+
+    @property
+    def card_name(self) -> str:
         return self.title or f'{self.payment_method_type} *{self.card_last4}'

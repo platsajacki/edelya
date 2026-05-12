@@ -71,3 +71,10 @@ def dict_validator(
 ) -> None:
     if not isinstance(value, dict):
         raise error_type('Value must be a dictionary.')
+
+
+def validate_balanced_braces(value: str) -> None:
+    open_count = value.count('{')
+    close_count = value.count('}')
+    if open_count != close_count:
+        raise ValidationError('The number of opening and closing braces must be the same.')
