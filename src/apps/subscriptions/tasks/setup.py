@@ -35,9 +35,9 @@ class SetupPeriodicTasksService(TaskService):
 
     def get_task_definitions(self) -> list[dict]:
         every_5_minutes = self.get_every_5_minutes_schedule()
-        daily_0300 = self.get_crontab_schedule(hour='3', minute='0')
-        daily_0315 = self.get_crontab_schedule(hour='3', minute='15')
-        daily_0330 = self.get_crontab_schedule(hour='3', minute='30')
+        daily_0700 = self.get_crontab_schedule(hour='7', minute='0')
+        daily_0715 = self.get_crontab_schedule(hour='7', minute='15')
+        daily_0730 = self.get_crontab_schedule(hour='7', minute='30')
         return [
             {
                 'name': 'Конвертация триала в платную подписку',
@@ -71,30 +71,30 @@ class SetupPeriodicTasksService(TaskService):
                 'name': 'Истечение брошенных триалов',
                 'task': expire_trials_without_payment.name,
                 'description': (
-                    'Ежедневно в 03:00. Переводит в EXPIRED Trial-подписки, '
+                    'Ежедневно в 07:00. Переводит в EXPIRED Trial-подписки, '
                     'где pending_tariff = None (пользователь не выбрал план).'
                 ),
-                'schedule': daily_0300,
+                'schedule': daily_0700,
                 'schedule_field': 'crontab',
             },
             {
                 'name': 'Истечение PAST_DUE подписок после grace period',
                 'task': expire_past_due_subscriptions.name,
                 'description': (
-                    'Ежедневно в 03:15. Страховочный fallback: '
+                    'Ежедневно в 07:15. Страховочный fallback: '
                     'переводит в EXPIRED PAST_DUE-подписки, у которых истёк grace period.'
                 ),
-                'schedule': daily_0315,
+                'schedule': daily_0715,
                 'schedule_field': 'crontab',
             },
             {
                 'name': 'Истечение отменённых подписок',
                 'task': expire_cancelled_subscriptions.name,
                 'description': (
-                    'Ежедневно в 03:30. Переводит в EXPIRED ACTIVE-подписки '
+                    'Ежедневно в 07:30. Переводит в EXPIRED ACTIVE-подписки '
                     'с auto_renew=False и истёкшим current_period_end.'
                 ),
-                'schedule': daily_0330,
+                'schedule': daily_0730,
                 'schedule_field': 'crontab',
             },
         ]
