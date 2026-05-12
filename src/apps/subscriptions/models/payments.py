@@ -93,6 +93,10 @@ class Payment(BaseModel):
         verbose_name='Метаданные',
         default=dict,
     )
+    send_to_tax3r = models.BooleanField(
+        verbose_name='Отправлено в Tax3r',
+        default=False,
+    )
 
     objects: PaymentManager = PaymentManager()
 

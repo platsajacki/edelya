@@ -17,6 +17,8 @@ class TaxCheckSender(BaseService):
         try:
             response = send_payment_check_to_taxer(data)
             response.raise_for_status()
+            self.payment.send_to_tax3r = True
+            self.payment.save(update_fields=['send_to_tax3r'])
             loki_logger.info(self.get_log_msg(f'Tax check sent for payment {self.payment.id!r}, data: {data}'))
         except Exception as e:
             tg_logger.error(

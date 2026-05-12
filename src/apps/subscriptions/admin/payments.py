@@ -10,7 +10,7 @@ class PaymentAdmin(ModelAdmin):
         (
             'General',
             {
-                'fields': ('id', 'idempotence_key', 'user', 'subscription', 'payment_type', 'status'),
+                'fields': ('id', 'idempotence_key', 'user', 'subscription', 'payment_type', 'status', 'send_to_tax3r'),
             },
         ),
         (
