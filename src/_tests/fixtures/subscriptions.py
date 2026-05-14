@@ -414,3 +414,24 @@ def cancelled_subscription_ready_to_expire(
         current_period_start=now - timedelta(days=31),
         current_period_end=now - timedelta(days=1),
     )
+
+
+@pytest.fixture
+def payment_ready_for_check(
+    telegram_user: User,
+    active_subscription_with_period: Subscription,
+    paid_tariff: Tariff,
+) -> Payment:
+    """SUCCEEDED payment with send_to_tax3r=True and is_check_sent=False — ready for Tax3r check processing."""
+    return Payment.objects.create(
+        subscription=active_subscription_with_period,
+        user=telegram_user,
+        amount=paid_tariff.price,
+        payment_type=PaymentType.RECURRING,
+        status=PaymentStatus.SUCCEEDED,
+        idempotence_key='99999999-9999-9999-9999-999999999999',
+        yookassa_payment_id='yoo-pay-id-tax3r-001',
+        send_to_tax3r=True,
+        is_check_sent=False,
+        metadata={'action': 'recurring'},
+    )

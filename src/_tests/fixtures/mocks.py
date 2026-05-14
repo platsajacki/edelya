@@ -64,3 +64,13 @@ def yookassa_canceled_response(mocker: MockFixture) -> MockType:
 @pytest.fixture(autouse=True)
 def edelya_bot_send_message_mock(mocker: MockFixture) -> MockType:
     return mocker.patch('core.telegram.EdelyaBotSender.send_message')
+
+
+@pytest.fixture
+def mock_lpop(mocker: MockFixture) -> MockType:
+    return mocker.patch('apps.subscriptions.services.tax3r_check_processor.cluster_redis.lpop')
+
+
+@pytest.fixture
+def mock_notification_sender(mocker: MockFixture) -> MockType:
+    return mocker.patch('apps.subscriptions.services.tax3r_check_processor.NotificationSender')

@@ -134,3 +134,14 @@ message_templates:
     with_variables: true
     variables_description: |
       tariff_name — название тарифа.
+
+  - name: subscription_check_for_client
+    text_str: |
+      Ваш чек об оплате подписки.
+
+      Тариф: {tariff_name}
+      Ссылка на чек: {check_url}
+    with_variables: true
+    variables_description: |
+      tariff_name — название тарифа.
+      check_url — ссылка чек.

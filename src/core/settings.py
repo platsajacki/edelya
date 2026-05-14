@@ -14,7 +14,7 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = getenv('SECRET_KEY', 'django-insecure-default-key')
-
+SERVICE_NAME = getenv('SERVICE_NAME', 'edelya')
 DEBUG = bool(int(getenv('DEBUG', 0)))
 
 ALLOWED_HOSTS = getenv('ALLOWED_HOSTS', '').split(', ')
@@ -188,6 +188,7 @@ REDIS_CELERY_RETRY_POLICY = {
 }
 
 TELEGRAM_REDIS_LIMITER_URL = f'{REDIS_HOST}/1'
+CLUSTER_REDIS_URL = getenv('CLUSTER_REDIS_URL', 'redis://127.0.0.1:6379/0')
 
 if not DEBUG:
     CACHES = {

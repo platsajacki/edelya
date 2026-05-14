@@ -97,6 +97,18 @@ class Payment(BaseModel):
         verbose_name='Отправлено в Tax3r',
         default=False,
     )
+    is_check_sent = models.BooleanField(
+        default=False,
+        verbose_name='Отправлен ли чек в налоговую',
+        editable=False,
+        help_text='Устанавливается в True после успешного получения ответа от Tax3r.',
+    )
+    check_url = models.URLField(
+        verbose_name='URL для проверки чека',
+        null=True,
+        blank=True,
+        editable=False,
+    )
 
     objects: PaymentManager = PaymentManager()
 

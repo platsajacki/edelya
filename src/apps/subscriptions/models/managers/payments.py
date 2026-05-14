@@ -20,6 +20,9 @@ class PaymentQuerySet(QuerySet['Payment']):
             created_at__gte=created_at__gte,
         )
 
+    def to_send_check(self) -> PaymentQuerySet:
+        return self.filter(send_to_tax3r=True, is_check_sent=False)
+
 
 class PaymentManager(Manager['Payment']):
     def get_queryset(self) -> PaymentQuerySet:
@@ -30,3 +33,6 @@ class PaymentManager(Manager['Payment']):
 
     def has_pending_recurring_payment(self, subscription: Subscription) -> bool:
         return self.get_pending_recurring_payments(subscription).exists()
+
+    def to_send_check(self) -> PaymentQuerySet:
+        return self.get_queryset().to_send_check()

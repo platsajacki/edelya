@@ -50,3 +50,7 @@ class MessageTemplateName(models.TextChoices):
         'subscription_cancelled_expired',
         'Оплаченный период завершился',
     )
+    SUBSCRIPTION_CHECK_FOR_CLIENT = (
+        'subscription_check_for_client',
+        'Чек для клиента',
+    )

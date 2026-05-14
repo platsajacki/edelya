@@ -2,6 +2,7 @@ from pytest_mock import MockFixture, MockType
 
 from decimal import Decimal
 
+from django.conf import settings
 from django.test import override_settings
 
 import requests
@@ -73,6 +74,7 @@ class TestTaxCheckSender:
             'service_name': 'Подписка Edelya',
             'price': '99.00',
             'payment_id': str(payment.id),
+            'service': settings.SERVICE_NAME,
         }
         assert kwargs['timeout'] == 10
 

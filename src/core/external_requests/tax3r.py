@@ -1,4 +1,5 @@
 from dataclasses import asdict, dataclass
+from dataclasses import field as dc_field
 
 from django.conf import settings
 
@@ -12,6 +13,7 @@ class TaxCheckData:
     service_name: str
     price: str
     payment_id: str
+    service: str = dc_field(default=settings.SERVICE_NAME)
 
 
 def send_payment_check_to_taxer(data: TaxCheckData) -> Response:

@@ -7,6 +7,7 @@ from apps.subscriptions.tasks.expire import (
 )
 from apps.subscriptions.tasks.past_due import process_past_due_charge
 from apps.subscriptions.tasks.renewals import process_subscription_renewals
+from apps.subscriptions.tasks.tax3r_check import process_tax3r_check_results
 from apps.subscriptions.tasks.trials import process_trial_to_paid
 from core import celery_app
 from core.base.services import TaskService
@@ -26,6 +27,13 @@ class SetupPeriodicTasksService(TaskService):
         )
         return schedule
 
+    def get_every_20_seconds_schedule(self) -> IntervalSchedule:
+        schedule, _ = IntervalSchedule.objects.get_or_create(
+            every=20,
+            period=IntervalSchedule.SECONDS,
+        )
+        return schedule
+
     def get_crontab_schedule(self, hour: str, minute: str) -> CrontabSchedule:
         schedule, _ = CrontabSchedule.objects.get_or_create(
             hour=hour,
@@ -35,6 +43,7 @@ class SetupPeriodicTasksService(TaskService):
 
     def get_task_definitions(self) -> list[dict]:
         every_5_minutes = self.get_every_5_minutes_schedule()
+        every_20_seconds = self.get_every_20_seconds_schedule()
         daily_0700 = self.get_crontab_schedule(hour='7', minute='0')
         daily_0715 = self.get_crontab_schedule(hour='7', minute='15')
         daily_0730 = self.get_crontab_schedule(hour='7', minute='30')
@@ -65,6 +74,16 @@ class SetupPeriodicTasksService(TaskService):
                     'При неуспехе подписка переходит в EXPIRED.'
                 ),
                 'schedule': every_5_minutes,
+                'schedule_field': 'interval',
+            },
+            {
+                'name': 'Обработка результатов Tax3r',
+                'task': process_tax3r_check_results.name,
+                'description': (
+                    'Каждые 20 секунд. Читает результаты проверки от Tax3r из Redis-очереди, '
+                    'обновляет поля is_check_sent и check_url у платежей, отправляет уведомление пользователю.'
+                ),
+                'schedule': every_20_seconds,
                 'schedule_field': 'interval',
             },
             {
