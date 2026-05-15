@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+from rest_framework.response import Response
 
 api_urlpatterns_v1 = [
     path('auth/', include(('apps.a12n.urls', 'a12n'), namespace='a12n')),
@@ -12,6 +13,7 @@ api_urlpatterns_v1 = [
 ]
 
 urlpatterns = [
+    path('ping/', lambda request: Response({'pong': 'pong'}), name='ping'),
     path('admin/', admin.site.urls),
     path('api/v1/', include((api_urlpatterns_v1, 'api_v1')), name='api_v1'),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
