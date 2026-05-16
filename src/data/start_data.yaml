@@ -6,350 +6,2748 @@ dish_categories:
   - name: Основные блюда
   - name: Десерты
   - name: Напитки
+  - name: Выпечка
   - name: Другое
 
 ingredient_categories:
-  - name: Овощи
-  - name: Фрукты
-  - name: Ягоды
-  - name: Зелень
-  - name: Грибы
-  - name: Орехи
-  - name: Семечки и семена
-  - name: Сухофрукты
-
+  - name: Овощи и фрукты
+  - name: Орехи, семечки и сухофрукты
   - name: Мясо
-  - name: Птица
-  - name: Колбасы
-  - name: Mясные изделия
-  - name: Рыба
-  - name: Морепродукты
-
+  - name: Рыба и морепродукты
   - name: Молочные продукты
-  - name: Кисломолочные продукты
+  - name: Колбасные изделия
   - name: Сыры
-  - name: Творог и творожные продукты
   - name: Яйца
-
-  - name: Крупы и злаки
-  - name: Бобовые
-  - name: Макароны и лапша
-  - name: Мука
-  - name: Крахмалы и панировка
-  - name: Тесто и основы
-  - name: Хлеб и хлебобулочные изделия
-
+  - name: Бакалея
+  - name: Хлеб и выпечка
   - name: Специи
-  - name: Соусы
-  - name: Масла
-  - name: Уксусы
-
-  - name: Сахар и подсластители
-  - name: Шоколад и какао
-  - name: Кондитерские ингредиенты
-  - name: Варенье
-  - name: Cиропы
-
+  - name: Соусы и масла
+  - name: Сладости
   - name: Консервы
-  - name: Маринады и соленья
-  - name: Замороженные продукты
-  - name: Сухие смеси и концентраты
-  - name: Полуфабрикаты
-
+  - name: Заморозка
   - name: Напитки
-  - name: Растительные продукты
 
 ingredients:
-  - name: Говядина
-    category: Мясо
-    base_unit: gram
 
-  - name: Куриное филе
-    category: Птица
-    base_unit: gram
-
-  - name: Панчетта
-    category: Колбасы
-    base_unit: gram
-
-  - name: Свекла
-    category: Овощи
+  - name: Творожный сыр
+    category: Сыры
     base_unit: gram
 
   - name: Картофель
-    category: Овощи
-    base_unit: gram
-
-  - name: Капуста белокочанная
-    category: Овощи
-    base_unit: gram
-
-  - name: Морковь
-    category: Овощи
-    base_unit: gram
-
-  - name: Лук репчатый
-    category: Овощи
-    base_unit: gram
-
-  - name: Чеснок
-    category: Овощи
-    base_unit: clove
-
-  - name: Помидор
-    category: Овощи
+    category: Овощи и фрукты
     base_unit: gram
 
   - name: Огурец
-    category: Овощи
+    category: Овощи и фрукты
     base_unit: gram
 
-  - name: Болгарский перец
-    category: Овощи
+  - name: Говядина отварная, на кости
+    category: Мясо
     base_unit: gram
 
-  - name: Листья салата ромэн
-    category: Зелень
+  - name: Морковь
+    category: Овощи и фрукты
     base_unit: gram
 
-  - name: Петрушка
-    category: Зелень
-    base_unit: bunch
-
-  - name: Маслины
-    category: Консервы
+  - name: Лук репчатый
+    category: Овощи и фрукты
     base_unit: gram
-
-  - name: Пармезан
-    category: Сыры
-    base_unit: gram
-
-  - name: Фета
-    category: Сыры
-    base_unit: gram
-
-  - name: Творог
-    category: Творог и творожные продукты
-    base_unit: gram
-
-  - name: Молоко
-    category: Молочные продукты
-    base_unit: milliliter
-
-  - name: Яйцо куриное
-    category: Яйца
-    base_unit: piece
-
-  - name: Спагетти
-    category: Макароны и лапша
-    base_unit: gram
-
-  - name: Мука пшеничная
-    category: Мука
-    base_unit: gram
-
-  - name: Гренки
-    category: Хлеб и хлебобулочные изделия
-    base_unit: gram
-
-  - name: Черный перец
-    category: Специи
-    base_unit: pinch
-
-  - name: Соль
-    category: Специи
-    base_unit: to_taste
-
-  - name: Томатная паста
-    category: Соусы
-    base_unit: tablespoon
-
-  - name: Оливковое масло
-    category: Масла
-    base_unit: milliliter
-
-  - name: Уксус
-    category: Уксусы
-    base_unit: tablespoon
-
-  - name: Сахар
-    category: Сахар и подсластители
-    base_unit: gram
-
-  - name: Сухари панировочные
-    category: Крахмалы и панировка
-    base_unit: gram
-
-  - name: Сметана
-    category: Кисломолочные продукты
-    base_unit: tablespoon
 
   - name: Лавровый лист
     category: Специи
     base_unit: piece
 
+  - name: Перец черный горошком
+    category: Специи
+    base_unit: gram
+
+  - name: Масло растительное
+    category: Соусы и масла
+    base_unit: milliliter
+
+  - name: Чеснок
+    category: Овощи и фрукты
+    base_unit: clove
+
+  - name: Свекла
+    category: Овощи и фрукты
+    base_unit: gram
+
+  - name: Томатная паста
+    category: Соусы и масла
+    base_unit: gram
+
+  - name: Красный винный уксус
+    category: Соусы и масла
+    base_unit: milliliter
+
+  - name: Капуста белокочанная
+    category: Овощи и фрукты
+    base_unit: gram
+
+  - name: Сахар
+    category: Бакалея
+    base_unit: gram
+
+  - name: Укроп
+    category: Овощи и фрукты
+    base_unit: bunch
+
+  - name: Соль
+    category: Специи
+    base_unit: to_taste
+
+  - name: Перец черный молотый
+    category: Специи
+    base_unit: to_taste
+
+  - name: Яйцо куриное
+    category: Яйца
+    base_unit: piece
+
+  - name: Колбаса вареная
+    category: Колбасные изделия
+    base_unit: gram
+
+  - name: Огурец маринованный
+    category: Консервы
+    base_unit: gram
+
+  - name: Горошек зелёный консервированный
+    category: Консервы
+    base_unit: gram
+
+  - name: Майонез
+    category: Соусы и масла
+    base_unit: gram
+
+  - name: Петрушка
+    category: Овощи и фрукты
+    base_unit: bunch
+
+  - name: Творог зерненный в сливках
+    category: Молочные продукты
+    base_unit: gram
+
+  - name: Помидор
+    category: Овощи и фрукты
+    base_unit: gram
+
+  - name: Лук красный
+    category: Овощи и фрукты
+    base_unit: gram
+
+  - name: Соус песто
+    category: Соусы и масла
+    base_unit: tablespoon
+
+  - name: Куриное филе
+    category: Мясо
+    base_unit: gram
+
+  - name: Фасоль
+    category: Бакалея
+    base_unit: gram
+
+  - name: Кефир
+    category: Молочные продукты
+    base_unit: milliliter
+
+  - name: Квас
+    category: Напитки
+    base_unit: liter
+
+  - name: Горчица
+    category: Соусы и масла
+    base_unit: teaspoon
+
+  - name: Чечевица
+    category: Бакалея
+    base_unit: gram
+
+  - name: Перец сладкий
+    category: Овощи и фрукты
+    base_unit: gram
+
+  - name: Томаты протёртые
+    category: Овощи и фрукты
+    base_unit: gram
+
+  - name: Вода
+    category: Напитки
+    base_unit: milliliter
+
+  - name: Паприка копчёная
+    category: Специи
+    base_unit: to_taste
+
+  - name: Орегано
+    category: Специи
+    base_unit: to_taste
+
+  - name: Перец чёрный молотый
+    category: Специи
+    base_unit: to_taste
+
+  - name: Базилик сушёный
+    category: Специи
+    base_unit: to_taste
+
+  - name: Хмели-сунели
+    category: Специи
+    base_unit: to_taste
+
+  - name: Пармезан
+    category: Сыры
+    base_unit: gram
+
+  - name: Фарш
+    category: Мясо
+    base_unit: gram
+
+  - name: Сельдерей
+    category: Овощи и фрукты
+    base_unit: gram
+
+  - name: Шпинат
+    category: Овощи и фрукты
+    base_unit: gram
+
+  - name: Макароны
+    category: Бакалея
+    base_unit: gram
+
+  - name: Итальянские травы
+    category: Специи
+    base_unit: to_taste
+
+  - name: Белый хлеб
+    category: Хлеб и выпечка
+    base_unit: slice
+
+  - name: Черный хлеб
+    category: Хлеб и выпечка
+    base_unit: slice
+
+  - name: Гречка
+    category: Бакалея
+    base_unit: gram
+
+  - name: Шампиньон
+    category: Овощи и фрукты
+    base_unit: gram
+
+  - name: Соевый соус
+    category: Соусы и масла
+    base_unit: tablespoon
+
+  - name: Масло топлёное
+    category: Соусы и масла
+    base_unit: gram
+
+  - name: Сливки 20%
+    category: Молочные продукты
+    base_unit: milliliter
+
+  - name: Кинза
+    category: Овощи и фрукты
+    base_unit: bunch
+
+  - name: Батат
+    category: Овощи и фрукты
+    base_unit: piece
+
+  - name: Молоко
+    category: Молочные продукты
+    base_unit: milliliter
+
+  - name: Сыр
+    category: Сыры
+    base_unit: gram
+
+  - name: Бекон
+    category: Мясо
+    base_unit: gram
+
+  - name: Масло оливковое
+    category: Соусы и масла
+    base_unit: tablespoon
+
+  - name: Сметана
+    category: Молочные продукты
+    base_unit: gram
+
+  - name: Лук зелёный
+    category: Овощи и фрукты
+    base_unit: gram
+
+  - name: Масло сливочное
+    category: Соусы и масла
+    base_unit: gram
+
+  - name: Мука
+    category: Бакалея
+    base_unit: gram
+
+  - name: Ванилин
+    category: Специи
+    base_unit: to_taste
+
+  - name: Какао
+    category: Сладости
+    base_unit: gram
+
+  - name: Ягоды
+    category: Овощи и фрукты
+    base_unit: gram
+
+  - name: Орехи
+    category: Орехи, семечки и сухофрукты
+    base_unit: gram
+
+  - name: Шоколад
+    category: Сладости
+    base_unit: gram
+
+  - name: Яблоко
+    category: Овощи и фрукты
+    base_unit: piece
+
+  - name: Изюм
+    category: Бакалея
+    base_unit: gram
+
+  - name: Миндаль
+    category: Орехи, семечки и сухофрукты
+    base_unit: gram
+
+  - name: Лимон
+    category: Овощи и фрукты
+    base_unit: piece
+
+  - name: Панировочные сухари
+    category: Бакалея
+    base_unit: gram
+
+  - name: Печенье
+    category: Хлеб и выпечка
+    base_unit: gram
+
+  - name: Корица
+    category: Специи
+    base_unit: to_taste
+
+  - name: Мёд
+    category: Сладости
+    base_unit: tablespoon
+
+  - name: Кунжут
+    category: Орехи, семечки и сухофрукты
+    base_unit: tablespoon
+
+  - name: Банан
+    category: Овощи и фрукты
+    base_unit: piece
+
+  - name: Разрыхлитель
+    category: Бакалея
+    base_unit: gram
+
+  - name: Орехи грецкие
+    category: Орехи, семечки и сухофрукты
+    base_unit: gram
+
+  - name: Сахарная пудра
+    category: Бакалея
+    base_unit: to_taste
+
+  - name: Тунец консервированный
+    category: Консервы
+    base_unit: can
+
+  - name: Фасоль белая консервированная
+    category: Консервы
+    base_unit: gram
+
+  - name: Лимонный сок
+    category: Соусы и масла
+    base_unit: tablespoon
+
+  - name: Лосось
+    category: Рыба и морепродукты
+    base_unit: gram
+
+  - name: Овощи замороженные
+    category: Заморозка
+    base_unit: gram
+
+  - name: Капуста цветная
+    category: Овощи и фрукты
+    base_unit: piece
+
+  - name: Брокколи
+    category: Овощи и фрукты
+    base_unit: piece
+
+  - name: Смесь трав
+    category: Специи
+    base_unit: to_taste
+
+  - name: Базилик
+    category: Овощи и фрукты
+    base_unit: to_taste
+
+  - name: Розмарин
+    category: Специи
+    base_unit: to_taste
+
+  - name: Лисички
+    category: Овощи и фрукты
+    base_unit: gram
+
+  - name: Говядина
+    category: Мясо
+    base_unit: gram
+
+  - name: Свинина
+    category: Мясо
+    base_unit: gram
+
+  - name: Приправа для мяса
+    category: Специи
+    base_unit: to_taste
+
+  - name: Острый соус
+    category: Соусы и масла
+    base_unit: to_taste
+
+  - name: Соус табаско чипотле
+    category: Соусы и масла
+    base_unit: to_taste
+
+  - name: Крабовые палочки
+    category: Консервы
+    base_unit: gram
+
+  - name: Кукуруза консервированная
+    category: Консервы
+    base_unit: gram
+
+  - name: Зелень
+    category: Овощи и фрукты
+    base_unit: gram
+
+  - name: Арбуз
+    category: Овощи и фрукты
+    base_unit: gram
+
+  - name: Сироп гренадин
+    category: Соусы и масла
+    base_unit: milliliter
+
+  - name: Лайм
+    category: Овощи и фрукты
+    base_unit: piece
+
+  - name: Мята
+    category: Овощи и фрукты
+    base_unit: bunch
+
+  - name: Вино сухое
+    category: Напитки
+    base_unit: milliliter
+
+  - name: Вино игристое сухое
+    category: Напитки
+    base_unit: milliliter
+
+  - name: Рис
+    category: Бакалея
+    base_unit: gram
+
+  - name: Ткемали
+    category: Соусы и масла
+    base_unit: tablespoon
+
+  - name: Соус сацебели
+    category: Соусы и масла
+    base_unit: milliliter
+
+  - name: Уцхо-сунели
+    category: Специи
+    base_unit: to_taste
+
+  - name: Кориандр
+    category: Специи
+    base_unit: to_taste
+
+  - name: Аджика
+    category: Соусы и масла
+    base_unit: to_taste
+
+  - name: Курица
+    category: Мясо
+    base_unit: gram
+
+  - name: Плавленный сыр
+    category: Сыры
+    base_unit: gram
+
+  - name: Масло кунжутное
+    category: Соусы и масла
+    base_unit: tablespoon
+
+  - name: Креветка
+    category: Рыба и морепродукты
+    base_unit: gram
+
+  - name: Творог
+    category: Молочные продукты
+    base_unit: gram
+
+  - name: Кокосовая стружка
+    category: Бакалея
+    base_unit: gram
+
+  - name: Мука рисовая цельнозерновая
+    category: Бакалея
+    base_unit: gram
+
+  - name: Тимьян
+    category: Специи
+    base_unit: to_taste
+
+  - name: Чеснок гранулированный
+    category: Специи
+    base_unit: to_taste
+
+  - name: Соус унаги
+    category: Соусы и масла
+    base_unit: to_taste
+
+  - name: Огуречный рассол
+    category: Соусы и масла
+    base_unit: milliliter
+
+  - name: Перловка
+    category: Бакалея
+    base_unit: gram
+
+  - name: Карри
+    category: Специи
+    base_unit: to_taste
+
+  - name: Сгущёнка
+    category: Бакалея
+    base_unit: gram
+
+  - name: Ягоды консервированные
+    category: Консервы
+    base_unit: gram
+
+  - name: Цукини
+    category: Овощи и фрукты
+    base_unit: piece
+
+  - name: Сосиски
+    category: Колбасные изделия
+    base_unit: gram
+
+  - name: Огурец соленый
+    category: Консервы
+    base_unit: gram
+
+  - name: Маслины
+    category: Консервы
+    base_unit: piece
+
+  - name: Листья салата
+    category: Овощи и фрукты
+    base_unit: gram
+
+  - name: Йогурт греческий
+    category: Молочные продукты
+    base_unit: gram
+
 dishes:
-  - name: Борщ
+  - name: Борщ с говядиной
     category: Супы
-    recipe: Классический борщ с говядиной и свеклой
+    recipe: |
+      1. Вымыть говядину, залить водой, довести до кипения, снять пену и варить бульон на тихом огне около 40 минут. Очистить картофель, нарезать кубиком около 1,5 см.
+
+      2. Когда бульон начнёт закипать, добавить перец чёрный горошком и лавровый лист, затем выложить картофель. Достать мясо из бульона, отделить от костей, нарезать небольшими кусочками и вернуть в кастрюлю. Довести до кипения, убавить огонь, снять пену и варить до мягкости картофеля 15–20 минут, лавровый лист через 10 минут вынуть.
+
+      3. Морковь и свёклу вымыть, очистить и натереть на крупной тёрке, лук очистить и нарезать мелким кубиком.
+
+      4. На разогретом растительном масле обжарить лук до прозрачности и лёгкой золотистости. Добавить тёртую морковь и измельчённый чеснок, обжарить 3–4 минуты до мягкости, посолить и поперчить по вкусу, затем переложить зажарку в кастрюлю с бульоном.
+
+      5. Выложить на разогретую сковороду тёртую свёклу, влить красный винный уксус и тушить 5–7 минут до мягкости. Нашинковать капусту, посолить и поперчить свёклу, добавить томатную пасту, прогреть 1–2 минуты, переложить свекольную заправку и капусту в кастрюлю, всыпать сахар и при необходимости соль, затем томить борщ на минимальном огне под крышкой 1 час, периодически помешивая.
+
+      6. Снять борщ с огня и дать настояться под крышкой 10–15 минут. Разлить по тарелкам, в каждую порцию добавить сметану и украсить укропом, подать горячим.
     ingredients:
+      - name: Картофель
+        amount: 400
+        position: 2
       - name: Говядина
         amount: 400
-        position: 1
-      - name: Свекла
-        amount: 200
-        position: 2
-      - name: Картофель
-        amount: 300
         position: 3
-      - name: Капуста белокочанная
-        amount: 200
-        position: 4
       - name: Морковь
-        amount: 100
-        position: 5
-      - name: Лук репчатый
-        amount: 100
-        position: 6
-      - name: Чеснок
-        amount: 2
-        position: 7
-      - name: Томатная паста
-        amount: 2
-        position: 8
-      - name: Оливковое масло
-        amount: 30
-        position: 9
-      - name: Уксус
-        amount: 1
-        position: 10
-      - name: Лавровый лист
-        amount: 2
-        position: 11
-      - name: Соль
-        amount: 1
-        position: 12
-      - name: Черный перец
-        amount: 1
-        position: 13
-      - name: Сметана
-        amount: 2
-        position: 14
-        is_optional: true
-
-  - name: Греческий салат
-    category: Салаты
-    recipe: Свежий салат с овощами и сыром фета
-    ingredients:
-      - name: Помидор
-        amount: 200
-        position: 1
-      - name: Огурец
-        amount: 150
-        position: 2
-      - name: Болгарский перец
-        amount: 100
-        position: 3
-      - name: Лук репчатый
-        amount: 50
+        amount: 250
         position: 4
-      - name: Фета
-        amount: 100
+      - name: Лук репчатый
+        amount: 150
         position: 5
-      - name: Маслины
-        amount: 50
+      - name: Лавровый лист
+        amount: 3
         position: 6
-      - name: Оливковое масло
-        amount: 30
+      - name: Перец черный горошком
+        amount: 5
         position: 7
+      - name: Масло растительное
+        amount: 20
+        position: 8
+      - name: Чеснок
+        amount: 1
+        position: 9
+      - name: Свекла
+        amount: 250
+        position: 10
+      - name: Томатная паста
+        amount: 40
+        position: 11
+      - name: Красный винный уксус
+        amount: 20
+        position: 12
+        is_optional: true
+      - name: Капуста белокочанная
+        amount: 150
+        position: 13
+      - name: Сахар
+        amount: 10
+        position: 14
+      - name: Сметана
+        amount: 30
+        position: 15
+      - name: Укроп
+        amount: 1
+        position: 16
       - name: Соль
         amount: 1
-        position: 8
+        position: 17
+      - name: Перец черный молотый
+        amount: 1
+        position: 18
 
-  - name: Паста Карбонара
-    category: Основные блюда
-    recipe: Итальянская паста с панчеттой и пармезаном
+  - name: Салат Оливье с колбасой
+    category: Салаты
+    recipe: |
+      1. Вымыть картофель и морковь, не очищая, залить холодной водой и отварить 30 минут до готовности, затем полностью остудить.
+
+      2. Вымыть яйца, залить холодной водой, довести до кипения и варить 8–10 минут, после чего остудить в холодной воде.
+
+      3. Очистить остывшие картофель, морковь и яйца, нарезать их, колбасу и свежие огурцы маленькими кубиками одинакового размера.
+
+      4. Достать маринованные огурцы из рассола, обсушить, при необходимости слить жидкость из полостей, разрезав вдоль, затем нарезать кубиками.
+
+      5. Слить жидкость с зелёного горошка, соединить все ингредиенты в миске, добавить мелко нарезанные укроп и зеленый лук, заправить майонезом, посолить и поперчить по вкусу.
     ingredients:
-      - name: Спагетти
+      - name: Картофель
         amount: 400
         position: 1
-      - name: Панчетта
+      - name: Морковь
         amount: 150
         position: 2
       - name: Яйцо куриное
         amount: 4
         position: 3
-      - name: Пармезан
+      - name: Колбаса вареная
+        amount: 300
+        position: 4
+      - name: Огурец маринованный
+        amount: 130
+        position: 5
+      - name: Огурец
+        amount: 130
+        position: 5
+      - name: Горошек зелёный консервированный
+        amount: 200
+        position: 6
+      - name: Майонез
+        amount: 120
+        position: 7
+      - name: Укроп
+        amount: 1
+        position: 8
+        is_optional: true
+      - name: Лук зелёный
+        amount: 20
+        position: 9
+        is_optional: true
+      - name: Перец черный молотый
+        amount: 1
+        position: 10
+      - name: Соль
+        amount: 1
+        position: 11
+
+  - name: Салат с творогом и овощами
+    category: Салаты
+    recipe: |
+      1. Нарезать помидоры, красный лук и петрушку произвольно.
+
+      2. Слить лишние сливки с творога, чтобы масса не была слишком жидкой.
+
+      3. Смешать в одной тарелке творог, нарезанные помидоры, лук и петрушку.
+
+      4. Добавить соус песто и соль по вкусу, тщательно перемешать.
+    ingredients:
+      - name: Творог зерненный в сливках
+        amount: 300
+        position: 1
+      - name: Помидор
+        amount: 300
+        position: 2
+      - name: Лук красный
+        amount: 50
+        position: 3
+      - name: Петрушка
+        amount: 1
+        position: 4
+      - name: Соус песто
+        amount: 1
+        position: 5
+      - name: Соль
+        amount: 1
+        position: 6
+
+  - name: Салат с курицей и фасолью
+    category: Салаты
+    recipe: |
+      1. Отварить куриное филе и яйцо, остудить.
+
+      2. Нарезать лук, залить уксусом и кипятком, мариновать 5 минут, затем слить жидкость.
+
+      3. Нарезать отварное куриное филе, фасоль, маринованные огурцы и яйцо.
+
+      4. Смешать сметану и горчицу до однородного соуса.
+
+      5. Соединить в миске все нарезанные ингредиенты, добавить маринованный лук и заправить соусом.
+
+      6. Посыпать салат рубленым укропом или другой зеленью перед подачей.
+    ingredients:
+      - name: Куриное филе
+        amount: 160
+        position: 1
+      - name: Фасоль
         amount: 100
+        position: 2
+      - name: Огурец маринованный
+        amount: 100
+        position: 3
+      - name: Яйцо куриное
+        amount: 1
+        position: 4
+      - name: Лук репчатый
+        amount: 30
+        position: 5
+      - name: Красный винный уксус
+        amount: 45
+        position: 6
+        is_optional: true
+      - name: Сметана
+        amount: 40
+        position: 7
+      - name: Горчица
+        amount: 1
+        position: 8
+      - name: Укроп
+        amount: 1
+        position: 9
+
+  - name: Курица с чечевицей и овощами
+    category: Основные блюда
+    recipe: |
+      1. Промыть чечевицу, замочить в воде на 1–2 часа, затем слить воду и ещё раз промыть.
+
+      2. Нарезать куриные бёдра небольшим кубиком, добавить соль, паприку, орегано, базилик и обжарить на хорошо разогретой сковороде с небольшим количеством масла до образования корочки, затем переложить на тарелку.
+
+      3. Нарезать лук и сладкий перец небольшим кубиком и обжарить на этой же сковороде около 3 минут до мягкости.
+
+      4. Добавить к овощам чечевицу и курицу, влить горячую воду, довести до кипения, убавить огонь до минимального и тушить 15–20 минут, по мере необходимости подливая воду небольшими порциями.
+
+      5. Когда чечевица станет мягкой, добавить протёртые томаты, сахар, соль, перец, паприку, орегано, базилик и хмели-сунели и тушить ещё 3–5 минут до готовности.
+
+      6. Снять блюдо с огня, дать настояться 5–10 минут, посыпать мелко нарезанной петрушкой и тёртым пармезаном.
+    ingredients:
+      - name: Куриное филе
+        amount: 450
+        position: 1
+      - name: Чечевица
+        amount: 200
+        position: 2
+      - name: Лук репчатый
+        amount: 80
+        position: 3
+      - name: Перец сладкий
+        amount: 120
+        position: 4
+      - name: Томаты протёртые
+        amount: 150
+        position: 5
+      - name: Петрушка
+        amount: 1
+        position: 6
+      - name: Сахар
+        amount: 5
+        position: 8
+      - name: Паприка копчёная
+        amount: 1
+        position: 9
+      - name: Орегано
+        amount: 1
+        position: 10
+      - name: Соль
+        amount: 1
+        position: 11
+      - name: Перец чёрный молотый
+        amount: 1
+        position: 12
+      - name: Базилик сушёный
+        amount: 1
+        position: 13
+      - name: Хмели-сунели
+        amount: 1
+        position: 14
+      - name: Пармезан
+        amount: 20
+        position: 15
+      - name: Масло растительное
+        amount: 10
+        position: 16
+
+  - name: Минестроне
+    category: Супы
+    recipe: |
+      1. Нарезать морковь, лук, сельдерей маленьким кубиком, шпинат и зелень мелко.
+
+      2. Разогреть кастрюлю с небольшим количеством масла, обжарить фарш до румяной корочки, разбивая на маленькие кусочки, затем убрать из кастрюли.
+
+      3. В той же кастрюле обжарить лук, сельдерей, морковь, томатную пасту и итальянские травы около 5 минут.
+
+      4. Добавить в кастрюлю фарш, томаты, бульон или горячую воду, соль, сахар, фасоль и пасту, довести до кипения.
+
+      5. Варить суп на маленьком огне под приоткрытой крышкой до готовности пасты.
+
+      6. Добавить шпинат и зелень, варить под крышкой ещё около 5 минут и перед подачей посыпать пармезаном.
+    ingredients:
+      - name: Фарш
+        amount: 400
+        position: 1
+      - name: Морковь
+        amount: 100
+        position: 2
+      - name: Лук репчатый
+        amount: 80
+        position: 3
+      - name: Сельдерей
+        amount: 50
+        position: 4
+      - name: Томаты протёртые
+        amount: 400
+        position: 5
+      - name: Петрушка
+        amount: 1
+        position: 6
+      - name: Базилик сушёный
+        amount: 1
+        position: 7
+      - name: Томатная паста
+        amount: 5
+        position: 8
+      - name: Шпинат
+        amount: 50
+        position: 9
+      - name: Фасоль
+        amount: 150
+        position: 11
+      - name: Сахар
+        amount: 5
+        position: 12
+      - name: Макароны
+        amount: 30
+        position: 13
+      - name: Итальянские травы
+        amount: 1
+        position: 14
+      - name: Соль
+        amount: 1
+        position: 15
+      - name: Перец чёрный молотый
+        amount: 1
+        position: 16
+      - name: Пармезан
+        amount: 20
+        position: 17
+
+  - name: Сливочная гречка с грибами и куриными бедрышками
+    category: Основные блюда
+    recipe: |
+      1. Нарезать курицу кусочками, натереть солью, чёрным перцем и молотой паприкой.
+
+      2. Обжарить куриное филе на сковороде в топлёном масле до золотистого цвета.
+
+      3. Нарезать лук и шампиньоны, измельчить чеснок.
+
+      4. Добавить лук, чеснок и грибы к курице, обжарить до мягкости овощей.
+
+      5. Влить соевый соус и перемешать содержимое сковороды.
+
+      6. Всыпать промытую гречку, залить горячей водой и посолить по вкусу.
+
+      7. Готовить под крышкой на небольшом огне около 15 минут, при необходимости добавить немного воды.
+
+      8. Влить сливки, прогреть 1–2 минуты и снять сковороду с огня.
+    ingredients:
+      - name: Гречка
+        amount: 200
+        position: 1
+      - name: Куриное филе
+        amount: 400
+        position: 2
+      - name: Шампиньон
+        amount: 200
+        position: 3
+      - name: Лук репчатый
+        amount: 1
+        position: 4
+      - name: Чеснок
+        amount: 1
+        position: 5
+      - name: Соевый соус
+        amount: 1
+        position: 7
+      - name: Соль
+        amount: 1
+        position: 8
+      - name: Перец чёрный молотый
+        amount: 1
+        position: 9
+      - name: Паприка копчёная
+        amount: 1
+        position: 10
+      - name: Масло топлёное
+        amount: 30
+        position: 11
+      - name: Сливки 20%
+        amount: 100
+        position: 12
+        is_optional: true
+
+  - name: Суп с фрикадельками и шпинатом
+    category: Супы
+    recipe: |
+      1. Смешать фарш, кинзу и специи для фарша, сформировать маленькие фрикадельки.
+
+      2. Обжарить фрикадельки на сковороде до полуготовности.
+
+      3. Нарезать лук и морковь, измельчить чеснок.
+
+      4. Обжарить лук и морковь в кастрюле до мягкости, добавить чеснок и прогреть.
+
+      5. Влить воду, добавить бульонный кубик или готовый бульон, довести до кипения.
+
+      6. Выложить фрикадельки в бульон и варить до их готовности и мягкости овощей.
+
+      7. Добавить творожный сыр, размешать до однородности.
+
+      8. Всыпать макаронные изделия и варить до готовности по времени на упаковке.
+
+      9. Добавить шпинат, варить ещё около минуты, приправить солью и чёрным перцем по вкусу.
+    ingredients:
+      - name: Фарш
+        amount: 200
+        position: 1
+      - name: Кинза
+        amount: 1
+        position: 2
+      - name: Чеснок
+        amount: 1
+        position: 3
+      - name: Соль
+        amount: 1
+        position: 4
+      - name: Лук репчатый
+        amount: 100
+        position: 6
+      - name: Морковь
+        amount: 80
+        position: 7
+      - name: Чеснок
+        amount: 3
+        position: 8
+      - name: Шпинат
+        amount: 250
+        position: 10
+      - name: Творожный сыр
+        amount: 100
+        position: 11
+      - name: Макароны
+        amount: 100
+        position: 12
+      - name: Перец черный молотый
+        amount: 1
+        position: 13
+
+  - name: Фаршированный батат с сыром и беконом
+    category: Основные блюда
+    recipe: |
+      1. Разогреть духовку до 200 °C, застелить противень пергаментом, вымытый и высушенный батат проколоть вилкой и выложить на противень, запечь до мягкости 40–50 минут.
+
+      2. Дать батату немного остыть, разрезать вдоль пополам и уменьшить температуру духовки до 190 °C.
+
+      3. Ложкой вынуть мякоть, оставив тонкий слой на кожуре, мякоть выложить в миску, а шкурки положить на противень.
+
+      4. Сбрызнуть шкурки оливковым маслом и запекать 10 минут.
+
+      5. Размять мякоть батата со сливками или молоком, добавить соль и перец и тщательно перемешать.
+
+      6. Наполнить шкурки пюре из батата и посыпать сверху тёртым сыром.
+
+      7. Запекать лодочки 15 минут до расплавления сыра.
+
+      8. Обжарить бекон до золотистой корочки и посыпать им готовые лодочки.
+
+      9. Подавать батат с сметаной и нарезанным зелёным луком.
+    ingredients:
+      - name: Батат
+        amount: 4
+        position: 1
+      - name: Молоко
+        amount: 60
+        position: 2
+      - name: Сливки 20%
+        amount: 60
+        position: 3
+      - name: Сыр
+        amount: 120
+        position: 4
+      - name: Бекон
+        amount: 120
+        position: 5
+      - name: Масло оливковое
+        amount: 2
+        position: 6
+      - name: Соль
+        amount: 1
+        position: 7
+      - name: Перец чёрный молотый
+        amount: 1
+        position: 8
+      - name: Сметана
+        amount: 50
+        position: 9
+      - name: Лук зелёный
+        amount: 20
+        position: 10
+
+  - name: Сметанник
+    category: Выпечка
+    recipe: |
+      1. Растопить сливочное масло. Взбить яйца с 1 стаканом сахара и сливочным маслом до светлой пышной массы.
+
+      2. Добавить 200 г сметаны, разрыхлитель, ванилин и муку, замесить однородное тесто.
+
+      3. При желании разделить тесто на две части и в одну из них добавить какао.
+
+      4. Вылить тесто в смазанную маслом форму и выпекать 20–30 минут при температуре 160 °C до готовности коржей.
+
+      5. Для крема взбить 400 г сметаны с 1 столовой ложкой сахара до растворения сахара.
+
+      6. Дать коржам остыть, разрезать их на пласты и хорошо обмазать кремом.
+
+      7. Выложить коржи друг на друга и дать торту пропитаться 3–5 часов.
+
+      8. Перед подачей украсить торт ягодами, орехами или тёртым шоколадом по вкусу.
+    ingredients:
+      - name: Яйцо куриное
+        amount: 2
+        position: 1
+      - name: Сахар
+        amount: 400
+        position: 2
+      - name: Масло сливочное
+        amount: 50
+        position: 3
+      - name: Мука
+        amount: 240
+        position: 4
+      - name: Сметана
+        amount: 600
+        position: 5
+      - name: Разрыхлитель
+        amount: 0.5
+        position: 6
+      - name: Ванилин
+        amount: 1
+        position: 7
+      - name: Какао
+        amount: 10
+        position: 8
+        is_optional: true
+      - name: Ягоды
+        amount: 50
+        position: 9
+        is_optional: true
+      - name: Орехи
+        amount: 30
+        position: 10
+        is_optional: true
+      - name: Шоколад
+        amount: 20
+        position: 11
+        is_optional: true
+
+  - name: Яблочный штрудель
+    category: Выпечка
+    recipe: |
+      1. Разогреть духовку до 220 °C.
+
+      2. Просеять муку, сделать углубление, влить 1 ст. л. растительного масла и тёплую воду, добавить яйцо, щепотку соли и замесить тесто.
+
+      3. Разделить тесто на две части, в одну часть добавить 1 ст. л. растительного масла, соединить со второй частью и вымесить.
+
+      4. Скатать тесто в шар, полить оставшимся растительным маслом, накрыть и оставить на 30 минут.
+
+      5. Выжать сок из половины лимона, удалить из яблок семечки и сердцевину, нарезать тонкими дольками и сбрызнуть лимонным соком.
+
+      6. Измельчить миндаль ножом или в блендере, изюм обдать кипятком и обсушить.
+
+      7. Присыпать полотенце мукой и раскатать на нём тесто как можно тоньше.
+
+      8. Смазать тесто мягким сливочным маслом, присыпать панировочными сухарями или измельчённым печеньем, оставив с одного края неприсыпанную полосу шириной около 10 см.
+
+      9. Выложить на сухари яблоки, изюм и миндаль, присыпать сахаром с корицей и разложить сверху несколько кусочков сливочного масла.
+
+      10. Отделить желток от белка, желток взбить с молоком вилкой и смазать полоску теста без начинки.
+
+      11. Свернуть штрудель рулетом с помощью полотенца.
+
+      12. Смазать противень растительным маслом, присыпать мукой и выложить штрудель швом вниз.
+
+      13. Смазать штрудель желтком с молоком и выпекать 40 минут, во время выпекания ещё 2–3 раза смазать молочно-яичной смесью.
+    ingredients:
+      - name: Мука
+        amount: 250
+        position: 1
+      - name: Яйцо куриное
+        amount: 2
+        position: 2
+      - name: Масло растительное
+        amount: 45
+        position: 3
+      - name: Соль
+        amount: 1
+        position: 4
+      - name: Яблоко
+        amount: 8
+        position: 6
+      - name: Изюм
+        amount: 80
+        position: 7
+      - name: Масло сливочное
+        amount: 100
+        position: 8
+      - name: Миндаль
+        amount: 70
+        position: 9
+      - name: Сахар
+        amount: 50
+        position: 10
+      - name: Лимон
+        amount: 0.5
+        position: 11
+      - name: Молоко
+        amount: 30
+        position: 12
+      - name: Панировочные сухари
+        amount: 30
+        position: 13
+      - name: Печенье
+        amount: 30
+        position: 14
+      - name: Корица
+        amount: 0.25
+        position: 15
+
+  - name: Картофель в медово-соевом соусе с кунжутом
+    category: Основные блюда
+    recipe: |
+      1. Подготовить картофель: мелкий тщательно промыть и просушить, крупный вымыть, очистить и отварить 15–20 минут до полуготовности.
+
+      2. Разогреть растительное масло на сковороде и выложить картофель в один слой, крупные клубни разрезать пополам.
+
+      3. Обжарить картофель под крышкой 15–20 минут, помешивая каждые 5 минут, до мягкости внутри и румяной корочки снаружи.
+
+      4. Смешать в миске мёд, соевый соус, измельчённый чеснок, кунжут и соль до однородности.
+
+      5. Полить картофель подготовленным соусом и готовить ещё 2–3 минуты, помешивая, пока соус не загустеет, а картофель не покроется блестящей глазурью.
+    ingredients:
+      - name: Картофель
+        amount: 300
+        position: 1
+      - name: Чеснок
+        amount: 1
+        position: 2
+      - name: Мёд
+        amount: 2
+        position: 3
+      - name: Соевый соус
+        amount: 2
+        position: 4
+      - name: Кунжут
+        amount: 1
+        position: 5
+      - name: Соль
+        amount: 1
+        position: 6
+      - name: Масло растительное
+        amount: 30
+        position: 7
+
+  - name: Гренки
+    category: Завтраки
+    recipe: |
+      1. Взбить яйца, влить молоко и перемешать. Добавить натёртый сыр, укроп, соль и перец, затем снова перемешать.
+
+      2. Обмакнуть ломтики хлеба в смесь и обжарить на сковороде до золотистой корочки.
+    ingredients:
+      - name: Яйцо куриное
+        amount: 1
+        position: 1
+      - name: Молоко
+        amount: 50
+        position: 2
+      - name: Сыр
+        amount: 30
+        position: 3
+      - name: Укроп
+        amount: 1
+        position: 4
+      - name: Соль
+        amount: 1
+        position: 5
+      - name: Перец чёрный молотый
+        amount: 1
+        position: 6
+      - name: Белый хлеб
+        amount: 2
+        position: 7
+
+  - name: Окрошка
+    category: Супы
+    recipe: |
+      1. Отварить яйца 
+
+      2. Картофель отварить
+
+      2. Нарезать зелёный лук и укроп, посолить.
+
+      3. Размять зелёный лук толкушкой до выделения сока.
+
+      4. Нарезать кубиками колбасу, яйца и огурец.
+
+      5. Сложить все подготовленные ингредиенты в посуду с луком, перемешать
+
+      6. Залить квасом, айраном или разбавленным кефиром и добавить сметану.
+
+      7. Добавить горячую вареную картошку
+
+    ingredients:
+      - name: Картофель
+        amount: 2
+        position: 1
+      - name: Яйцо куриное
+        amount: 3
+        position: 2
+      - name: Колбаса вареная
+        amount: 300
+        position: 3
+      - name: Огурец
+        amount: 1
+        position: 4
+      - name: Лук зелёный
+        amount: 100
+        position: 5
+      - name: Укроп
+        amount: 40
+        position: 6
+      - name: Соль
+        amount: 1
+        position: 8
+      - name: Сметана
+        amount: 100
+        position: 9
+      - name: Кефир
+        amount: 1500
+        position: 10
+      - name: Квас
+        amount: 1500
+        position: 11
+        is_optional: true
+
+
+  - name: Банановый хлеб
+    category: Выпечка
+    recipe: |
+      1. Размять вилкой в пюре два спелых банана.
+
+      2. Добавить яйца и сахар, перемешать до однородной массы, при желании добавить корицу.
+
+      3. Влить растительное масло, перемешать венчиком, просеять муку с солью и разрыхлителем и замесить вязкое тесто.
+
+      4. Обжарить орехи на сухой сковороде 3–5 минут, порубить ножом и добавить в тесто.
+
+      5. Смазать форму сливочным маслом, влить тесто и выложить сверху разрезанный вдоль оставшийся банан.
+
+      6. Разогреть духовку до 180 °C и выпекать хлеб 50–60 минут до сухой зубочистки.
+
+      7. Оставить хлеб в форме 15–20 минут, затем посыпать остывший кекс сахарной пудрой.
+    ingredients:
+      - name: Банан
+        amount: 3
+        position: 1
+      - name: Яйцо куриное
+        amount: 2
+        position: 2
+      - name: Масло растительное
+        amount: 70
+        position: 3
+      - name: Мука
+        amount: 180
+        position: 4
+      - name: Сахар
+        amount: 100
+        position: 5
+      - name: Разрыхлитель
+        amount: 10
+        position: 6
+      - name: Корица
+        amount: 1
+        position: 7
+        is_optional: true
+      - name: Орехи грецкие
+        amount: 50
+        position: 8
+      - name: Соль
+        amount: 1
+        position: 9
+      - name: Сахарная пудра
+        amount: 1
+        position: 10
+      - name: Масло сливочное
+        amount: 20
+        position: 11
+
+  - name: Салат с тунцом и фасолью
+    category: Салаты
+    recipe: |
+      1. Нарезать помидоры черри и подготовить остальные ингредиенты, открыв банку тунца и промыв фасоль при необходимости.
+
+      2. Смешать помидоры, тунца и фасоль, посолить и поперчить по вкусу.
+
+      3. Заправить лимонным соком и сбрызнуть оливковым маслом, аккуратно перемешать.
+    ingredients:
+      - name: Помидор
+        amount: 300
+        position: 1
+      - name: Тунец консервированный
+        amount: 1
+        position: 2
+      - name: Фасоль белая консервированная
+        amount: 200
+        position: 3
+      - name: Масло оливковое
+        amount: 2
+        position: 4
+      - name: Лимонный сок
+        amount: 2
+        position: 5
+      - name: Соль
+        amount: 1
+        position: 6
+      - name: Перец черный молотый
+        amount: 1
+        position: 7
+
+  - name: Рыба с овощами в фольге
+    category: Основные блюда
+    recipe: |
+      1. Промыть цветную капусту и брокколи, разделить на небольшие соцветия. Лук репчатый и лук красный нарезать мелкими кубиками, чеснок нарезать слайсами.
+
+      2. Нагреть сковороду, влить масло оливковое. Обжарить лук до прозрачности, выложить свежие овощи и готовить 5 минут.
+
+      3. Добавить замороженные овощи, чеснок, смесь трав, соль и чёрный молотый перец. Потушить ещё 7 минут и снять с огня.
+
+      4. Лист фольги накрыть пергаментом и вырезать прямоугольники с запасом 10 см. В центр каждого выложить филе белой рыбы.
+
+      5. Присыпать рыбу овощами, добавить кусочек сливочного масла.
+
+      6. Свернуть конверты из фольги с пергаментом, плотно закрепив узкие края.
+
+      7. Запекать конверты в разогретой до 200 °C духовке 10–20 минут в зависимости от количества замороженных овощей.
+
+      8. Подавать рыбу, присыпав зелёным луком, петрушкой и укропом.
+    ingredients:
+      - name: Лосось
+        amount: 300
+        position: 1
+      - name: Овощи замороженные
+        amount: 500
+        position: 2
+      - name: Капуста цветная
+        amount: 0.25
+        position: 3
+      - name: Брокколи
+        amount: 0.25
+        position: 4
+      - name: Лук репчатый
+        amount: 1
+        position: 5
+      - name: Лук красный
+        amount: 1
+        position: 6
+      - name: Масло оливковое
+        amount: 2
+        position: 7
+      - name: Масло сливочное
+        amount: 10
+        position: 8
+      - name: Чеснок
+        amount: 2
+        position: 9
+      - name: Смесь трав
+        amount: 1
+        position: 10
+      - name: Лук зелёный
+        amount: 1
+        position: 11
+        is_optional: true
+      - name: Петрушка
+        amount: 1
+        position: 12
+        is_optional: true
+      - name: Укроп
+        amount: 1
+        position: 13
+        is_optional: true
+      - name: Базилик
+        amount: 1
+        position: 14
+        is_optional: true
+      - name: Розмарин
+        amount: 1
+        position: 15
+        is_optional: true
+      - name: Соль
+        amount: 1
+        position: 16
+      - name: Перец чёрный молотый
+        amount: 1
+        position: 17
+
+  - name: Лисички в сметане
+    category: Основные блюда
+    recipe: |
+      1. Нарезать лисички. Разогреть сливочное масло и пожарить на нём нарезанный лук до золотистого оттенка.
+
+      2. Добавить грибы, посолить, накрыть крышкой и тушить 20–25 минут.
+
+      3. Когда выпарится вода, добавить сметану и тушить на слабом огне ещё 10–12 минут.
+    ingredients:
+      - name: Лисички
+        amount: 800
+        position: 1
+      - name: Сметана
+        amount: 300
+        position: 2
+      - name: Лук репчатый
+        amount: 70
+        position: 3
+      - name: Соль
+        amount: 1
+        position: 4
+      - name: Масло сливочное
+        amount: 50
+        position: 5
+
+  - name: Панкейки
+    category: Завтраки
+    recipe: |
+      1. Отделить белки от желтков, добавить к желткам часть сахара и перемешать.
+
+      2. Влить к желткам молоко и размешать до однородности.
+
+      3. Смешать муку с разрыхлителем, просеять в яичную массу и замесить густое плотное тесто.
+
+      4. Взбить белки с солью, постепенно добавляя немного сахара, до устойчивых пиков.
+
+      5. Аккуратно ввести взбитые белки в тесто силиконовой лопаткой движениями сверху вниз до однородного цвета.
+
+      6. Налить на сковороду немного растительного масла, удалить излишки салфеткой и хорошо разогреть на среднем огне.
+
+      7. Выложить тесто по 2 столовые ложки на один панкейк, налить на дно сковороды немного воды, накрыть крышкой и жарить пару минут на слабом огне.
+
+      8. Добавить на каждый панкейк ещё по столовой ложке теста, накрыть крышкой и жарить ещё около 2 минут.
+
+      9. Аккуратно перевернуть панкейки с помощью двух лопаток, накрыть крышкой и довести до готовности.
+
+      10. Подавать панкейки сразу после приготовления со сливочным маслом, ягодами, мёдом или сахарной пудрой.
+    ingredients:
+      - name: Мука
+        amount: 35
+        position: 1
+      - name: Разрыхлитель
+        amount: 5
+        position: 2
+      - name: Яйцо куриное
+        amount: 2
+        position: 3
+      - name: Сахар
+        amount: 25
+        position: 4
+      - name: Молоко
+        amount: 20
+        position: 5
+      - name: Масло растительное
+        amount: 10
+        position: 6
+      - name: Соль
+        amount: 1
+        position: 7
+      - name: Масло сливочное
+        amount: 10
+        position: 8
+        is_optional: true
+      - name: Ягоды
+        amount: 30
+        position: 9
+        is_optional: true
+      - name: Мёд
+        amount: 1
+        position: 10
+        is_optional: true
+      - name: Сахарная пудра
+        amount: 1
+        position: 11
+        is_optional: true
+
+  - name: Жаркое
+    category: Основные блюда
+    recipe: |
+      1. Очистить картофель и морковь, промыть помидоры черри, нарезать кубиками и высыпать в глубокую миску, добавить нарезанный лук.
+
+      2. Промыть говядину или свинину, срезать жилы и плёнки, нарезать на кусочки и добавить к овощам.
+
+      3. Посолить, поперчить, добавить приправу для мяса и подсолнечное масло, затем тщательно перемешать.
+
+      4. Выложить мясо с овощами в горшочки или жаропрочную форму и добавить немного воды.
+
+      5. Поместить в духовку, разогретую до 200 °C, прикрыть горшочки крышками или форму фольгой и запекать до мягкости мяса, ориентируясь на размер нарезки.
+    ingredients:
+      - name: Говядина
+        amount: 150
+        position: 1
+      - name: Свинина
+        amount: 150
+        position: 2
+      - name: Морковь
+        amount: 80
+        position: 3
+      - name: Картофель
+        amount: 300
+        position: 4
+      - name: Помидор
+        amount: 60
+        position: 5
+      - name: Соль
+        amount: 1
+        position: 6
+      - name: Приправа для мяса
+        amount: 4
+        position: 7
+      - name: Перец чёрный молотый
+        amount: 1
+        position: 8
+      - name: Масло растительное
+        amount: 5
+        position: 10
+      - name: Лук репчатый
+        amount: 30
+        position: 11
+
+  - name: Макароны с сыром и беконом
+    category: Основные блюда
+    recipe: |
+      1. Выложить бекон на противень, посыпать небольшим количеством сахара и запекать в духовке при 180 °C 15–20 минут, а после нарезать кубиком.
+
+      2. Отварить макароны до готовности в подсоленной воде и откинуть на дуршлаг, чтобы стекла вода.
+
+      3. Измельчить сухарики до средней крошки.
+
+      4. Натереть сыр чеддер на крупной тёрке и подготовить плавленый сыр, нарезав его ломтиками.
+
+      5. Соединить в сотейнике сливочное масло и муку, прогреть на среднем огне до однородной массы. Влить молоко, добавить паприку и соус табаско чипотле, уварить до консистенции соуса бешамель.
+
+      6. Ввести чеддер и плавленый сыр в горячий соус и постоянно помешивать до полного растворения сыра.
+
+      7. Смешать отваренные макароны с беконом и зелёным луком, залить сырным соусом, тщательно перемешать, посолить и поперчить по вкусу.
+
+      8. Выложить макароны в тарелки, полить острым соусом, посыпать крошкой сухариков и дополнить ломтиками огурца и мелко нарезанным луком.
+    ingredients:
+      - name: Макароны
+        amount: 450
+        position: 1
+      - name: Бекон
+        amount: 200
+        position: 2
+      - name: Масло сливочное
+        amount: 30
+        position: 3
+      - name: Молоко
+        amount: 500
+        position: 4
+      - name: Мука
+        amount: 30
+        position: 5
+      - name: Сыр
+        amount: 200
+        position: 6
+      - name: Сыр
+        amount: 200
+        position: 7
+      - name: Соль
+        amount: 1
+        position: 8
+      - name: Перец чёрный молотый
+        amount: 1
+        position: 9
+      - name: Панировочные сухари
+        amount: 50
+        position: 10
+      - name: Острый соус
+        amount: 1
+        position: 11
+      - name: Соус табаско чипотле
+        amount: 1
+        position: 12
+      - name: Паприка копчёная
+        amount: 1
+        position: 13
+      - name: Лук зелёный
+        amount: 20
+        position: 14
+      - name: Сахар
+        amount: 5
+        position: 15
+      - name: Огурец
+        amount: 50
+        position: 16
+      - name: Лук зелёный
+        amount: 5
+        position: 17
+
+  - name: Салат с крабовыми палочками и кукурузой
+    category: Салаты
+    recipe: |
+      1. Разделить крабовые палочки на волокна.
+
+      2. Нарезать помидоры кубиком, перец болгарский соломкой.
+
+      3. Добавить консервированную кукурузу и выдавить чеснок через пресс.
+
+      4. Добавить укроп и майонез, тщательно перемешать салат.
+    ingredients:
+      - name: Крабовые палочки
+        amount: 250
+        position: 1
+      - name: Перец сладкий
+        amount: 100
+        position: 2
+      - name: Помидор
+        amount: 2
+        position: 3
+      - name: Кукуруза консервированная
+        amount: 300
+        position: 4
+      - name: Чеснок
+        amount: 1
+        position: 5
+      - name: Укроп
+        amount: 1
+        position: 6
+      - name: Майонез
+        amount: 50
+        position: 7
+
+  - name: Рубленные куриные котлеты
+    category: Основные блюда
+    recipe: |
+      1. Нарезать куриное филе мелкими кубиками, натереть сыр, нарезать помидоры черри и мелко порубить зелень.
+
+      2. Смешать куриное филе, яйцо, помидоры черри, зелень, сметану, муку и тертый сыр до однородной массы.
+
+      3. Разогреть сковороду с небольшим количеством масла, выкладывать массу ложкой и обжаривать котлеты на среднем огне под крышкой до готовности с двух сторон.
+
+      4. При необходимости добавить ещё немного муки в фарш, чтобы котлеты держали форму, не допуская излишней плотности.
+    ingredients:
+      - name: Куриное филе
+        amount: 400
+        position: 1
+      - name: Яйцо куриное
+        amount: 1
+        position: 2
+      - name: Помидор
+        amount: 100
+        position: 3
+      - name: Зелень
+        amount: 20
+        position: 4
+      - name: Мука
+        amount: 60
+        position: 5
+      - name: Сыр
+        amount: 50
+        position: 6
+      - name: Сметана
+        amount: 30
+        position: 7
+
+  - name: Арбузная гранита
+    category: Десерты
+    recipe: |
+      1. Нарезать половинку арбуза так, чтобы было удобно замораживать и убрать в морозильник до полной заморозки.
+
+      2. Натереть замороженный арбуз на тёрке и разложить по бокалам.
+
+      3. Полить арбуз сиропом гренадин и соком лайма, украсить листочками мяты.
+
+      4. По желанию добавить сухое игристое в бокалы.
+    ingredients:
+      - name: Арбуз
+        amount: 500
+        position: 1
+      - name: Сироп гренадин
+        amount: 20
+        position: 2
+      - name: Лайм
+        amount: 0.25
+        position: 3
+      - name: Мята
+        amount: 0.1
+        position: 4
+      - name: Вино игристое сухое
+        amount: 50
+        position: 5
+        is_optional: true
+
+  - name: Суп харчо
+    category: Супы
+    recipe: |
+      1. Промыть говяжью грудинку, залить холодной водой в кастрюле объёмом 3,5 л и варить около 2 часов до готовности.
+
+      2. Достать мясо, нарезать на небольшие кусочки и вернуть в бульон.
+
+      3. Очистить и мелко нарезать лук репчатый, обжарить на растительном масле до мягкости, добавить томатную пасту и немного прогреть, помешивая.
+
+      4. Переложить зажарку в бульон, добавить ткемали, сацебели или измельчённые в блендере помидоры с чесноком.
+
+      5. Всыпать уцхо-сунели или хмели-сунели, кориандр, аджику и рис, варить около 10 минут до готовности риса.
+
+      6. Мелко нарезать укроп и кинзу, добавить в суп, довести до вкуса и снять с огня.
+    ingredients:
+      - name: Говядина
+        amount: 1000
+        position: 1
+      - name: Лук репчатый
+        amount: 100
+        position: 2
+      - name: Рис
+        amount: 100
+        position: 3
+      - name: Томатная паста
+        amount: 10
+        position: 4
+      - name: Ткемали
+        amount: 3
+        position: 5
+      - name: Соус сацебели
+        amount: 200
+        position: 6
+      - name: Помидор
+        amount: 480
+        position: 7
+      - name: Уцхо-сунели
+        amount: 1
+        position: 8
+      - name: Хмели-сунели
+        amount: 1
+        position: 9
+      - name: Кориандр
+        amount: 1
+        position: 10
+      - name: Аджика
+        amount: 1
+        position: 11
+      - name: Чеснок
+        amount: 4
+        position: 12
+      - name: Укроп
+        amount: 1
+        position: 13
+      - name: Кинза
+        amount: 1
+        position: 14
+      - name: Масло растительное
+        amount: 30
+        position: 15
+
+  - name: Куриный суп с сырными рулетиками
+    category: Супы
+    recipe: |
+      1. Нарезать курицу на кусочки и залить кипящей водой, довести до кипения и варить.
+
+      2. Нарезать картофель кубиками и добавить к курице, варить бульон 20–30 минут до готовности картофеля и мяса.
+
+      3. Соединить яйцо с солью и взбить венчиком, добавить муку и замесить тесто до однородной консистенции.
+
+      4. Присыпать стол мукой, раскатать тесто в тонкий пласт, смазать плавленным сыром, свернуть в рулет и нарезать кусочками примерно по 1 см.
+
+      5. Добавить сырные рулетики в кастрюлю с супом и варить около 5–8 минут до готовности.
+
+      6. Нарезать лук и морковь, обжарить на растительном масле до мягкости и слегка золотистого цвета.
+
+      7. Добавить зажарку в суп, посолить по вкусу, при подаче посыпать измельчённой зеленью.
+    ingredients:
+      - name: Курица
+        amount: 500
+        position: 1
+      - name: Картофель
+        amount: 400
+        position: 2
+      - name: Лук репчатый
+        amount: 80
+        position: 3
+      - name: Морковь
+        amount: 80
+        position: 4
+      - name: Зелень
+        amount: 20
+        position: 5
+      - name: Соль
+        amount: 1
+        position: 6
+      - name: Яйцо куриное
+        amount: 1
+        position: 7
+      - name: Мука
+        amount: 60
+        position: 8
+      - name: Плавленный сыр
+        amount: 80
+        position: 9
+      - name: Масло растительное
+        amount: 20
+        position: 10
+
+  - name: Жареный рис с овощами и курицей
+    category: Основные блюда
+    recipe: |
+      1. Залить рис водой в пропорции 1:2 и отварить на среднем огне.
+
+      2. Нарезать кубиком репчатый лук, болгарский перец, морковь и чеснок, а куриное филе - небольшими кусочками.
+
+      4. Разогреть сливочное и растительное масло на сковороде, обжарить чеснок и лук, затем добавить морковь и болгарский перец и обжаривать, помешивая.
+
+      5. Убрать овощи со сковороды, на этой же сковороде обжарить куриное филе до готовности, при необходимости добавить немного масла.
+
+      6. Вернуть овощи в сковороду к курице, перемешать и добавить отваренный рис.
+
+      7. Обжаривать рис с овощами и курицей около 2 минут, постоянно помешивая.
+
+      8. Влить соевый соус и кунжутное масло, перемешать рис.
+
+      9. Посыпать блюдо мелко нарезанным зелёным луком и семенами кунжута перед подачей.
+    ingredients:
+      - name: Рис
+        amount: 1
+        position: 1
+      - name: Куриное филе
+        amount: 1
+        position: 2
+      - name: Лук репчатый
+        amount: 1
+        position: 3
+      - name: Чеснок
+        amount: 2
+        position: 4
+      - name: Морковь
+        amount: 1
+        position: 5
+      - name: Перец сладкий
+        amount: 100
+        position: 6
+      - name: Лук зелёный
+        amount: 1
+        position: 7
+      - name: Кунжут
+        amount: 1
+        position: 8
+      - name: Масло сливочное
+        amount: 2
+        position: 9
+      - name: Масло растительное
+        amount: 2
+        position: 10
+      - name: Соевый соус
+        amount: 3
+        position: 11
+      - name: Масло кунжутное
+        amount: 1
+        position: 12
+        is_optional: true
+
+  - name: Паста лингвини с креветками и шпинатным соусом
+    category: Основные блюда
+    recipe: |
+      1. Замариновать креветки в оливковом масле с солью, паприкой и измельчённым чесноком, затем обжарить на сковороде до готовности.
+
+      2. Отварить пасту лингвини в подсоленной воде до состояния аль денте согласно инструкции на упаковке, затем откинуть на дуршлаг.
+
+      3. Обжарить мелко нарезанные лук и чеснок на оливковом масле до мягкости.
+
+      4. Измельчить в блендере шпинат, обжаренные лук и чеснок, творожный сыр, твёрдый сыр, соль и перец, залив сливками, до однородного соуса.
+
+      5. Перелить соус в сковороду и слегка подогреть, постоянно помешивая в течение 3–4 минут.
+
+      6. Смешать нужное количество пасты с горячим соусом, разложить по тарелкам, выложить сверху креветки и посыпать тёртым сыром.
+    ingredients:
+      - name: Креветка
+        amount: 450
+        position: 1
+      - name: Макароны
+        amount: 300
+        position: 2
+      - name: Шпинат
+        amount: 200
+        position: 3
+      - name: Лук репчатый
+        amount: 80
+        position: 4
+      - name: Чеснок
+        amount: 7
+        position: 5
+      - name: Творожный сыр
+        amount: 140
+        position: 6
+      - name: Сливки 20%
+        amount: 180
+        position: 7
+      - name: Сыр
+        amount: 70
+        position: 8
+      - name: Соль
+        amount: 1
+        position: 9
+      - name: Перец чёрный молотый
+        amount: 1
+        position: 10
+      - name: Паприка копчёная
+        amount: 1
+        position: 11
+      - name: Масло оливковое
+        amount: 4
+        position: 13
+
+  - name: Куриные рулетики в сливочно-пряном соусе
+    category: Основные блюда
+    recipe: |
+      1. Нарезать шампиньоны, болгарский перец и лук.
+
+      2. Промыть куриное филе, обсушить и разрезать вдоль на 2–3 тонких пласта из каждого куска.
+
+      3. Отбить каждое филе обратной стороной ножа и посолить с двух сторон.
+
+      4. На пару слайсов бекона выложить сверху веточку розмарина и пласт куриного филе.
+
+      5. Распределить творожный сыр по филе и свернуть рулетики, при необходимости скрепить зубочисткой.
+
+      6. Разогреть оливковое масло, слегка обжарить нарезанные овощи и аккуратно выложить к ним рулетики.
+
+      7. Обжарить рулетики с двух сторон.
+
+      8. Влить сливки, уварить на низком огне до готовности куриного филе, при желании накрыть крышкой или довести до готовности в духовке.
+    ingredients:
+      - name: Куриное филе
+        amount: 2
+        position: 1
+      - name: Бекон
+        amount: 200
+        position: 2
+      - name: Розмарин
+        amount: 1
+        position: 3
+      - name: Перец сладкий
+        amount: 100
+        position: 4
+      - name: Шампиньон
+        amount: 5
+        position: 5
+      - name: Сливки 20%
+        amount: 100
+        position: 6
+      - name: Творожный сыр
+        amount: 140
+        position: 7
+      - name: Лук репчатый
+        amount: 2
+        position: 8
+      - name: Соль
+        amount: 1
+        position: 9
+      - name: Масло оливковое
+        amount: 1
+        position: 10
+
+  - name: Творожно-кокосовые колечки
+    category: Выпечка
+    recipe: |
+      1. Смешать творог, одно яйцо, дополнительный яичный белок, кокосовую стружку, рисовую муку и разрыхлитель до однородного теста.
+
+      2. Скатать из теста шарики влажными руками, сделать отверстие в центре и сформовать колечки.
+
+      3. Выложить колечки на лист пергамента, смазать яичным желтком и посыпать оставшейся кокосовой стружкой.
+
+      4. Выпекать колечки при температуре 190–200 °C около 25 минут до золотистого цвета.
+    ingredients:
+      - name: Творог
+        amount: 400
+        position: 1
+      - name: Яйцо куриное
+        amount: 2
+        position: 2
+      - name: Кокосовая стружка
+        amount: 40
+        position: 3
+      - name: Мука рисовая цельнозерновая
+        amount: 40
+        position: 4
+      - name: Разрыхлитель
+        amount: 5
+        position: 5
+
+  - name: Курочка по деревенски
+    category: Основные блюда
+    recipe: |
+      1. Замариновать куриное филе в оливковом масле с солью, перцем, паприкой, измельчённым чесноком и розмарином.
+
+      2. Нарезать лук и шампиньоны, обжарить лук до мягкости и переложить, затем на той же сковороде обжарить шампиньоны без добавления масла.
+
+      3. Смешать грибы с луком, добавить творожный сыр и молоко, посолить и уварить соус пару минут, регулируя густоту количеством молока.
+
+      4. Обжарить замаринованное куриное филе и подать с приготовленным соусом.
+    ingredients:
+      - name: Куриное филе
+        amount: 500
+        position: 1
+      - name: Масло оливковое
+        amount: 2
+        position: 2
+      - name: Паприка копчёная
+        amount: 1
+        position: 3
+      - name: Розмарин
+        amount: 1
         position: 4
       - name: Чеснок
         amount: 2
         position: 5
-      - name: Оливковое масло
-        amount: 20
+      - name: Соль
+        amount: 1
         position: 6
-      - name: Черный перец
+      - name: Перец чёрный молотый
+        amount: 1
+        position: 7
+      - name: Шампиньон
+        amount: 300
+        position: 8
+      - name: Лук репчатый
+        amount: 150
+        position: 9
+      - name: Творожный сыр
+        amount: 140
+        position: 10
+      - name: Молоко
+        amount: 150
+        position: 11
+      - name: Масло сливочное
+        amount: 20
+        position: 12
+
+  - name: Шарлотка с карамелизированными яблоками
+    category: Выпечка
+    recipe: |
+      1. Подготовить яблоки: промыть, очистить от кожуры и нарезать дольками.
+
+      2. Карамелизировать яблоки: в сотейнике разогреть сливочное масло, добавить тростниковый сахар, выложить яблоки, всыпать ещё немного сахара и корицу, перемешать и уварить на огне до загустения сиропа.
+
+      3. Взбить яйца с сахаром до густой светлой пены.
+
+      4. Просеять муку с разрыхлителем и вмешать в яичную массу миксером на низких оборотах до однородного теста.
+
+      5. Застелить форму бумагой для выпечки.
+
+      6. Вылить тесто в форму, сверху выложить карамелизированные яблоки и равномерно распределить по поверхности.
+
+      7. Выпекать шарлотку в духовке при температуре около 170 °C примерно 35 минут на среднем уровне в режиме верх-низ, при необходимости уменьшить температуру.
+    ingredients:
+      - name: Яйцо куриное
+        amount: 3
+        position: 1
+      - name: Сахар
+        amount: 100
+        position: 2
+      - name: Мука
+        amount: 120
+        position: 3
+      - name: Разрыхлитель
+        amount: 1
+        position: 4
+      - name: Корица
+        amount: 1
+        position: 5
+      - name: Яблоко
+        amount: 4
+        position: 6
+      - name: Масло сливочное
+        amount: 40
+        position: 7
+      - name: Сахар
+        amount: 40
+        position: 8
+
+  - name: Фрикадельки в томатном соусе со сметаной
+    category: Основные блюда
+    recipe: |
+      1. Смешать фарш из индейки или курицы, яйцо, мелко нарезанный лук и чеснок, соль и ароматные травы, тщательно перемешать вилкой.
+
+      2. Сформировать влажными руками фрикадельки.
+
+      3. Разогреть на сковороде растительное масло и обжарить фрикадельки со всех сторон до румяной корочки на среднем огне.
+
+      4. Добавить протёртые томаты и сметану, влить воду и аккуратно перемешать соус до однородности.
+
+      5. Томить фрикадельки под крышкой до готовности около 10 минут, затем добавить тёртый сыр и мелко нарезанную зелень, накрыть крышкой ещё на пару минут.
+
+      6. Подать фрикадельки в томатном соусе горячими, при желании дополнить гарниром.
+    ingredients:
+      - name: Фарш
+        amount: 500
+        position: 1
+      - name: Яйцо куриное
+        amount: 1
+        position: 2
+      - name: Чеснок
+        amount: 1
+        position: 3
+      - name: Лук репчатый
+        amount: 80
+        position: 4
+      - name: Соль
+        amount: 1
+        position: 5
+      - name: Смесь трав
+        amount: 1
+        position: 6
+      - name: Томаты протёртые
+        amount: 200
+        position: 7
+      - name: Сметана
+        amount: 60
+        position: 8
+      - name: Масло растительное
+        amount: 30
+        position: 10
+      - name: Сыр
+        amount: 50
+        position: 11
+      - name: Петрушка
+        amount: 1
+        position: 12
+      - name: Укроп
+        amount: 1
+        position: 13
+
+  - name: Сливочный грибной суп
+    category: Супы
+    recipe: |
+      1. Нарезать лук мелко, шампиньоны тонкими ломтиками, картофель кубиком.
+
+      2. Растопить в кастрюле сливочное масло, добавить оливковое масло, выложить лук и шампиньоны и обжарить на среднем огне, добавить тимьян.
+
+      3. Влить белое сухое вино, перемешать и выпарить около 5 минут.
+
+      4. Добавить муку, тщательно перемешать и влить горячий бульон или воду.
+
+      5. Варить суп под крышкой 10–15 минут.
+
+      6. Влить сливки, посолить, поперчить и продолжать варить на слабом огне.
+
+      7. Добавить картофель и варить до его полной готовности.
+
+      8. Нарезать белый хлеб кубиками и обжарить на оливковом масле до румяной корочки, посолить.
+
+      9. Подать суп, при необходимости досолить и поперчить, сверху выложить сухарики из белого хлеба.
+    ingredients:
+      - name: Шампиньон
+        amount: 500
+        position: 2
+      - name: Картофель
+        amount: 200
+        position: 3
+      - name: Лук репчатый
+        amount: 100
+        position: 4
+      - name: Масло сливочное
+        amount: 30
+        position: 5
+      - name: Масло оливковое
+        amount: 3
+        position: 6
+      - name: Вино сухое
+        amount: 200
+        position: 7
+      - name: Мука
+        amount: 40
+        position: 8
+      - name: Сливки 20%
+        amount: 200
+        position: 9
+      - name: Белый хлеб
+        amount: 4
+        position: 10
+      - name: Соль
+        amount: 1
+        position: 11
+      - name: Перец чёрный молотый
+        amount: 1
+        position: 12
+      - name: Тимьян
+        amount: 1
+        position: 13
+
+  - name: Бефстроганов с пюре
+    category: Основные блюда
+    recipe: |
+      1. Нарезать говядину полосками поперёк волокон, сильно разогреть сковороду, влить подсолнечное масло и обжарить мясо до золотистого цвета, затем убрать со сковороды.
+
+      2. Нарезать лук средними кубиками, добавить в сковороду сливочное масло и лук, обжарить до золотистости.
+
+      3. Нарезать шампиньоны слайсами, добавить к луку и жарить 6–7 минут.
+
+      4. Мелко нарезать чеснок, добавить в сковороду и перемешать.
+
+      5. Убавить огонь, добавить муку, соль, кориандр свежемолотый, чеснок гранулированный и перец свежемолотый, хорошо перемешать, прогреть около минуты и влить сливки, затем перемешать и уварить соус до небольшого загустения.
+
+      6. Вернуть обжаренную говядину в сковороду и тушить на медленном огне ещё пару минут.
+
+      7. Выключить огонь и добавить мелко нарезанную петрушку, подать бефстроганов с нежным пюре из картофеля.
+    ingredients:
+      - name: Говядина
+        amount: 500
+        position: 1
+      - name: Шампиньон
+        amount: 400
+        position: 2
+      - name: Лук репчатый
+        amount: 1
+        position: 3
+      - name: Чеснок
+        amount: 4
+        position: 4
+      - name: Сливки 20%
+        amount: 500
+        position: 5
+      - name: Масло сливочное
+        amount: 30
+        position: 6
+      - name: Петрушка
+        amount: 20
+        position: 7
+      - name: Соль
+        amount: 1
+        position: 8
+      - name: Кориандр
+        amount: 1
+        position: 9
+      - name: Чеснок гранулированный
+        amount: 1
+        position: 10
+      - name: Перец чёрный молотый
+        amount: 1
+        position: 11
+      - name: Масло растительное
+        amount: 45
+        position: 13
+
+  - name: Салат с курицей, шампиньонами и перцем
+    category: Салаты
+    recipe: |
+      1. Нарезать куриное филе тонкими слайсами, добавить соус унаги и запекать в аэрогриле 15 минут при температуре 160 °C.
+
+      2. Нарезать перец сладкий и шампиньоны крупно, слегка посолить и запекать в аэрогриле 15 минут при температуре 170 °C.
+
+      3. Нарезать помидор и подготовить салатные листья или зелень.
+
+      4. Смешать растительное масло, соевый соус, лимонный сок, мёд и горчицу до однородной заправки.
+
+      5. Смешать запечённое куриное филе, овощи и зелень, полить заправкой и подать к столу.
+    ingredients:
+      - name: Куриное филе
+        amount: 500
+        position: 1
+      - name: Перец сладкий
+        amount: 300
+        position: 2
+      - name: Шампиньон
+        amount: 300
+        position: 3
+      - name: Помидор
+        amount: 300
+        position: 4
+      - name: Зелень
+        amount: 50
+        position: 5
+      - name: Масло растительное
+        amount: 22.5
+        position: 6
+      - name: Соевый соус
+        amount: 3
+        position: 7
+      - name: Лимонный сок
+        amount: 1.5
+        position: 8
+      - name: Мёд
+        amount: 1
+        position: 9
+      - name: Горчица
+        amount: 1
+        position: 10
+      - name: Соль
+        amount: 1
+        position: 11
+      - name: Соус унаги
+        amount: 1
+        position: 12
+        is_optional: true
+
+  - name: Паста с лососем и шпинатом
+    category: Основные блюда
+    recipe: |
+      1. Ополоснуть красную рыбу водой, просушить и нарезать небольшими кусочками.
+
+      2. Раздавить чеснок в прессе или натереть на тёрке, слегка обжарить на оливковом масле, добавить рыбу и томить 5 минут до румяной корочки.
+
+      3. Добавить шпинат и готовить пару минут, влить сливки, посыпать тёртым пармезаном, посолить и поперчить по вкусу, тушить 5 минут.
+
+      4. Отварить спагетти до состояния аль денте по инструкции на упаковке, слить воду, выложить пасту в сковороду с соусом и перемешать.
+
+      5. Готовить ещё 2 минуты, при желании добавить томаты и подать пасту к столу.
+    ingredients:
+      - name: Макароны
+        amount: 250
+        position: 1
+      - name: Лосось
+        amount: 250
+        position: 2
+      - name: Сливки 20%
+        amount: 150
+        position: 3
+      - name: Шпинат
+        amount: 100
+        position: 4
+      - name: Пармезан
+        amount: 50
+        position: 5
+      - name: Чеснок
+        amount: 1
+        position: 6
+      - name: Масло оливковое
         amount: 2
         position: 7
       - name: Соль
         amount: 1
         position: 8
+      - name: Перец чёрный молотый
+        amount: 1
+        position: 9
+      - name: Помидор
+        amount: 50
+        position: 10
+        is_optional: true
 
-  - name: Салат Цезарь
-    category: Салаты
-    recipe: Салат с куриным филе, пармезаном и гренками
+  - name: Рассольник классический
+    category: Супы
+    recipe: |
+      1. Вымыть говядину, залить водой, довести до кипения, снять пену и варить бульон на тихом огне около 40 минут.
+
+      2. Промыть перловку, выложить в кипящий бульон, убавить огонь до среднего и варить ещё около 30 минут.
+
+      3. Очистить лук, морковь и картофель, вымыть и нарезать лук и морковь мелкими кубиками.
+
+      4. Нарезать солёные огурцы небольшими кубиками.
+
+      5. Разогреть растительное масло на сковороде, обжарить лук и морковь до золотистого оттенка, затем добавить огурцы и томатную пасту и перемешать.
+
+      6. Влить в сковороду огуречный рассол, накрыть крышкой и тушить овощи до мягкости.
+
+      7. Достать мясо из бульона, отделить от костей, нарезать небольшими кусочками и вернуть в кастрюлю с бульоном и перловкой.
+
+      8. Нарезать картофель кубиками, выложить в бульон с мясом и перловкой и варить около 10 минут.
+
+      9. Добавить в суп тушёные на сковороде овощи, варить ещё около 5 минут.
+
+      10. Вложить лавровый лист, посолить, приправить чёрным перцем и карри по вкусу, выключить огонь и настоять суп не менее 10 минут.
+
+      11. Подать рассольник со свежей зеленью и сметаной.
+    ingredients:
+      - name: Картофель
+        amount: 500
+        position: 1
+      - name: Огурец соленый
+        amount: 200
+        position: 3
+      - name: Говядина
+        amount: 400
+        position: 4
+      - name: Морковь
+        amount: 100
+        position: 5
+      - name: Огуречный рассол
+        amount: 200
+        position: 6
+      - name: Лук репчатый
+        amount: 100
+        position: 7
+      - name: Томатная паста
+        amount: 60
+        position: 8
+      - name: Перловка
+        amount: 70
+        position: 9
+      - name: Масло растительное
+        amount: 30
+        position: 10
+      - name: Соль
+        amount: 1
+        position: 11
+      - name: Перец черный молотый
+        amount: 1
+        position: 12
+      - name: Карри
+        amount: 1
+        position: 13
+        is_optional: true
+      - name: Лавровый лист
+        amount: 2
+        position: 14
+        is_optional: true
+      - name: Зелень
+        amount: 20
+        position: 15
+        is_optional: true
+      - name: Сметана
+        amount: 50
+        position: 16
+        is_optional: true
+
+  - name: Творожные сырки в шоколадной глазури
+    category: Десерты
+    recipe: |
+      1. Растопить шоколад на водяной бане, добавить растительное масло и перемешать до однородности.
+
+      2. Смазать силиконовые формы шоколадной глазурью, накрыть плёнкой, поставить на доску и убрать в холодильник на 20 минут до застывания.
+
+      3. Взбить блендером творог, сгущёнку и сливочное масло до однородной массы.
+
+      4. Выложить часть творожной массы в формы, посередине сделать углубление, выложить консервированные ягоды и накрыть оставшейся творожной массой.
+
+      5. Полить сырки сверху шоколадной глазурью, выровнять поверхность и поставить в морозилку на 4–5 часов до полного застывания.
+
+      6. Переставить сырки из морозилки в холодильник на пару часов, затем извлечь из форм и подать к столу.
+    ingredients:
+      - name: Творог
+        amount: 600
+        position: 1
+      - name: Сгущёнка
+        amount: 150
+        position: 2
+      - name: Масло сливочное
+        amount: 50
+        position: 3
+      - name: Ягоды консервированные
+        amount: 100
+        position: 4
+      - name: Шоколад
+        amount: 200
+        position: 5
+      - name: Масло растительное
+        amount: 2
+        position: 6
+
+  - name: Лосось с запечёнными овощами
+    category: Основные блюда
+    recipe: |
+      1. Разогреть духовку до 200 °C, подготовить брокколи, цукини, болгарский перец и красный лук.
+
+      2. Смешать овощи в большой миске.
+
+      3. Добавить к овощам 1–2 столовые ложки масла оливкового, рубленый чеснок, сушёный тимьян, соль и перец чёрный молотый, тщательно перемешать.
+
+      4. Выложить овощи ровным слоем на противень с пергаментной бумагой и запекать 10–12 минут.
+
+      5. Промыть филе лосося под холодной водой и обсушить бумажными полотенцами.
+
+      6. Смешать оставшееся масло оливковое, сок половины лимона, соль и перец чёрный молотый для заправки лосося.
+
+      7. Достать противень с овощами, сдвинуть овощи к краям, выложить куски лосося в центр и смазать приготовленной заправкой.
+
+      8. Запекать лосося с овощами ещё 10–12 минут до готовности рыбы.
+
+      9. Переложить лосося и овощи на тарелки, украсить дольками лимона и свежей зеленью, подать сразу.
+    ingredients:
+      - name: Лосось
+        amount: 2
+        position: 1
+      - name: Брокколи
+        amount: 1
+        position: 2
+      - name: Цукини
+        amount: 1
+        position: 3
+      - name: Перец сладкий
+        amount: 50
+        position: 4
+      - name: Лук красный
+        amount: 25
+        position: 5
+      - name: Масло оливковое
+        amount: 3
+        position: 6
+      - name: Лимон
+        amount: 0.5
+        position: 7
+      - name: Чеснок
+        amount: 2
+        position: 8
+      - name: Тимьян
+        amount: 0.5
+        position: 9
+      - name: Соль
+        amount: 1
+        position: 10
+      - name: Перец чёрный молотый
+        amount: 1
+        position: 11
+      - name: Зелень
+        amount: 10
+        position: 12
+        is_optional: true
+
+  - name: Куриный суп с шампиньонами и сыром
+    category: Супы
+    recipe: |
+      1. Промыть куриное филе, нарезать кусочками и отварить до готовности на медленном огне в течение 30 минут.
+
+      2. Натереть на крупной тёрке морковь.
+
+      3. Очистить и мелко нашинковать лук репчатый.
+
+      4. Обжарить лук с морковью на растительном масле до золотистого цвета.
+
+      5. Очистить и нарезать кубиками картофель, добавить к курице, выложить нарезанные шампиньоны и зажарку в бульон.
+
+      6. Посолить, поперчить и варить суп в течение 10 минут.
+
+      7. Добавить плавленый сыр, тщательно перемешать и варить 10–15 минут.
+
+      8. Готовый суп украсить свежей зеленью.
     ingredients:
       - name: Куриное филе
         amount: 300
         position: 1
-      - name: Листья салата ромэн
-        amount: 200
-        position: 2
-      - name: Пармезан
-        amount: 50
+      - name: Шампиньон
+        amount: 300
         position: 3
-      - name: Гренки
-        amount: 80
+      - name: Морковь
+        amount: 200
         position: 4
-      - name: Яйцо куриное
-        amount: 1
+      - name: Лук репчатый
+        amount: 200
         position: 5
-      - name: Чеснок
-        amount: 1
+      - name: Картофель
+        amount: 200
         position: 6
-      - name: Оливковое масло
-        amount: 40
+      - name: Плавленный сыр
+        amount: 250
         position: 7
-      - name: Соль
-        amount: 1
+      - name: Масло растительное
+        amount: 50
         position: 8
-      - name: Черный перец
+      - name: Зелень
         amount: 1
         position: 9
-
-  - name: Сырники
-    category: Завтраки
-    recipe: Нежные сырники из творога
-    ingredients:
-      - name: Творог
-        amount: 500
-        position: 1
-      - name: Яйцо куриное
-        amount: 2
-        position: 2
-      - name: Мука пшеничная
-        amount: 60
-        position: 3
-      - name: Сахар
-        amount: 40
-        position: 4
       - name: Соль
         amount: 1
+        position: 10
+      - name: Перец чёрный молотый
+        amount: 1
+        position: 11
+
+  - name: Солянка
+    category: Супы
+    recipe: |
+      1. Приготовить бульон из говядины, затем вынуть мясо и нарезать его небольшими кусочками.
+
+      2. Нарезать лук репчатый мелким кубиком, солёный огурец — небольшими кусочками.
+
+      3. Разогреть подсолнечное масло на сковороде, пассеровать лук до мягкости, добавить огурец, накрыть крышкой и тушить около 10 минут.
+
+      4. Добавить к луку с огурцами томатную пасту, перемешать и тушить ещё 2–3 минуты.
+
+      5. Нарезать колбасу соломкой, сосиски кружками.
+
+      6. В кипящий бульон добавить смесь лука с огурцами и томатной пастой, колбасу, сосиски, кусочки говядины, маслины и лавровый лист.
+
+      7. Посолить, приправить перцем чёрным молотым и варить на среднем огне около 10 минут, затем дать настояться под крышкой.
+
+      8. При подаче разлить солянку по тарелкам, добавить кружок лимона, посыпать зеленью и подать со сметаной по желанию.
+    ingredients:
+      - name: Говядина
+        amount: 350
+        position: 1
+      - name: Колбаса вареная
+        amount: 450
+        position: 2
+      - name: Сосиски
+        amount: 250
+        position: 3
+      - name: Огурец соленый
+        amount: 200
+        position: 4
+      - name: Лук репчатый
+        amount: 80
         position: 5
-      - name: Оливковое масло
-        amount: 30
+      - name: Томатная паста
+        amount: 40
         position: 6
-      - name: Сметана
-        amount: 3
+      - name: Масло растительное
+        amount: 30
         position: 7
+      - name: Маслины
+        amount: 12
+        position: 8
+      - name: Лавровый лист
+        amount: 1
+        position: 9
+      - name: Лимон
+        amount: 1
+        position: 10
+      - name: Соль
+        amount: 1
+        position: 11
+      - name: Перец черный молотый
+        amount: 1
+        position: 12
+      - name: Зелень
+        amount: 20
+        position: 13
+      - name: Сметана
+        amount: 40
+        position: 14
+        is_optional: true
+
+  - name: Хрустящий салат с курицей
+    category: Салаты
+    recipe: |
+      1. Нарезать куриное филе вдоль на 2–3 части, замариновать в соли, перце и майонезе. 
+
+      2. Обвалять курицу в муке, затем во взбитых яйцах и панировочных сухарях, при желании повторить слой яйца и сухарей для более хрустящей корочки. 
+
+      3. Достать кукурузу из банки и обсушить бумажными полотенцами, выложить кукурузу и курицу на противень. 
+
+      4. Запекать курицу и кукурузу при 190 °C: курицу около 20 минут, кукурузу 20–25 минут, периодически перемешивая кукурузу каждые 4–5 минут до хрустящего состояния. 
+
+      5. Нарезать листья салата, черри, огурец, замаринованный лук и при желании зелёный лук, выложить в салатник. 
+
+      6. Нарезать запечённую курицу, добавить к овощам вместе с запечённой кукурузой. 
+
+      7. Смешать йогурт, соевый соус, лимонный сок, сухие травы, выдавленный чеснок и мёд до однородного соуса. 
+
+      8. Полить салат приготовленным соусом и аккуратно перемешать или подать соус отдельно.
+    ingredients:
+      - name: Куриное филе
+        amount: 200
+        position: 1
+      - name: Помидор
+        amount: 150
+        position: 2
+      - name: Огурец
+        amount: 100
+        position: 3
+      - name: Лук репчатый
+        amount: 50
+        position: 4
+      - name: Листья салата
+        amount: 50
+        position: 5
+      - name: Кукуруза консервированная
+        amount: 200
+        position: 6
+      - name: Панировочные сухари
+        amount: 50
+        position: 7
+      - name: Мука
+        amount: 30
+        position: 8
+      - name: Яйцо куриное
+        amount: 2
+        position: 9
+      - name: Соль
+        amount: 1
+        position: 10
+      - name: Смесь трав
+        amount: 1
+        position: 11
+      - name: Майонез
+        amount: 30
+        position: 12
+        is_optional: true
+      - name: Йогурт греческий
+        amount: 140
+        position: 13
+      - name: Соевый соус
+        amount: 2
+        position: 14
+      - name: Лимон
+        amount: 0.25
+        position: 15
+      - name: Чеснок
+        amount: 1
+        position: 16
+      - name: Мёд
+        amount: 1
+        position: 17
+      - name: Лук зелёный
+        amount: 10
+        position: 18
         is_optional: true
