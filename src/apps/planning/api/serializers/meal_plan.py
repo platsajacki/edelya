@@ -3,6 +3,7 @@ from rest_framework.fields import CurrentUserDefault, DateField, HiddenField, Li
 from rest_framework.serializers import ModelSerializer, Serializer
 
 from apps.dishes.api.serializers.dishes import DishReadSerializer
+from apps.dishes.models import Dish
 from apps.planning.api.serializers.cooking import CookingEventSerializer
 from apps.planning.models import MealPlanItem
 
@@ -104,6 +105,11 @@ class MealPlanItemUpdateSerializer(ModelSerializer):
             'created_at',
             'updated_at',
         ]
+
+    def validate_dish(self, value: Dish) -> Dish:
+        if self.instance and self.instance.cooking_event and self.instance.dish_id != value.pk:
+            raise ValidationError('Cannot change the dish of a meal plan item linked to a cooking event.')
+        return value
 
     def validate_date(self, value: DateField) -> DateField:
         if self.instance and self.instance.cooking_event and value < self.instance.cooking_event.cooking_date:

@@ -481,6 +481,35 @@ class TestMealPlanItemViewSetPartialUpdate:
         assert 'color' in response.data
         assert response.data['color']
 
+    def test_cannot_change_dish_of_cooking_event_linked_item(
+        self,
+        auth_telegram_api_client: APIClient,
+        cooking_event_with_meal_plan_items: CookingEvent,
+        dish_user: Dish,
+    ) -> None:
+        item = MealPlanItem.objects.filter(cooking_event=cooking_event_with_meal_plan_items).first()
+        assert item is not None
+        response = auth_telegram_api_client.patch(
+            self.get_url(str(item.id)), data={'dish': str(dish_user.id)}, format='json'
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        item.refresh_from_db()
+        assert item.dish == cooking_event_with_meal_plan_items.dish
+
+    def test_can_change_dish_of_manual_item(
+        self,
+        auth_telegram_api_client: APIClient,
+        meal_plan_item: MealPlanItem,
+        dish_user: Dish,
+    ) -> None:
+        assert meal_plan_item.cooking_event is None
+        response = auth_telegram_api_client.patch(
+            self.get_url(str(meal_plan_item.id)), data={'dish': str(dish_user.id)}, format='json'
+        )
+        assert response.status_code == status.HTTP_200_OK
+        meal_plan_item.refresh_from_db()
+        assert meal_plan_item.dish == dish_user
+
 
 class TestMealPlanItemViewSetDelete:
     def get_url(self, item_id: str) -> str:
