@@ -48,7 +48,7 @@ def get_random_color(existing_colors: list | None = None) -> str:
     return choice(list(set_of_available_colors))
 
 
-def build_weeks_q(dates: list[date]) -> Q:
+def build_weeks_q(dates: list[date], date_field: str = 'date') -> Q:
     weeks_q = Q()
     seen_weeks = set()
     for day in dates:
@@ -57,7 +57,7 @@ def build_weeks_q(dates: list[date]) -> Q:
             continue
         seen_weeks.add(week_start)
         week_end = week_start + timedelta(days=6)
-        weeks_q |= Q(date__range=(week_start, week_end))
+        weeks_q |= Q(**{f'{date_field}__range': (week_start, week_end)})
     return weeks_q
 
 

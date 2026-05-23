@@ -49,7 +49,7 @@ class CookingEventQuerySet(BaseQuerySet['CookingEvent']):
         return list(
             self.for_user(owner)
             .filter(color__isnull=False)
-            .filter(build_weeks_q(eat_dates))
+            .filter(build_weeks_q(eat_dates, date_field='cooking_date'))
             .values_list('color', flat=True)
         )
 
