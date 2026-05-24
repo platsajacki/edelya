@@ -44,5 +44,8 @@ class CookingEventUpdater(CookingEventBaseService):
     def act(self) -> None:
         meal_plan_items = list(self.serializer.instance.meal_plan_items.all())
         old_cooking_date = self.serializer.instance.cooking_date
+        old_dish_id = self.serializer.instance.dish_id
         cooking_event = self.serializer.save()
         self.process_meal_plan_items(cooking_event, meal_plan_items, old_cooking_date)
+        if cooking_event.dish_id != old_dish_id:
+            MealPlanItem.objects.filter(cooking_event=cooking_event).update(dish=cooking_event.dish)

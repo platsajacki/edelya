@@ -547,6 +547,24 @@ class TestCookingEventViewSetPartialUpdate:
         assert items.count() == 3
         assert all(item.color == cooking_event.color for item in items)
 
+    def test_changing_dish_propagates_to_linked_meal_plan_items(
+        self,
+        auth_telegram_api_client: APIClient,
+        cooking_event_with_meal_plan_items: CookingEvent,
+        dish_user: Dish,
+    ) -> None:
+        event = cooking_event_with_meal_plan_items
+        eat_dates = list(MealPlanItem.objects.filter(cooking_event=event).values_list('date', flat=True))
+        response = auth_telegram_api_client.patch(
+            self.get_url(str(event.id)),
+            data={'dish': str(dish_user.id), 'eat_dates': [str(d) for d in eat_dates]},
+            format='json',
+        )
+        assert response.status_code == status.HTTP_200_OK
+        event.refresh_from_db()
+        assert event.dish == dish_user
+        assert not MealPlanItem.objects.filter(cooking_event=event).exclude(dish=dish_user).exists()
+
     def test_put_method_not_allowed(self, auth_telegram_api_client: APIClient, cooking_event: CookingEvent) -> None:
         response = auth_telegram_api_client.put(self.get_url(str(cooking_event.id)), data={}, format='json')
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
