@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Any
 from django.apps import apps
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import UserManager as DjangoUserManager
+from django.db.models import QuerySet
 
 if TYPE_CHECKING:
     from apps.users.models import User
@@ -30,3 +31,6 @@ class UserManager(DjangoUserManager):
         else:
             user.set_unusable_password()
         return user  # type: ignore[return-value]
+
+    def with_subscription_and_tariff(self) -> QuerySet[User]:
+        return self.get_queryset().select_related('subscription', 'subscription__tariff')  # type: ignore[return-value]

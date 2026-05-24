@@ -10,7 +10,7 @@ class CookingEventAdmin(ModelAdmin):
         (
             'General',
             {
-                'fields': ('owner', 'dish', 'cooking_date', 'duration_days', 'start_eating_date'),
+                'fields': ('owner', 'dish', 'cooking_date', 'position'),
             },
         ),
         (
@@ -28,8 +28,9 @@ class CookingEventAdmin(ModelAdmin):
         ),
     )
     readonly_fields = ('id', 'created_at', 'updated_at')
-    list_display = ('id', 'owner', 'dish', 'cooking_date', 'duration_days', 'start_eating_date')
+    list_display = ('id', 'owner', 'dish', 'cooking_date')
     list_filter = ('cooking_date',)
+    list_select_related = ('owner', 'dish')
     search_fields = ('owner__username', 'owner__telegram_username', 'dish__name')
     ordering = ('-cooking_date',)
     autocomplete_fields = ('owner', 'dish')

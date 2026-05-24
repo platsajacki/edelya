@@ -1,10 +1,10 @@
 from django.db import models
 
 from apps.planning.models.managers.meal_plan import MealPlanItemManager
-from core.base.abstract_models import BaseModel
+from core.base.abstract_models import BaseModel, ColoredModel
 
 
-class MealPlanItem(BaseModel):
+class MealPlanItem(BaseModel, ColoredModel):
     owner = models.ForeignKey(
         'users.User',
         on_delete=models.CASCADE,
@@ -55,12 +55,6 @@ class MealPlanItem(BaseModel):
             models.Index(
                 fields=['cooking_event'],
                 name='idx_meal_cooking_event',
-            ),
-        ]
-        constraints = [
-            models.UniqueConstraint(
-                fields=['owner', 'date', 'position'],
-                name='unique_meal_position_per_day',
             ),
         ]
 

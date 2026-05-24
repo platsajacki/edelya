@@ -4,13 +4,17 @@ from dataclasses import dataclass
 from dataclasses import field as dc_field
 from typing import Any
 
+from django.db.models import Model, QuerySet
 from rest_framework.serializers import BaseSerializer
 
 
 class BaseService(metaclass=ABCMeta):
+    __call___called: bool = False
+
     def __call__(self) -> Any:
+        self.__call___called = True
         self.validate()
-        return self.act()
+        return self.__act()
 
     def get_log_msg(self, message: str) -> str:
         return f'[{self.__repr__()}] {message}'
@@ -22,6 +26,11 @@ class BaseService(metaclass=ABCMeta):
         validators = self.get_validators()
         for validator in validators:
             validator()
+
+    def __act(self) -> Any:
+        if not self.__call___called:
+            raise RuntimeError('Please call the service instance to execute the action')
+        return self.act()
 
     @abstractmethod
     def act(self) -> Any:
@@ -45,3 +54,23 @@ class BaseViewSetService(BaseService):
 @dataclass
 class BaseViewSetPerformService(BaseService):
     serializer: BaseSerializer
+
+
+@dataclass
+class BaseInstanceService(BaseService):
+    instance: Model
+
+
+@dataclass
+class PerformActionInstanceRefresher(BaseViewSetPerformService):
+    qs: QuerySet
+
+    def act(self) -> Model:
+        instance = self.serializer.save()
+        return self.qs.get(pk=instance.pk)
+
+
+@dataclass
+class TaskService(BaseService):
+    def get_log_msg(self, message: str) -> str:
+        return f'[Task] [{self.__repr__()}] {message}'

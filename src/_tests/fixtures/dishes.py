@@ -38,10 +38,10 @@ def dish_categories(dish_category_data: list[dict]) -> list[DishCategory]:
 def dish_data(factory: FixtureFactory, dish_category: DishCategory) -> list[dict]:
     return factory.schema(
         lambda: {
-            'name': factory.generic.text.word(),
+            'name': f'{factory.generic.text.word()} {factory.generic.numeric.integer_number(start=1000, end=9999999)}',
             'owner': None,
             'category': dish_category,
-            'description': '',
+            'recipe': '',
         },
         iterations=10,
     ).create()

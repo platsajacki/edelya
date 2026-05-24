@@ -3,6 +3,9 @@ from uuid import uuid4
 from django.db import models
 from django.utils import timezone
 
+from core.base.validators import HexColorValidator
+from core.utils import get_random_color
+
 
 class BaseModel(models.Model):
     id = models.UUIDField(
@@ -37,3 +40,15 @@ class BaseActiveModel(BaseModel):
     def deactivate(self) -> None:
         self.is_active = False
         self.save(update_fields=['is_active'])
+
+
+class ColoredModel(models.Model):
+    color = models.CharField(
+        verbose_name='Цвет',
+        max_length=7,
+        validators=[HexColorValidator()],
+        default=get_random_color,
+    )
+
+    class Meta:
+        abstract = True

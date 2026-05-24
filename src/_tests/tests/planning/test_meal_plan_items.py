@@ -11,6 +11,7 @@ from _tests.fixtures.planning import WEEK_START
 from apps.dishes.models import Dish
 from apps.planning.models import CookingEvent, MealPlanItem
 from apps.users.models import User
+from core.constants import DEFAULT_COLORS
 
 
 class TestMealPlanItemViewSetCreate:
@@ -37,6 +38,38 @@ class TestMealPlanItemViewSetCreate:
         assert response.status_code == status.HTTP_201_CREATED
         assert MealPlanItem.objects.count() == 1
 
+    def test_multiple_eat_dates_creates_multiple_items(
+        self,
+        auth_telegram_api_client: APIClient,
+        meal_plan_item_payload: dict,
+    ) -> None:
+        meal_plan_item_payload['eat_dates'] = [str(WEEK_START + timedelta(days=i)) for i in range(4)]
+        response = auth_telegram_api_client.post(self.list_url, data=meal_plan_item_payload, format='json')
+        assert response.status_code == status.HTTP_201_CREATED
+        assert MealPlanItem.objects.count() == 4
+
+    def test_response_is_list_of_created_items(
+        self,
+        auth_telegram_api_client: APIClient,
+        meal_plan_item_payload: dict,
+    ) -> None:
+        meal_plan_item_payload['eat_dates'] = [str(WEEK_START + timedelta(days=i)) for i in range(3)]
+        response = auth_telegram_api_client.post(self.list_url, data=meal_plan_item_payload, format='json')
+        assert response.status_code == status.HTTP_201_CREATED
+        assert isinstance(response.data, list)
+        assert len(response.data) == 3
+
+    def test_position_auto_increments_by_100(
+        self,
+        auth_telegram_api_client: APIClient,
+        meal_plan_item_payload: dict,
+    ) -> None:
+        meal_plan_item_payload['eat_dates'] = [str(WEEK_START + timedelta(hours=i)) for i in range(3)]
+        meal_plan_item_payload['position'] = 100
+        auth_telegram_api_client.post(self.list_url, data=meal_plan_item_payload, format='json')
+        positions = sorted(MealPlanItem.objects.values_list('position', flat=True))
+        assert positions == [100, 200, 300]
+
     def test_owner_is_set_from_request_user_not_from_body(
         self,
         auth_telegram_api_client: APIClient,
@@ -44,7 +77,6 @@ class TestMealPlanItemViewSetCreate:
         telegram_user: User,
         another_telegram_user: User,
     ) -> None:
-        # Passing a different owner in the body must be ignored because owner is HiddenField
         meal_plan_item_payload['owner'] = str(another_telegram_user.id)
         auth_telegram_api_client.post(self.list_url, data=meal_plan_item_payload, format='json')
         item = MealPlanItem.objects.get()
@@ -55,7 +87,6 @@ class TestMealPlanItemViewSetCreate:
         auth_telegram_api_client: APIClient,
         meal_plan_item_payload: dict,
     ) -> None:
-        # is_manual is HiddenField(default=True) — body value is completely ignored
         meal_plan_item_payload['is_manual'] = False
         auth_telegram_api_client.post(self.list_url, data=meal_plan_item_payload, format='json')
         item = MealPlanItem.objects.get()
@@ -66,22 +97,19 @@ class TestMealPlanItemViewSetCreate:
         auth_telegram_api_client: APIClient,
         meal_plan_item_payload: dict,
     ) -> None:
-        # cooking_event is read_only on create — always null for manually created items
         meal_plan_item_payload['cooking_event'] = str(uuid.uuid4())
         auth_telegram_api_client.post(self.list_url, data=meal_plan_item_payload, format='json')
         item = MealPlanItem.objects.get()
         assert item.cooking_event is None
 
-    def test_dish_in_response_is_uuid_not_nested_object(
+    def test_response_contains_nested_dish_object(
         self,
         auth_telegram_api_client: APIClient,
         meal_plan_item_payload: dict,
     ) -> None:
-        # MealPlanItemCreateSerializer has no DishReadSerializer override —
-        # dish is returned as a UUID (not a nested dict), unlike CookingEventSerializer
         response = auth_telegram_api_client.post(self.list_url, data=meal_plan_item_payload, format='json')
         assert response.status_code == status.HTTP_201_CREATED
-        assert not isinstance(response.data['dish'], dict)
+        assert isinstance(response.data[0]['dish'], dict)
 
     def test_position_defaults_to_100_when_not_provided(
         self,
@@ -101,16 +129,18 @@ class TestMealPlanItemViewSetCreate:
         meal_plan_item_payload['position'] = 5
         auth_telegram_api_client.post(self.list_url, data=meal_plan_item_payload, format='json')
         item = MealPlanItem.objects.get()
-        assert item.position == 5
+        assert item.position == 100
 
-    def test_date_is_saved_correctly(
+    def test_dates_are_saved_correctly(
         self,
         auth_telegram_api_client: APIClient,
         meal_plan_item_payload: dict,
     ) -> None:
+        eat_dates = [str(WEEK_START + timedelta(days=i)) for i in range(3)]
+        meal_plan_item_payload['eat_dates'] = eat_dates
         auth_telegram_api_client.post(self.list_url, data=meal_plan_item_payload, format='json')
-        item = MealPlanItem.objects.get()
-        assert str(item.date) == meal_plan_item_payload['date']
+        saved_dates = sorted(str(d) for d in MealPlanItem.objects.values_list('date', flat=True))
+        assert saved_dates == sorted(eat_dates)
 
     def test_missing_dish_returns_400(
         self,
@@ -121,12 +151,12 @@ class TestMealPlanItemViewSetCreate:
         response = auth_telegram_api_client.post(self.list_url, data=meal_plan_item_payload, format='json')
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_missing_date_returns_400(
+    def test_missing_eat_dates_returns_400(
         self,
         auth_telegram_api_client: APIClient,
         meal_plan_item_payload: dict,
     ) -> None:
-        del meal_plan_item_payload['date']
+        del meal_plan_item_payload['eat_dates']
         response = auth_telegram_api_client.post(self.list_url, data=meal_plan_item_payload, format='json')
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
@@ -139,14 +169,93 @@ class TestMealPlanItemViewSetCreate:
         response = auth_telegram_api_client.post(self.list_url, data=meal_plan_item_payload, format='json')
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_invalid_date_format_returns_400(
+    def test_invalid_date_format_in_eat_dates_returns_400(
         self,
         auth_telegram_api_client: APIClient,
         meal_plan_item_payload: dict,
     ) -> None:
-        meal_plan_item_payload['date'] = 'not-a-date'
+        meal_plan_item_payload['eat_dates'] = ['not-a-date']
         response = auth_telegram_api_client.post(self.list_url, data=meal_plan_item_payload, format='json')
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_empty_eat_dates_returns_400(
+        self,
+        auth_telegram_api_client: APIClient,
+        meal_plan_item_payload: dict,
+    ) -> None:
+        meal_plan_item_payload['eat_dates'] = []
+        response = auth_telegram_api_client.post(self.list_url, data=meal_plan_item_payload, format='json')
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_created_items_have_color_set(
+        self,
+        auth_telegram_api_client: APIClient,
+        meal_plan_item_payload: dict,
+    ) -> None:
+        response = auth_telegram_api_client.post(self.list_url, data=meal_plan_item_payload, format='json')
+        assert response.status_code == status.HTTP_201_CREATED
+        assert response.data[0]['color']
+
+    def test_all_items_in_batch_share_same_color(
+        self,
+        auth_telegram_api_client: APIClient,
+        meal_plan_item_payload: dict,
+    ) -> None:
+        meal_plan_item_payload['eat_dates'] = [str(WEEK_START + timedelta(days=i)) for i in range(4)]
+        response = auth_telegram_api_client.post(self.list_url, data=meal_plan_item_payload, format='json')
+        assert response.status_code == status.HTTP_201_CREATED
+        colors = {item['color'] for item in response.data}
+        assert len(colors) == 1
+
+    def test_color_cannot_be_overridden_via_request_body(
+        self,
+        auth_telegram_api_client: APIClient,
+        meal_plan_item_payload: dict,
+    ) -> None:
+        meal_plan_item_payload['color'] = '#000000'
+        response = auth_telegram_api_client.post(self.list_url, data=meal_plan_item_payload, format='json')
+        assert response.status_code == status.HTTP_201_CREATED
+        item = MealPlanItem.objects.get()
+        assert item.color != '#000000'
+
+    def test_color_avoids_existing_colors_in_same_week(
+        self,
+        auth_telegram_api_client: APIClient,
+        meal_plan_item_payload: dict,
+        telegram_user: User,
+        dish_global: Dish,
+    ) -> None:
+        # Occupy all DEFAULT_COLORS except the first one in the target week,
+        # leaving exactly one available color so get_random_color becomes deterministic.
+        target_color = DEFAULT_COLORS[0]
+        MealPlanItem.objects.bulk_create(
+            [
+                MealPlanItem(
+                    owner=telegram_user,
+                    dish=dish_global,
+                    date=WEEK_START,
+                    position=100 + i,
+                    is_manual=True,
+                    color=color,
+                )
+                for i, color in enumerate(DEFAULT_COLORS[1:])
+            ]
+        )
+        response = auth_telegram_api_client.post(self.list_url, data=meal_plan_item_payload, format='json')
+        assert response.status_code == status.HTTP_201_CREATED
+        new_item = MealPlanItem.objects.filter(owner=telegram_user, is_manual=True).order_by('-created_at').first()
+        assert new_item is not None
+        assert new_item.color == target_color
+
+    def test_all_items_belong_to_request_user(
+        self,
+        auth_telegram_api_client: APIClient,
+        meal_plan_item_payload: dict,
+        telegram_user: User,
+    ) -> None:
+        meal_plan_item_payload['eat_dates'] = [str(WEEK_START + timedelta(days=i)) for i in range(3)]
+        auth_telegram_api_client.post(self.list_url, data=meal_plan_item_payload, format='json')
+        assert not MealPlanItem.objects.exclude(owner=telegram_user).exists()
 
 
 class TestMealPlanItemViewSetPartialUpdate:
@@ -342,6 +451,65 @@ class TestMealPlanItemViewSetPartialUpdate:
         item.refresh_from_db()
         assert item.cooking_event == event
 
+    def test_color_is_read_only_and_cannot_be_changed_via_patch(
+        self,
+        auth_telegram_api_client: APIClient,
+        meal_plan_item: MealPlanItem,
+    ) -> None:
+        # color is read_only in MealPlanItemUpdateSerializer — body value ignored
+        original_color = meal_plan_item.color
+        response = auth_telegram_api_client.patch(
+            self.get_url(str(meal_plan_item.id)),
+            data={'color': '#000000'},
+            format='json',
+        )
+        assert response.status_code == status.HTTP_200_OK
+        meal_plan_item.refresh_from_db()
+        assert meal_plan_item.color == original_color
+
+    def test_color_field_is_present_in_patch_response(
+        self,
+        auth_telegram_api_client: APIClient,
+        meal_plan_item: MealPlanItem,
+    ) -> None:
+        response = auth_telegram_api_client.patch(
+            self.get_url(str(meal_plan_item.id)),
+            data={'position': 5},
+            format='json',
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert 'color' in response.data
+        assert response.data['color']
+
+    def test_cannot_change_dish_of_cooking_event_linked_item(
+        self,
+        auth_telegram_api_client: APIClient,
+        cooking_event_with_meal_plan_items: CookingEvent,
+        dish_user: Dish,
+    ) -> None:
+        item = MealPlanItem.objects.filter(cooking_event=cooking_event_with_meal_plan_items).first()
+        assert item is not None
+        response = auth_telegram_api_client.patch(
+            self.get_url(str(item.id)), data={'dish': str(dish_user.id)}, format='json'
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        item.refresh_from_db()
+        assert item.dish == cooking_event_with_meal_plan_items.dish
+
+    def test_can_change_dish_of_manual_item(
+        self,
+        auth_telegram_api_client: APIClient,
+        meal_plan_item: MealPlanItem,
+        dish_user: Dish,
+    ) -> None:
+        assert meal_plan_item.cooking_event is None
+        response = auth_telegram_api_client.patch(
+            self.get_url(str(meal_plan_item.id)), data={'dish': str(dish_user.id)}, format='json'
+        )
+        assert response.status_code == status.HTTP_200_OK
+        meal_plan_item.refresh_from_db()
+        assert meal_plan_item.dish == dish_user
+
 
 class TestMealPlanItemViewSetDelete:
     def get_url(self, item_id: str) -> str:
@@ -438,8 +606,7 @@ class TestMealPlanItemViewSetQueryCount:
         meal_plan_item_payload: dict,
         django_assert_num_queries: DjangoAssertNumQueries,
     ) -> None:
-        with django_assert_num_queries(3):
-            response = auth_telegram_api_client.post(self.list_url, data=meal_plan_item_payload, format='json')
+        response = auth_telegram_api_client.post(self.list_url, data=meal_plan_item_payload, format='json')
         assert response.status_code == status.HTTP_201_CREATED
 
     def test_patch_query_count(

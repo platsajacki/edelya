@@ -30,6 +30,7 @@ class MealPlanItemAdmin(ModelAdmin):
     readonly_fields = ('id', 'created_at', 'updated_at')
     list_display = ('id', 'owner', 'date', 'dish', 'position', 'is_manual')
     list_filter = ('is_manual', 'date')
+    list_select_related = ('owner', 'dish')
     search_fields = ('owner__username', 'owner__telegram_username', 'dish__name')
     ordering = ('-date', 'position')
     autocomplete_fields = ('owner', 'dish', 'cooking_event')

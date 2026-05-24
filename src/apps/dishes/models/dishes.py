@@ -6,7 +6,7 @@ from django.db.models import Q
 from django.db.models.base import ModelBase
 from django.db.models.functions import Lower
 
-from apps.dishes.models.managers.dishes import DishCategoryManager, DishManager
+from apps.dishes.models.managers.dishes import DishCategoryManager, DishIngredientManager, DishManager
 from core.base.abstract_models import BaseActiveModel, BaseModel
 from core.utils import normalize_string
 
@@ -53,8 +53,8 @@ class Dish(BaseActiveModel):
         verbose_name='Название блюда',
         max_length=255,
     )
-    description = models.TextField(
-        verbose_name='Описание',
+    recipe = models.TextField(
+        verbose_name='Рецепт',
         blank=True,
         default='',
     )
@@ -73,13 +73,13 @@ class Dish(BaseActiveModel):
             models.UniqueConstraint(
                 Lower('name'),
                 name='unique_dish_global',
-                condition=Q(owner__isnull=True),
+                condition=Q(owner__isnull=True, is_active=True),
             ),
             models.UniqueConstraint(
                 'owner',
                 Lower('name'),
                 name='unique_dish_user',
-                condition=Q(owner__isnull=False),
+                condition=Q(owner__isnull=False, is_active=True),
             ),
         ]
         indexes = [
@@ -136,6 +136,8 @@ class DishIngredient(BaseModel):
         verbose_name='Позиция',
         default=100,
     )
+
+    objects: DishIngredientManager = DishIngredientManager()
 
     class Meta:
         verbose_name = 'Ингредиент в блюде'

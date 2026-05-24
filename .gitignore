@@ -1,5 +1,9 @@
 # Custom Python gitignore template for Python projects.
 debug.ipynb
+staticfiles
+*.x.md
+.start_data.yaml
+recipes.ipynb
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -8,3 +8,69 @@ def mock_tg_validator(mocker: MockFixture, valid_tg_user_data: dict) -> MockType
         'apps.a12n.validators.TelegramDataValidator.validate',
         return_value=valid_tg_user_data,
     )
+
+
+@pytest.fixture
+def mock_yookassa_payment_create(mocker: MockFixture) -> MockType:
+    return mocker.patch('apps.subscriptions.services.yookassa_payments.YooPayment.create')
+
+
+@pytest.fixture
+def mock_yookassa_payment_find_one(mocker: MockFixture) -> MockType:
+    return mocker.patch('apps.subscriptions.services.yookassa_payments.YooPayment.find_one')
+
+
+@pytest.fixture
+def mock_yookassa_payment_capture(mocker: MockFixture) -> MockType:
+    return mocker.patch('apps.subscriptions.services.yookassa_payments.YooPayment.capture')
+
+
+@pytest.fixture
+def mock_yookassa_payment_cancel(mocker: MockFixture) -> MockType:
+    return mocker.patch('apps.subscriptions.services.yookassa_payments.YooPayment.cancel')
+
+
+@pytest.fixture
+def mock_yookassa_payment_method_create(mocker: MockFixture) -> MockType:
+    return mocker.patch('apps.subscriptions.services.yookassa_payments.YooPaymentMethod.create')
+
+
+@pytest.fixture
+def mock_yookassa_payment_method_find_one(mocker: MockFixture) -> MockType:
+    return mocker.patch('apps.subscriptions.services.yookassa_payments.YooPaymentMethod.find_one')
+
+
+@pytest.fixture
+def yookassa_succeeded_response(mocker: MockFixture) -> MockType:
+    obj = mocker.MagicMock()
+    obj.status = 'succeeded'
+    obj.cancellation_details = None
+    return obj
+
+
+@pytest.fixture
+def mock_tax3r_post(mocker: MockFixture) -> MockType:
+    return mocker.patch('core.external_requests.tax3r.requests_session.post')
+
+
+@pytest.fixture
+def yookassa_canceled_response(mocker: MockFixture) -> MockType:
+    obj = mocker.MagicMock()
+    obj.status = 'canceled'
+    obj.cancellation_details.reason = 'card_expired'
+    return obj
+
+
+@pytest.fixture(autouse=True)
+def edelya_bot_send_message_mock(mocker: MockFixture) -> MockType:
+    return mocker.patch('core.telegram.EdelyaBotSender.send_message')
+
+
+@pytest.fixture
+def mock_lpop(mocker: MockFixture) -> MockType:
+    return mocker.patch('apps.subscriptions.services.tax3r_check_processor.cluster_redis.lpop')
+
+
+@pytest.fixture
+def mock_notification_sender(mocker: MockFixture) -> MockType:
+    return mocker.patch('apps.subscriptions.services.tax3r_check_processor.NotificationSender')

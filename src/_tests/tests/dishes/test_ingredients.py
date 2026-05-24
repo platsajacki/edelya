@@ -266,3 +266,97 @@ class TestIngredientViewSet:
         assert response.data['name'] == 'New Ingredient'
         assert response.data['base_unit'] == Unit.TABLESPOON
         assert response.data['category']['id'] == str(ingredient_category.id)
+
+
+class TestIngredientCategoryFilterCaseInsensitive:
+    list_url = reverse('api_v1:dishes:ingredients:ingredient-category-list')
+
+    def test_icontains_finds_by_lowercase(
+        self, auth_telegram_api_client: APIClient, ingredient_category: IngredientCategory
+    ) -> None:
+        ingredient_category.name = 'Овощи'
+        ingredient_category.save(update_fields=['name'])
+        response = auth_telegram_api_client.get(self.list_url, data={'name__icontains': 'овощи'})
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['count'] == 1
+
+    def test_icontains_finds_by_uppercase(
+        self, auth_telegram_api_client: APIClient, ingredient_category: IngredientCategory
+    ) -> None:
+        ingredient_category.name = 'Овощи'
+        ingredient_category.save(update_fields=['name'])
+        response = auth_telegram_api_client.get(self.list_url, data={'name__icontains': 'ОВОЩИ'})
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['count'] == 1
+
+    def test_icontains_finds_partial_match(
+        self, auth_telegram_api_client: APIClient, ingredient_category: IngredientCategory
+    ) -> None:
+        ingredient_category.name = 'Молочные продукты'
+        ingredient_category.save(update_fields=['name'])
+        response = auth_telegram_api_client.get(self.list_url, data={'name__icontains': 'молоч'})
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['count'] == 1
+
+    def test_icontains_returns_empty_on_no_match(
+        self, auth_telegram_api_client: APIClient, ingredient_category: IngredientCategory
+    ) -> None:
+        response = auth_telegram_api_client.get(self.list_url, data={'name__icontains': 'zzzzNotExist'})
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['count'] == 0
+
+    def test_icontains_latin_case_insensitive(
+        self, auth_telegram_api_client: APIClient, ingredient_category: IngredientCategory
+    ) -> None:
+        ingredient_category.name = 'Dairy'
+        ingredient_category.save(update_fields=['name'])
+        response = auth_telegram_api_client.get(self.list_url, data={'name__icontains': 'dairy'})
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['count'] == 1
+
+
+class TestIngredientFilterCaseInsensitive:
+    list_url = reverse('api_v1:dishes:ingredients:ingredient-list')
+
+    def test_icontains_finds_by_lowercase(
+        self, auth_telegram_api_client: APIClient, ingredient_global: Ingredient
+    ) -> None:
+        ingredient_global.name = 'Картофель'
+        ingredient_global.save(update_fields=['name'])
+        response = auth_telegram_api_client.get(self.list_url, data={'name__icontains': 'картофель'})
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['count'] == 1
+
+    def test_icontains_finds_by_uppercase(
+        self, auth_telegram_api_client: APIClient, ingredient_global: Ingredient
+    ) -> None:
+        ingredient_global.name = 'Картофель'
+        ingredient_global.save(update_fields=['name'])
+        response = auth_telegram_api_client.get(self.list_url, data={'name__icontains': 'КАРТОФЕЛЬ'})
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['count'] == 1
+
+    def test_icontains_finds_partial_match(
+        self, auth_telegram_api_client: APIClient, ingredient_global: Ingredient
+    ) -> None:
+        ingredient_global.name = 'Картофель молодой'
+        ingredient_global.save(update_fields=['name'])
+        response = auth_telegram_api_client.get(self.list_url, data={'name__icontains': 'картоф'})
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['count'] == 1
+
+    def test_icontains_returns_empty_on_no_match(
+        self, auth_telegram_api_client: APIClient, ingredient_global: Ingredient
+    ) -> None:
+        response = auth_telegram_api_client.get(self.list_url, data={'name__icontains': 'zzzzNotExist'})
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['count'] == 0
+
+    def test_icontains_latin_case_insensitive(
+        self, auth_telegram_api_client: APIClient, ingredient_global: Ingredient
+    ) -> None:
+        ingredient_global.name = 'Potato'
+        ingredient_global.save(update_fields=['name'])
+        response = auth_telegram_api_client.get(self.list_url, data={'name__icontains': 'potato'})
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['count'] == 1

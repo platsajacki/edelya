@@ -9,6 +9,7 @@ from django.conf import settings
 from rest_framework.test import APIClient
 
 from apps.a12n.validators import WebAppUserData
+from apps.subscriptions.models import Subscription
 from apps.users.models import User
 
 
@@ -67,13 +68,17 @@ def valid_tg_data(valid_tg_user_data: WebAppUserData) -> dict:
 
 
 @pytest.fixture
-def auth_telegram_api_client(api_client: APIClient, telegram_user: User) -> APIClient:
+def auth_telegram_api_client(
+    api_client: APIClient, telegram_user: User, active_subscription: Subscription
+) -> APIClient:
     api_client.force_authenticate(user=telegram_user)
     return api_client
 
 
 @pytest.fixture
-def auth_another_telegram_api_client(another_telegram_user: User) -> APIClient:
+def auth_another_telegram_api_client(
+    another_telegram_user: User, another_active_subscription: Subscription
+) -> APIClient:
     client = APIClient()
     client.force_authenticate(user=another_telegram_user)
     return client

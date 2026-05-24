@@ -1,0 +1,51 @@
+from core.base.decorators import CacheAction
+
+DEFAULT_COLORS = [
+    '#D32F2F',
+    '#C2185B',
+    '#7B1FA2',
+    '#512DA8',
+    '#303F9F',
+    '#1976D2',
+    '#0288D1',
+    '#0097A7',
+    '#00796B',
+    '#388E3C',
+    '#689F38',
+    '#AFB42B',
+    '#FFA000',
+    '#F57C00',
+    '#E64A19',
+    '#5D4037',
+    '#455A64',
+    '#448AFF',
+    '#40C4FF',
+    '#B71C1C',
+    '#880E4F',
+    '#4A148C',
+    '#311B92',
+    '#1A237E',
+    '#0D47A1',
+    '#01579B',
+    '#006064',
+    '#004D40',
+    '#1B5E20',
+    '#33691E',
+    '#827717',
+    '#F57F17',
+    '#FF6F00',
+    '#E65100',
+    '#BF360C',
+    '#3E2723',
+    '#263238',
+    '#FF5252',
+    '#FF4081',
+    '#E040FB',
+    '#7C4DFF',
+    '#536DFE',
+]
+
+CACHE_LIST_5MIN = CacheAction(name='list', seconds=60 * 5)
+CACHE_RETRIEVE_10MIN = CacheAction(name='retrieve', seconds=60 * 10)
+CACHE_LIST_1H = CacheAction(name='list', seconds=60 * 60)
+CACHE_LATEST_1H = CacheAction(name='latest', seconds=60 * 60)

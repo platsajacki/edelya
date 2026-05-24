@@ -13,7 +13,9 @@ class TelegramA12nJWTSchema:
         description=(
             'This endpoint allows clients to obtain a JWT token pair (access and refresh tokens) by '
             'providing Telegram Web App initialization data. The initialization data is sent by '
-            'Telegram in the header of the request.'
+            'Telegram in the header of the request. '
+            'For new users, consent fields must be provided in the request body. '
+            'If consent is missing or invalid, 428 is returned with the list of required consents.'
         ),
         request=OpenApiRequest(),
         parameters=[TG_INIT_DATA_HEADER],
@@ -25,6 +27,21 @@ class TelegramA12nJWTSchema:
                     'properties': {
                         'refresh': {'type': 'string', 'description': 'JWT refresh token'},
                         'access': {'type': 'string', 'description': 'JWT access token'},
+                    },
+                },
+            ),
+            status.HTTP_428_PRECONDITION_REQUIRED: OpenApiResponse(
+                description='New user — consent required before account creation',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'requires_consent': {'type': 'boolean', 'example': True},
+                        'consents': {
+                            'type': 'array',
+                            'items': {'type': 'string'},
+                            'description': 'List of consent types that must be confirmed',
+                            'example': ['terms_of_service_and_privacy_policy', 'marketing_communications'],
+                        },
                     },
                 },
             ),

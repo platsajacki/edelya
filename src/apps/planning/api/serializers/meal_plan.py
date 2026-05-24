@@ -1,7 +1,9 @@
-from rest_framework.fields import CurrentUserDefault
-from rest_framework.serializers import DateField, HiddenField, ModelSerializer, Serializer
+from rest_framework.exceptions import ValidationError
+from rest_framework.fields import CurrentUserDefault, DateField, HiddenField, ListField
+from rest_framework.serializers import ModelSerializer, Serializer
 
 from apps.dishes.api.serializers.dishes import DishReadSerializer
+from apps.dishes.models import Dish
 from apps.planning.api.serializers.cooking import CookingEventSerializer
 from apps.planning.models import MealPlanItem
 
@@ -19,6 +21,7 @@ class MealPlanItemSerializer(ModelSerializer):
             'cooking_event',
             'position',
             'is_manual',
+            'color',
             'created_at',
             'updated_at',
         ]
@@ -31,7 +34,27 @@ class WeekDishesSerializer(Serializer):
     cooking_events = CookingEventSerializer(many=True)
 
 
-class MealPlanItemCreateSerializer(ModelSerializer):
+class EatDatesSerializer(ModelSerializer):
+    eat_dates = ListField(child=DateField(), write_only=True, allow_empty=False)
+
+    class Meta:
+        model = MealPlanItem
+        fields = [
+            'id',
+            'eat_dates',
+        ]
+
+    def validate(self, attrs: dict) -> dict:
+        eat_date = attrs.get('date', getattr(self.instance, 'date', None))
+        eat_dates = attrs.get('eat_dates', [])
+        if eat_date and eat_dates and any(d < eat_date for d in eat_dates):
+            raise ValidationError(
+                'All eat_dates must be greater than or equal to the current date of the meal plan item.'
+            )
+        return attrs
+
+
+class MealPlanItemCreateSerializer(EatDatesSerializer):
     owner = HiddenField(default=CurrentUserDefault())
     is_manual = HiddenField(default=True)
 
@@ -41,16 +64,18 @@ class MealPlanItemCreateSerializer(ModelSerializer):
             'id',
             'dish',
             'owner',
-            'date',
+            'eat_dates',
             'cooking_event',
             'position',
             'is_manual',
+            'color',
             'created_at',
             'updated_at',
         ]
         read_only_fields = [
             'id',
             'cooking_event',
+            'color',
             'created_at',
             'updated_at',
         ]
@@ -67,6 +92,7 @@ class MealPlanItemUpdateSerializer(ModelSerializer):
             'cooking_event',
             'position',
             'is_manual',
+            'color',
             'created_at',
             'updated_at',
         ]
@@ -75,6 +101,17 @@ class MealPlanItemUpdateSerializer(ModelSerializer):
             'owner',
             'cooking_event',
             'is_manual',
+            'color',
             'created_at',
             'updated_at',
         ]
+
+    def validate_dish(self, value: Dish) -> Dish:
+        if self.instance and self.instance.cooking_event and self.instance.dish_id != value.pk:
+            raise ValidationError('Cannot change the dish of a meal plan item linked to a cooking event.')
+        return value
+
+    def validate_date(self, value: DateField) -> DateField:
+        if self.instance and self.instance.cooking_event and value < self.instance.cooking_event.cooking_date:
+            raise ValidationError('Date must be on or after the cooking date of the associated cooking event.')
+        return value

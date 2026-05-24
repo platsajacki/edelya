@@ -40,7 +40,7 @@ def ingredient_categories(ingredient_category_data: list[dict]) -> list[Ingredie
 def ingredient_data(factory: FixtureFactory, ingredient_category: IngredientCategory) -> list[dict]:
     return factory.schema(
         lambda: {
-            'name': factory.generic.text.word(),
+            'name': str(factory.generic.random.randint(1, 999999)),
             'owner': None,
             'base_unit': choice(Unit.values),
             'category': ingredient_category,

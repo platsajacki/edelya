@@ -1,3 +1,5 @@
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.core.validators import RegexValidator
 from django.db.models import Q, QuerySet
 from rest_framework.exceptions import ValidationError
 from rest_framework.serializers import BaseSerializer
@@ -56,3 +58,23 @@ class UniqueTogetherWithOperatorValidator:
             qs = qs.exclude(pk=instance.pk)
         if qs.filter(**filter_kwargs).exists():
             raise ValidationError(self.message)
+
+
+class HexColorValidator(RegexValidator):
+    regex = r'^#(?:[0-9a-fA-F]{3}){1,2}$'
+    message = 'Enter a valid hex color code (e.g., #RRGGBB or #RGB).'
+    flags = 0
+
+
+def dict_validator(
+    value: dict, error_type: type[DjangoValidationError] | type[ValidationError] = DjangoValidationError
+) -> None:
+    if not isinstance(value, dict):
+        raise error_type('Value must be a dictionary.')
+
+
+def validate_balanced_braces(value: str) -> None:
+    open_count = value.count('{')
+    close_count = value.count('}')
+    if open_count != close_count:
+        raise ValidationError('The number of opening and closing braces must be the same.')
