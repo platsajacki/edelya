@@ -150,7 +150,7 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -187,19 +187,39 @@ REDIS_CELERY_RETRY_POLICY = {
     'max_retries': REDIS_TOTAL_CONNECTION_ATTEMPTS,
 }
 
-TELEGRAM_REDIS_LIMITER_URL = f'{REDIS_HOST}/1'
+REDIS_DB_CACHE = 1
+REDIS_DB_CELERY_BROKER = 2
+REDIS_DB_CELERY_BACKEND = 3
+REDIS_DB_API_CACHE = 4
+
+TELEGRAM_REDIS_LIMITER_URL = f'{REDIS_HOST}/{REDIS_DB_CACHE}'
 CLUSTER_REDIS_URL = getenv('CLUSTER_REDIS_URL', 'redis://127.0.0.1:6379/0')
+API_CACHE_KEY_PREFIX = 'api_cache'
+
+CACHES: dict = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    },
+    API_CACHE_KEY_PREFIX: {
+        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+    },
+}
 
 if not DEBUG:
     CACHES = {
         'default': {
             'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-            'LOCATION': f'{REDIS_HOST}/1',
+            'LOCATION': f'{REDIS_HOST}/{REDIS_DB_CACHE}',
             'OPTIONS': REDIS_CACHE_OPTIONS,
-        }
+        },
+        API_CACHE_KEY_PREFIX: {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': f'{REDIS_HOST}/{REDIS_DB_API_CACHE}',
+            'OPTIONS': REDIS_CACHE_OPTIONS,
+        },
     }
-    CELERY_BROKER_URL = f'{REDIS_HOST}/2'
-    CELERY_BACKEND_URL = f'{REDIS_HOST}/3'
+    CELERY_BROKER_URL = f'{REDIS_HOST}/{REDIS_DB_CELERY_BROKER}'
+    CELERY_BACKEND_URL = f'{REDIS_HOST}/{REDIS_DB_CELERY_BACKEND}'
     CELERY_TASK_SERIALIZER = 'json'
     CELERY_TIMEZONE = TIME_ZONE
     CELERY_RESULT_EXPIRES = 3600

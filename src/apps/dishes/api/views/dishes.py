@@ -16,10 +16,12 @@ from apps.dishes.api.serializers.dishes import (
 from apps.dishes.api.services.dish_updater import DishUpdater
 from apps.dishes.api.views.filters.dishes import DishCategoryFilter, DishFilter
 from apps.dishes.models import Dish, DishCategory, DishIngredient
-from core.base.decorators import extend_schema_view_from_class
+from core.base.decorators import cache_viewset_actions, extend_schema_view_from_class
 from core.base.permissions import CanUseBaseFeatures, HasActiveTrial, OwnerObjectPermission
+from core.constants import CACHE_LIST_5MIN, CACHE_RETRIEVE_10MIN
 
 
+@cache_viewset_actions([CACHE_LIST_5MIN, CACHE_RETRIEVE_10MIN])
 @extend_schema_view_from_class(DishCategoryViewSetSchema)
 class DishCategoryViewSet(ReadOnlyModelViewSet):
     queryset = DishCategory.objects.actived()

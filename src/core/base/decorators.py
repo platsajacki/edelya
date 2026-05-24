@@ -1,6 +1,28 @@
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
+from dataclasses import dataclass
 
+from django.conf import settings
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 from drf_spectacular.utils import extend_schema_view
+
+
+@dataclass(frozen=True, slots=True)
+class CacheAction:
+    name: str
+    seconds: int
+
+
+def cache_viewset_actions(actions: Sequence[CacheAction]) -> Callable:
+    def decorator[Decorator: Callable](viewset_class: Decorator) -> Decorator:
+        for action in actions:
+            viewset_class = method_decorator(
+                cache_page(action.seconds, cache=settings.API_CACHE_KEY_PREFIX),
+                name=action.name,
+            )(viewset_class)
+        return viewset_class
+
+    return decorator
 
 
 def extend_schema_view_from_class(schema_cls: type) -> Callable:

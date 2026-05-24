@@ -12,9 +12,11 @@ from apps.users.api.serializers.legal_docs import (
 )
 from apps.users.models.legal_docs import PrivacyPolicyVersion, TermsOfServiceVersion
 from apps.users.models.managers.legal_docs import PrivacyPolicyVersionQuerySet, TermsOfServiceVersionQuerySet
-from core.base.decorators import extend_schema_view_from_class
+from core.base.decorators import cache_viewset_actions, extend_schema_view_from_class
+from core.constants import CACHE_LATEST_1H, CACHE_LIST_1H
 
 
+@cache_viewset_actions([CACHE_LIST_1H, CACHE_LATEST_1H])
 @extend_schema_view_from_class(TermsOfServiceVersionViewSetSchema)
 class TermsOfServiceVersionViewSet(ListModelMixin, GenericViewSet):
     serializer_class = TermsOfServiceVersionSerializer
@@ -32,6 +34,7 @@ class TermsOfServiceVersionViewSet(ListModelMixin, GenericViewSet):
         return Response(self.get_serializer(instance).data)
 
 
+@cache_viewset_actions([CACHE_LIST_1H, CACHE_LATEST_1H])
 @extend_schema_view_from_class(PrivacyPolicyVersionViewSetSchema)
 class PrivacyPolicyVersionViewSet(ListModelMixin, GenericViewSet):
     serializer_class = PrivacyPolicyVersionSerializer

@@ -7,10 +7,12 @@ from apps.dishes.api.serializers.ingredients import IngredientCategorySerializer
 from apps.dishes.api.views.filters.ingredient import IngredientCategoryFilter, IngredientFilter
 from apps.dishes.models import Ingredient, IngredientCategory
 from apps.users.models import User
-from core.base.decorators import extend_schema_view_from_class
+from core.base.decorators import cache_viewset_actions, extend_schema_view_from_class
 from core.base.permissions import CanUseBaseFeatures, HasActiveTrial, OwnerObjectPermission
+from core.constants import CACHE_LIST_5MIN, CACHE_RETRIEVE_10MIN
 
 
+@cache_viewset_actions([CACHE_LIST_5MIN, CACHE_RETRIEVE_10MIN])
 @extend_schema_view_from_class(IngredientCategoryViewSetSchema)
 class IngredientCategoryViewSet(ReadOnlyModelViewSet):
     queryset = IngredientCategory.objects.actived()

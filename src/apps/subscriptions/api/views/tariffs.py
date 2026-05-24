@@ -9,9 +9,11 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from apps.subscriptions.api.schemas import TariffViewSetSchema
 from apps.subscriptions.api.serializers.tariffs import TariffSerializer
 from apps.subscriptions.models import Tariff
-from core.base.decorators import extend_schema_view_from_class
+from core.base.decorators import CacheAction, cache_viewset_actions, extend_schema_view_from_class
+from core.constants import CACHE_LIST_5MIN, CACHE_RETRIEVE_10MIN
 
 
+@cache_viewset_actions([CACHE_LIST_5MIN, CACHE_RETRIEVE_10MIN, CacheAction(name='trial_duration', seconds=60 * 60)])
 @extend_schema_view_from_class(TariffViewSetSchema)
 class TariffViewSet(ReadOnlyModelViewSet):
     queryset = Tariff.objects.published().actived()
