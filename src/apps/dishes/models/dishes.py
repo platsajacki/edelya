@@ -73,13 +73,13 @@ class Dish(BaseActiveModel):
             models.UniqueConstraint(
                 Lower('name'),
                 name='unique_dish_global',
-                condition=Q(owner__isnull=True),
+                condition=Q(owner__isnull=True, is_active=True),
             ),
             models.UniqueConstraint(
                 'owner',
                 Lower('name'),
                 name='unique_dish_user',
-                condition=Q(owner__isnull=False),
+                condition=Q(owner__isnull=False, is_active=True),
             ),
         ]
         indexes = [
