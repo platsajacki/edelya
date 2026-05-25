@@ -262,7 +262,7 @@ class WebhookHandler(BaseService):
                 .get(yookassa_payment_id=yookassa_id)
             )
         except Payment.DoesNotExist:
-            loki_logger.warning('Payment not found for YooKassa ID: %s', self.event)
+            loki_logger.warning('Payment not found for YooKassa ID: %s', self.object_data)
             raise
 
     def act(self) -> None:
