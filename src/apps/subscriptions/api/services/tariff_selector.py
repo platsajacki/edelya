@@ -254,7 +254,11 @@ class TariffSwitcher(TariffService):
                 payment_method_id=payment_method.yookassa_payment_method_id,
                 idempotence_key=self.idempotence_key,
                 description=f'Смена тарифа на «{self.tariff.name}»',
-                metadata={'tariff_id': str(self.tariff.id)},
+                metadata={
+                    'tariff_id': str(self.tariff.id),
+                    'action': WebhookAction.UPGRADE,
+                    'idempotence_key': self.idempotence_key,
+                },
             )
             payment = self.create_upgrade_payment(
                 yookassa_payment_id=yoo_payment.id,
