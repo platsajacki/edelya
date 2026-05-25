@@ -11,12 +11,12 @@ from apps.marketing.services.sender import NotificationSender, fmt_date
 from apps.subscriptions.exceptions import PaymentPendingRecurringError
 from apps.subscriptions.models import Payment, Subscription, Tariff
 from apps.subscriptions.models.model_enums import PaymentStatus, PaymentType, SubscriptionStatus
+from apps.subscriptions.services.sync_controler import payment_sync_flag_controler
 from apps.subscriptions.services.tax_check import TaxCheckSender
 from apps.subscriptions.services.webhook_handler import WebhookAction
 from apps.subscriptions.services.yookassa_payments import yookassa_service
 from core.base.services import TaskService
 from core.logging_handlers import loki_logger
-from core.utils import payment_sync_flag_controler
 
 
 class RecurringTaskService(TaskService):

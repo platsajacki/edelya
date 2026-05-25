@@ -13,12 +13,12 @@ from apps.subscriptions.models import Subscription, Tariff
 from apps.subscriptions.models.model_enums import PaymentStatus, SubscriptionStatus
 from apps.subscriptions.models.payment_methods import PaymentMethod
 from apps.subscriptions.models.payments import Payment
+from apps.subscriptions.services.sync_controler import payment_sync_flag_controler
 from apps.subscriptions.services.tax_check import TaxCheckSender
 from apps.users.models.consents import ConsentLog
 from apps.users.models.model_enums import ConsentAction, ConsentType
 from core.base.services import BaseService
 from core.logging_handlers import loki_logger, tg_logger
-from core.utils import payment_sync_flag_controler
 
 
 class WebhookAction(StrEnum):

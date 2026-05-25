@@ -18,6 +18,7 @@ from apps.subscriptions.models import Subscription, Tariff
 from apps.subscriptions.models.model_enums import PaymentStatus, PaymentType, SubscriptionStatus
 from apps.subscriptions.models.payment_methods import PaymentMethod
 from apps.subscriptions.models.payments import Payment
+from apps.subscriptions.services.sync_controler import payment_sync_flag_controler
 from apps.subscriptions.services.tax_check import TaxCheckSender
 from apps.subscriptions.services.webhook_handler import WebhookAction
 from apps.subscriptions.services.yookassa_payments import yookassa_service
@@ -27,7 +28,7 @@ from apps.users.models.model_enums import ConsentAction, ConsentType
 from core.base.exceptions import ConflictError
 from core.base.services import BaseService, BaseViewSetService
 from core.logging_handlers import loki_logger
-from core.utils import get_client_ip, payment_sync_flag_controler
+from core.utils import get_client_ip
 
 
 class ResponseAction(Enum):
