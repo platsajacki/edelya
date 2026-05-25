@@ -4,6 +4,7 @@ from apps.subscriptions.tasks.expire import (
     expire_cancelled_subscriptions,
     expire_past_due_subscriptions,
     expire_trials_without_payment,
+    expire_zero_amount_bindings,
 )
 from apps.subscriptions.tasks.past_due import process_past_due_charge
 from apps.subscriptions.tasks.renewals import process_subscription_renewals
@@ -47,6 +48,7 @@ class SetupPeriodicTasksService(TaskService):
         daily_0700 = self.get_crontab_schedule(hour='7', minute='0')
         daily_0715 = self.get_crontab_schedule(hour='7', minute='15')
         daily_0730 = self.get_crontab_schedule(hour='7', minute='30')
+        daily_0745 = self.get_crontab_schedule(hour='7', minute='45')
         return [
             {
                 'name': 'Конвертация триала в платную подписку',
@@ -114,6 +116,16 @@ class SetupPeriodicTasksService(TaskService):
                     'с auto_renew=False и истёкшим current_period_end.'
                 ),
                 'schedule': daily_0730,
+                'schedule_field': 'crontab',
+            },
+            {
+                'name': 'Истечение брошенных привязок карты',
+                'task': expire_zero_amount_bindings.name,
+                'description': (
+                    'Ежедневно в 07:45. Переводит в CANCELED платежи ZERO_AMOUNT_BINDING, '
+                    'застрявшие в статусе PENDING более 24 часов (клиент не заполнил данные карты).'
+                ),
+                'schedule': daily_0745,
                 'schedule_field': 'crontab',
             },
         ]
