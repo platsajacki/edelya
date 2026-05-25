@@ -27,7 +27,7 @@ from apps.users.models.model_enums import ConsentAction, ConsentType
 from core.base.exceptions import ConflictError
 from core.base.services import BaseService, BaseViewSetService
 from core.logging_handlers import loki_logger
-from core.utils import get_client_ip
+from core.utils import get_client_ip, payment_sync_flag_controler
 
 
 class ResponseAction(Enum):
@@ -71,6 +71,13 @@ class TariffService(BaseService):
     tariff: Tariff
     idempotence_key: str = dc_field(default_factory=lambda: str(uuid4()))
 
+    def get_metadata(self, metadata: dict | None) -> dict:
+        if metadata is None:
+            metadata = {'idempotence_key': self.idempotence_key}
+        else:
+            metadata['idempotence_key'] = self.idempotence_key
+        return metadata
+
 
 @dataclass
 class TrialTariffBinder(TariffService):
@@ -85,7 +92,7 @@ class TrialTariffBinder(TariffService):
             status=PaymentStatus.PENDING,
             idempotence_key=self.idempotence_key,
             yookassa_payment_id=yookassa_payment_id,
-            metadata=metadata or {},
+            metadata=self.get_metadata(metadata),
         )
 
     @transaction.atomic
@@ -132,7 +139,7 @@ class TariffActivator(TariffService):
             status=PaymentStatus.PENDING,
             idempotence_key=self.idempotence_key,
             yookassa_payment_id=yookassa_payment_id,
-            metadata=metadata or {},
+            metadata=self.get_metadata(metadata),
         )
 
     @transaction.atomic
@@ -200,7 +207,11 @@ class TariffSwitcher(TariffService):
             yookassa_payment_id=yookassa_payment_id,
             payment_method=payment_method,
             paid_at=paid_at,
-            metadata={'action': WebhookAction.UPGRADE, 'tariff_id': str(self.tariff.id)},
+            metadata={
+                'action': WebhookAction.UPGRADE,
+                'tariff_id': str(self.tariff.id),
+                'idempotence_key': self.idempotence_key,
+            },
         )
 
     def update_subscription_to_downgrade(self, subscription: Subscription) -> None:
@@ -237,6 +248,7 @@ class TariffSwitcher(TariffService):
     def upgrade(self, subscription: Subscription, payment_method: PaymentMethod) -> TariffSelectorResponse:
         proration = self._calc_proration(subscription)
         if proration > 0:
+            payment_sync_flag_controler.set_payment_sync_flag(self.idempotence_key)
             yoo_payment = yookassa_service.create_payment(
                 amount=proration,
                 payment_method_id=payment_method.yookassa_payment_method_id,

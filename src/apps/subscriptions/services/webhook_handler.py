@@ -18,6 +18,7 @@ from apps.users.models.consents import ConsentLog
 from apps.users.models.model_enums import ConsentAction, ConsentType
 from core.base.services import BaseService
 from core.logging_handlers import loki_logger, tg_logger
+from core.utils import payment_sync_flag_controler
 
 
 class WebhookAction(StrEnum):
@@ -125,21 +126,17 @@ class PaymentSucceededHandler(BaseService):
 
     @transaction.atomic
     def act(self) -> None:
-        already_processed = self.payment.status == PaymentStatus.SUCCEEDED
+        if self.payment.status == PaymentStatus.SUCCEEDED:
+            return
         payment_method = self._upsert_payment_method()
-        if not already_processed:
-            self.payment.status = PaymentStatus.SUCCEEDED
-            self.payment.paid_at = timezone.now()
-            self.payment.payment_method = payment_method
-            self.payment.save(update_fields=['status', 'paid_at', 'payment_method'])
-        else:
-            self.payment.payment_method = payment_method
-            self.payment.save(update_fields=['payment_method'])
+        self.payment.status = PaymentStatus.SUCCEEDED
+        self.payment.paid_at = timezone.now()
+        self.payment.payment_method = payment_method
+        self.payment.save(update_fields=['status', 'paid_at', 'payment_method'])
         action = self.payment.metadata.get('action')
         if action == WebhookAction.FIRST_PAYMENT:
             tariff = Tariff.objects.get(id=self.payment.metadata['tariff_id'])
-            if not already_processed:
-                self._activate_subscription(self.payment.subscription, tariff, payment_method)
+            self._activate_subscription(self.payment.subscription, tariff, payment_method)
             self.send_notification(
                 MessageTemplateName.SUBSCRIPTION_FIRST_PAYMENT_SUCCEEDED,
                 {
@@ -149,13 +146,9 @@ class PaymentSucceededHandler(BaseService):
                     'period_end': fmt_date(self.payment.subscription.current_period_end),
                 },
             )
-            if not already_processed:
-                TaxCheckSender(self.payment, f'Первый платеж по подписке на сервис Edelya — {tariff.name}')()
-        elif action == WebhookAction.UPGRADE:
-            pass  # subscription already updated synchronously during upgrade
+            TaxCheckSender(self.payment, f'Первый платеж по подписке на сервис Edelya — {tariff.name}')()
         elif action == WebhookAction.RECURRING:
-            if not already_processed:
-                self._renew_subscription(self.payment.subscription, payment_method)
+            self._renew_subscription(self.payment.subscription, payment_method)
             self.send_notification(
                 MessageTemplateName.SUBSCRIPTION_RECURRING_PAYMENT_SUCCEEDED,
                 {
@@ -165,11 +158,8 @@ class PaymentSucceededHandler(BaseService):
                     'period_end': fmt_date(self.payment.subscription.current_period_end),
                 },
             )
-            if not already_processed:
-                service_name = (
-                    f'Рекуррентный платеж по подписке на сервис Edelya — {self.payment.subscription.tariff.name}'
-                )
-                TaxCheckSender(self.payment, service_name)()
+            service_name = f'Рекуррентный платеж по подписке на сервис Edelya — {self.payment.subscription.tariff.name}'
+            TaxCheckSender(self.payment, service_name)()
         else:
             tg_logger.warning(
                 'PaymentSucceededHandler: unexpected action %r for payment %s, skipping subscription update',
@@ -185,13 +175,13 @@ class PaymentCanceledHandler(BaseService):
 
     @transaction.atomic
     def act(self) -> None:
-        already_processed = self.payment.status == PaymentStatus.CANCELED
-        if not already_processed:
-            cancellation_details = getattr(self.yoo_payment, 'cancellation_details', None)
-            reason = getattr(cancellation_details, 'reason', '') or ''
-            self.payment.status = PaymentStatus.CANCELED
-            self.payment.cancellation_reason = reason
-            self.payment.save(update_fields=['status', 'cancellation_reason'])
+        if self.payment.status == PaymentStatus.CANCELED:
+            return
+        cancellation_details = getattr(self.yoo_payment, 'cancellation_details', None)
+        reason = getattr(cancellation_details, 'reason', '') or ''
+        self.payment.status = PaymentStatus.CANCELED
+        self.payment.cancellation_reason = reason
+        self.payment.save(update_fields=['status', 'cancellation_reason'])
         subscription = self.payment.subscription
         NotificationSender(
             self.payment.user,
@@ -265,6 +255,23 @@ class WebhookHandler(BaseService):
             loki_logger.warning('Payment not found for YooKassa ID: %s', self.object_data)
             raise
 
+    def _check_idempotence(self) -> bool:
+        idempotence_key = self.object_data.get('metadata', {}).get('idempotence_key')
+        if idempotence_key:
+            if payment_sync_flag_controler.check_payment_sync_flag(idempotence_key):
+                loki_logger.info(
+                    'Payment with idempotence_key=%s was processed synchronously, skipping webhook',
+                    idempotence_key,
+                )
+                return True
+        else:
+            loki_logger.warning(
+                'No idempotence_key in webhook metadata for event %s and object %s',
+                self.event,
+                self.object_data,
+            )
+        return False
+
     def act(self) -> None:
         try:
             event_type = WebhookEventType(self.event)
@@ -272,6 +279,11 @@ class WebhookHandler(BaseService):
             loki_logger.info('Unsupported YooKassa webhook event: %s', self.event)
             return
         loki_logger.info('Processing YooKassa webhook event: %s', event_type)
+        if (
+            event_type in (WebhookEventType.PAYMENT_SUCCEEDED, WebhookEventType.PAYMENT_CANCELED)
+            and self._check_idempotence()
+        ):
+            return
         if event_type == WebhookEventType.PAYMENT_SUCCEEDED:
             yoo_payment = PaymentResponse(self.object_data)
             PaymentSucceededHandler(

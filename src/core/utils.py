@@ -5,6 +5,7 @@ from pkgutil import iter_modules
 from random import choice
 from types import ModuleType
 
+from django.core.cache import cache
 from django.db.models import Q
 from rest_framework.request import Request
 
@@ -77,3 +78,17 @@ def get_client_ip(request: Request) -> str | None:
     if forwarded:
         return forwarded.split(',')[0].strip()
     return request.META.get('REMOTE_ADDR')
+
+
+class PaymentSyncFlagControler:
+    _PAYMENT_SYNC_FLAG_KEY = 'payment:sync_processed:{}'
+    _PAYMENT_SYNC_FLAG_TTL = 7 * 24 * 3600  # 1 week
+
+    def set_payment_sync_flag(self, idempotence_key: str) -> None:
+        cache.set(self._PAYMENT_SYNC_FLAG_KEY.format(idempotence_key), True, self._PAYMENT_SYNC_FLAG_TTL)
+
+    def check_payment_sync_flag(self, idempotence_key: str) -> bool:
+        return bool(cache.get(self._PAYMENT_SYNC_FLAG_KEY.format(idempotence_key)))
+
+
+payment_sync_flag_controler: PaymentSyncFlagControler = PaymentSyncFlagControler()
