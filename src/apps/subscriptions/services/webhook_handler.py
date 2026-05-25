@@ -280,7 +280,7 @@ class WebhookHandler(BaseService):
             return
         loki_logger.info('Processing YooKassa webhook event: %s', event_type)
         if (
-            event_type in (WebhookEventType.PAYMENT_SUCCEEDED, WebhookEventType.PAYMENT_CANCELED)
+            event_type in (WebhookEventType.PAYMENT_SUCCEEDED, WebhookEventType.PAYMENT_CANCELED, WebhookAction.UPGRADE)
             and self._check_idempotence()
         ):
             return
