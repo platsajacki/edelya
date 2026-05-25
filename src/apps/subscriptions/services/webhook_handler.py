@@ -125,17 +125,21 @@ class PaymentSucceededHandler(BaseService):
 
     @transaction.atomic
     def act(self) -> None:
-        if self.payment.status == PaymentStatus.SUCCEEDED:
-            return
+        already_processed = self.payment.status == PaymentStatus.SUCCEEDED
         payment_method = self._upsert_payment_method()
-        self.payment.status = PaymentStatus.SUCCEEDED
-        self.payment.paid_at = timezone.now()
-        self.payment.payment_method = payment_method
-        self.payment.save(update_fields=['status', 'paid_at', 'payment_method'])
+        if not already_processed:
+            self.payment.status = PaymentStatus.SUCCEEDED
+            self.payment.paid_at = timezone.now()
+            self.payment.payment_method = payment_method
+            self.payment.save(update_fields=['status', 'paid_at', 'payment_method'])
+        else:
+            self.payment.payment_method = payment_method
+            self.payment.save(update_fields=['payment_method'])
         action = self.payment.metadata.get('action')
         if action == WebhookAction.FIRST_PAYMENT:
             tariff = Tariff.objects.get(id=self.payment.metadata['tariff_id'])
-            self._activate_subscription(self.payment.subscription, tariff, payment_method)
+            if not already_processed:
+                self._activate_subscription(self.payment.subscription, tariff, payment_method)
             self.send_notification(
                 MessageTemplateName.SUBSCRIPTION_FIRST_PAYMENT_SUCCEEDED,
                 {
@@ -145,11 +149,13 @@ class PaymentSucceededHandler(BaseService):
                     'period_end': fmt_date(self.payment.subscription.current_period_end),
                 },
             )
-            TaxCheckSender(self.payment, f'Первый платеж по подписке на сервис Edelya — {tariff.name}')()
+            if not already_processed:
+                TaxCheckSender(self.payment, f'Первый платеж по подписке на сервис Edelya — {tariff.name}')()
         elif action == WebhookAction.UPGRADE:
             pass  # subscription already updated synchronously during upgrade
         elif action == WebhookAction.RECURRING:
-            self._renew_subscription(self.payment.subscription, payment_method)
+            if not already_processed:
+                self._renew_subscription(self.payment.subscription, payment_method)
             self.send_notification(
                 MessageTemplateName.SUBSCRIPTION_RECURRING_PAYMENT_SUCCEEDED,
                 {
@@ -159,8 +165,11 @@ class PaymentSucceededHandler(BaseService):
                     'period_end': fmt_date(self.payment.subscription.current_period_end),
                 },
             )
-            service_name = f'Рекуррентный платеж по подписке на сервис Edelya — {self.payment.subscription.tariff.name}'
-            TaxCheckSender(self.payment, service_name)()
+            if not already_processed:
+                service_name = (
+                    f'Рекуррентный платеж по подписке на сервис Edelya — {self.payment.subscription.tariff.name}'
+                )
+                TaxCheckSender(self.payment, service_name)()
         else:
             tg_logger.warning(
                 'PaymentSucceededHandler: unexpected action %r for payment %s, skipping subscription update',
@@ -176,13 +185,13 @@ class PaymentCanceledHandler(BaseService):
 
     @transaction.atomic
     def act(self) -> None:
-        if self.payment.status == PaymentStatus.CANCELED:
-            return
-        cancellation_details = getattr(self.yoo_payment, 'cancellation_details', None)
-        reason = getattr(cancellation_details, 'reason', '') or ''
-        self.payment.status = PaymentStatus.CANCELED
-        self.payment.cancellation_reason = reason
-        self.payment.save(update_fields=['status', 'cancellation_reason'])
+        already_processed = self.payment.status == PaymentStatus.CANCELED
+        if not already_processed:
+            cancellation_details = getattr(self.yoo_payment, 'cancellation_details', None)
+            reason = getattr(cancellation_details, 'reason', '') or ''
+            self.payment.status = PaymentStatus.CANCELED
+            self.payment.cancellation_reason = reason
+            self.payment.save(update_fields=['status', 'cancellation_reason'])
         subscription = self.payment.subscription
         NotificationSender(
             self.payment.user,

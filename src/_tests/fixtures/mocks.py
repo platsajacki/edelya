@@ -1,6 +1,8 @@
 import pytest
 from pytest_mock import MockFixture, MockType
 
+from uuid import uuid4
+
 
 @pytest.fixture
 def mock_tg_validator(mocker: MockFixture, valid_tg_user_data: dict) -> MockType:
@@ -43,6 +45,7 @@ def mock_yookassa_payment_method_find_one(mocker: MockFixture) -> MockType:
 @pytest.fixture
 def yookassa_succeeded_response(mocker: MockFixture) -> MockType:
     obj = mocker.MagicMock()
+    obj.id = str(uuid4())
     obj.status = 'succeeded'
     obj.cancellation_details = None
     return obj
@@ -56,6 +59,7 @@ def mock_tax3r_post(mocker: MockFixture) -> MockType:
 @pytest.fixture
 def yookassa_canceled_response(mocker: MockFixture) -> MockType:
     obj = mocker.MagicMock()
+    obj.id = str(uuid4())
     obj.status = 'canceled'
     obj.cancellation_details.reason = 'card_expired'
     return obj

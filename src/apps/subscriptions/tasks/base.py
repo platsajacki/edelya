@@ -106,7 +106,7 @@ class RecurringTaskService(TaskService):
     ) -> PaymentResponse:
         try:
             yoo_payment_method_id = getattr(subscription.payment_method, 'yookassa_payment_method_id', None)
-            return yookassa_service.create_payment(
+            yoo_response = yookassa_service.create_payment(
                 amount=tariff.price,
                 payment_method_id=yoo_payment_method_id,
                 capture=True,
@@ -114,6 +114,9 @@ class RecurringTaskService(TaskService):
                 description=description,
                 metadata=payment.metadata,
             )
+            payment.yookassa_payment_id = yoo_response.id
+            payment.save(update_fields=['yookassa_payment_id'])
+            return yoo_response
         except Exception as e:
             raise PaymentPendingRecurringError(subscription_id=payment.subscription_id, message=str(e)) from e
 
