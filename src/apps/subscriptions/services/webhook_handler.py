@@ -255,11 +255,15 @@ class WebhookHandler(BaseService):
     object_data: dict
 
     def _get_payment(self, yookassa_id: str) -> Payment:
-        return (
-            Payment.objects.select_related('user', 'subscription', 'subscription__tariff')
-            .select_for_update()
-            .get(yookassa_payment_id=yookassa_id)
-        )
+        try:
+            return (
+                Payment.objects.select_related('user', 'subscription', 'subscription__tariff')
+                .select_for_update()
+                .get(yookassa_payment_id=yookassa_id)
+            )
+        except Payment.DoesNotExist:
+            loki_logger.warning('Payment not found for YooKassa ID: %s', self.event)
+            raise
 
     def act(self) -> None:
         try:
