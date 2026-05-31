@@ -4,6 +4,7 @@ from rest_framework.request import Request
 from rest_framework.views import APIView
 
 from apps.dishes.models.ai_drafts import DishAIDraft
+from core.base.exceptions import AIRecipeLimitExceeded
 
 
 class OwnerObjectPermission(BasePermission):
@@ -48,7 +49,11 @@ class CanCreateAIRecipes(BasePermission):
         tariff = getattr(subscription, 'tariff', None)
         if tariff is None:
             return False
-        return bool(tariff.can_create_ai_recipes) and DishAIDraft.objects.can_create_new_draft(subscription)
+        if not tariff.can_create_ai_recipes:
+            return False
+        if not DishAIDraft.objects.can_create_new_draft(subscription):
+            raise AIRecipeLimitExceeded(reset_at=subscription.ended_at)
+        return True
 
     def has_object_permission(self, request: Request, view: APIView, obj: Model) -> bool:
         return self.has_permission(request, view)

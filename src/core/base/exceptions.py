@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Any
 
 from rest_framework import status
@@ -23,6 +24,21 @@ class ConflictError(APIException):
     status_code = status.HTTP_409_CONFLICT
     default_detail = 'Request conflicts with the current resource state.'
     default_code = 'conflict'
+
+
+class AIRecipeLimitExceeded(APIException):
+    status_code = status.HTTP_403_FORBIDDEN
+    default_detail = 'AI recipe limit for the current subscription period has been exceeded.'
+    default_code = 'ai_recipe_limit_exceeded'
+
+    def __init__(self, reset_at: datetime | None) -> None:
+        super().__init__(
+            detail={
+                'detail': self.default_detail,
+                'code': self.default_code,
+                'reset_at': reset_at.isoformat() if reset_at is not None else None,
+            }
+        )
 
 
 class SubscriptionRequired(APIException):

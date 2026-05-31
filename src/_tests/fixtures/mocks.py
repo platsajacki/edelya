@@ -78,3 +78,8 @@ def mock_lpop(mocker: MockFixture) -> MockType:
 @pytest.fixture
 def mock_notification_sender(mocker: MockFixture) -> MockType:
     return mocker.patch('apps.subscriptions.services.tax3r_check_processor.NotificationSender')
+
+
+@pytest.fixture
+def mock_process_ai_draft_delay(mocker: MockFixture) -> MockType:
+    return mocker.patch('apps.dishes.api.services.ai_draft_creator.process_ai_draft.delay')

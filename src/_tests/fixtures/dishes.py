@@ -7,11 +7,14 @@ from typing import Any, cast
 from openai.types.shared_params.response_format_json_schema import JSONSchema
 
 from _tests import FixtureFactory
-from apps.dishes.models import Dish, DishCategory, DishIngredient
+from apps.dishes.models import Dish, DishAIDraft, DishCategory, DishIngredient
 from apps.dishes.models.ingredients import Ingredient, IngredientCategory
+from apps.dishes.models.model_enums import DishAIDraftStatus
 from apps.dishes.services.recipe_schema_builder import RecipeSchemaBuilder
 from apps.settings.model_enums import PromptName
 from apps.settings.models import Prompt
+from apps.subscriptions.constants import AI_RECIPE_LIMIT_PER_PERIOD
+from apps.subscriptions.models import Subscription
 from apps.users.models import User
 
 
@@ -82,6 +85,44 @@ def dish_user_with_ingredient(dish_user: Dish, ingredient_global: Ingredient) ->
         is_optional=False,
     )
     return dish_user
+
+
+@pytest.fixture
+def dish_ai_draft(telegram_user: User) -> DishAIDraft:
+    return DishAIDraft.objects.create(
+        owner=telegram_user,
+        source_text='Recipe source text',
+    )
+
+
+@pytest.fixture
+def parsed_dish_ai_draft(telegram_user: User) -> DishAIDraft:
+    return DishAIDraft.objects.create(
+        owner=telegram_user,
+        source_text='Parsed recipe source text',
+        status=DishAIDraftStatus.PARSED,
+        payload={'name': 'Parsed dish'},
+    )
+
+
+@pytest.fixture
+def another_user_dish_ai_draft(another_telegram_user: User) -> DishAIDraft:
+    return DishAIDraft.objects.create(
+        owner=another_telegram_user,
+        source_text='Another user recipe source text',
+    )
+
+
+@pytest.fixture
+def dish_ai_draft_limit(telegram_user: User, active_subscription_with_period: Subscription) -> list[DishAIDraft]:
+    drafts = [
+        DishAIDraft(
+            owner=telegram_user,
+            source_text=f'Recipe source text {index}',
+        )
+        for index in range(AI_RECIPE_LIMIT_PER_PERIOD)
+    ]
+    return DishAIDraft.objects.bulk_create(drafts)
 
 
 @pytest.fixture

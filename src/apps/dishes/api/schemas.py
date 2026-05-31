@@ -1,14 +1,79 @@
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import status
 
+from apps.dishes.api.serializers.ai_drafts import DishAIDraftSerializer
 from apps.dishes.api.serializers.dishes import DishCategorySerializer, DishReadSerializer, DishWriteSerializer
 from apps.dishes.api.serializers.ingredients import IngredientCategorySerializer, IngredientSerializer
 from core.schemas import STANDARD_ERROR_RESPONSES
 
+AI_DRAFT_TAG = 'AI Drafts'
 INGREDIENT_CATEGORY_TAG = 'Ingredient Categories'
 INGREDIENT_TAG = 'Ingredients'
 DISH_CATEGORY_TAG = 'Dish Categories'
 DISH_TAG = 'Dishes'
+
+
+class DishAIDraftViewSetSchema:
+    list = extend_schema(
+        tags=[AI_DRAFT_TAG],
+        summary='List AI dish drafts',
+        responses={
+            status.HTTP_200_OK: OpenApiResponse(
+                description='A paginated list of AI dish drafts',
+                response=DishAIDraftSerializer(many=True),
+            ),
+            **STANDARD_ERROR_RESPONSES,
+        },
+    )
+    create = extend_schema(
+        tags=[AI_DRAFT_TAG],
+        summary='Create AI dish draft',
+        request=DishAIDraftSerializer(),
+        responses={
+            status.HTTP_201_CREATED: OpenApiResponse(
+                description='The created AI dish draft',
+                response=DishAIDraftSerializer(),
+            ),
+            **STANDARD_ERROR_RESPONSES,
+            status.HTTP_403_FORBIDDEN: OpenApiResponse(
+                description=(
+                    'AI recipe creation is forbidden. Possible reasons: '
+                    'the current tariff does not include AI recipe creation; '
+                    'the AI recipe limit for the current subscription period has been exceeded.'
+                ),
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'detail': {'type': 'string', 'description': 'Error message'},
+                        'code': {'type': 'string', 'description': 'Machine-readable error code'},
+                        'reset_at': {
+                            'type': 'string',
+                            'format': 'date-time',
+                            'nullable': True,
+                            'description': 'Subscription period limit reset time',
+                        },
+                    },
+                    'required': ['detail'],
+                    'example': {
+                        'detail': 'AI recipe limit for the current subscription period has been exceeded.',
+                        'code': 'ai_recipe_limit_exceeded',
+                        'reset_at': '2026-06-30T12:00:00+00:00',
+                    },
+                },
+            ),
+        },
+    )
+    retrieve = extend_schema(
+        tags=[AI_DRAFT_TAG],
+        summary='Retrieve AI dish draft',
+        responses={
+            status.HTTP_200_OK: OpenApiResponse(
+                description='Details of the AI dish draft',
+                response=DishAIDraftSerializer(),
+            ),
+            **STANDARD_ERROR_RESPONSES,
+        },
+    )
 
 
 class IngredientCategoryViewSetSchema:
