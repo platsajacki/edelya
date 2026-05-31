@@ -49,5 +49,5 @@ class Prompt(BaseModel):
             raise ValidationError({'required_variables': message})
         return super().save(*args, **kwargs)
 
-    def render_text(self, variables: dict) -> str:
-        return self.text.format_map(SafeFormatDict(variables))
+    def render_text(self, variables: dict | None = None) -> str:
+        return self.text.format_map(SafeFormatDict(variables or {}))

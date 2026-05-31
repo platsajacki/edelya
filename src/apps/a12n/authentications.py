@@ -41,7 +41,8 @@ class BaseAuthentication:
             if not subscription.is_active:
                 raise SubscriptionExpired()
         elif status == SubscriptionStatus.PAST_DUE:
-            raise SubscriptionPastDue()
+            if not subscription.is_in_grace_period:
+                raise SubscriptionPastDue()
         elif status == SubscriptionStatus.CANCELLED:
             raise SubscriptionCancelled()
         elif status == SubscriptionStatus.EXPIRED:

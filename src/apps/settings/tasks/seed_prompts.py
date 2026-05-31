@@ -34,7 +34,7 @@ class SeedPromptsService(TaskService):
 
 
 @celery_app.task
-def seed_prompts() -> str:
+def task_seed_prompts() -> str:
     """
     Создаёт промпты из prompts.yaml, если они ещё не существуют.
     """

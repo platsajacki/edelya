@@ -27,7 +27,7 @@ class PromptAdmin(ModelAdmin):
             },
         ),
     )
-    readonly_fields = ('id', 'created_at', 'updated_at')
+    readonly_fields = ('id', 'created_at', 'updated_at', 'required_variables')
     list_display = ('id', 'name', 'created_at')
     search_fields = ('name',)
     ordering = ('name',)

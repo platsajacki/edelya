@@ -4,7 +4,7 @@ from pathlib import Path
 
 from apps.settings.model_enums import PromptName
 from apps.settings.models import Prompt
-from apps.settings.tasks.seed_prompts import SeedPromptsService, seed_prompts
+from apps.settings.tasks.seed_prompts import SeedPromptsService, task_seed_prompts
 
 
 class TestSeedPromptsService:
@@ -32,6 +32,6 @@ class TestSeedPromptsService:
 class TestSeedPromptsTask:
     def test_calls_service(self, mocker: MockerFixture) -> None:
         mock_call = mocker.patch.object(SeedPromptsService, '__call__', return_value=0)
-        result = seed_prompts()
+        result = task_seed_prompts()
         mock_call.assert_called_once()
         assert 'Created 0 prompt(s).' in result
