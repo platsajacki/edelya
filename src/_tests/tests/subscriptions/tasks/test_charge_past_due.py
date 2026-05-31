@@ -26,6 +26,7 @@ class TestCreatePayment:
         assert payment.amount == paid_tariff.price
         assert payment.payment_type == PaymentType.RECURRING
         assert payment.status == PaymentStatus.PENDING
+        assert payment.payment_method == past_due_subscription_ready_for_retry.payment_method
         assert payment.metadata['action'] == WebhookAction.RECURRING
         assert payment.metadata['tariff_id'] == str(paid_tariff.id)
 
@@ -206,6 +207,7 @@ class TestProcessPayment:
         payment.refresh_from_db()
         assert payment.status == PaymentStatus.CANCELED
         assert payment.cancellation_reason == 'card_expired'
+        assert payment.payment_method == past_due_subscription_ready_for_retry.payment_method
 
     def test_sets_subscription_expired_on_failure(
         self,
@@ -228,7 +230,9 @@ class TestProcessPayment:
             period_start=period_start,
             failed_status=SubscriptionStatus.EXPIRED,
         )
+        payment.refresh_from_db()
         past_due_subscription_ready_for_retry.refresh_from_db()
+        assert payment.payment_method == past_due_subscription_ready_for_retry.payment_method
         assert past_due_subscription_ready_for_retry.status == SubscriptionStatus.EXPIRED
 
     def test_atomic_rollback_if_subscription_save_fails(

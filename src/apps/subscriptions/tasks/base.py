@@ -133,6 +133,7 @@ class RecurringTaskService(TaskService):
             payment_type=PaymentType.RECURRING,
             status=PaymentStatus.PENDING,
             idempotence_key=idempotence_key,
+            payment_method=subscription.payment_method,
             metadata={
                 'action': action,
                 'tariff_id': str(tariff.id),

@@ -123,3 +123,15 @@ class Subscription(BaseModel):
         if self.trial_ended_at and self.trial_ended_at <= now:
             return True
         return self.get_trial_end_date() <= now
+
+    @property
+    def started_at(self) -> datetime | None:
+        if self.status == SubscriptionStatus.TRIAL:
+            return self.trial_started_at
+        return self.current_period_start
+
+    @property
+    def ended_at(self) -> datetime | None:
+        if self.status == SubscriptionStatus.TRIAL:
+            return self.trial_ended_at
+        return self.current_period_end

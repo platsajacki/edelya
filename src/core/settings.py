@@ -31,6 +31,7 @@ DJANGO_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'django.contrib.postgres',
     'django.contrib.staticfiles',
 ]
 LOCAL_APPS = [
@@ -38,6 +39,7 @@ LOCAL_APPS = [
     'apps.dishes',
     'apps.marketing',
     'apps.planning',
+    'apps.settings',
     'apps.shopping',
     'apps.subscriptions',
     'apps.users',
