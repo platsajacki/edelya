@@ -2,10 +2,11 @@ from pytest_mock import MockType
 
 from typing import Any
 
+from django.conf import settings
+
 from apps.dishes.models import DishCategory, IngredientCategory
 from apps.dishes.models.model_enums import Unit
 from apps.dishes.services.dish_parser import RecipeAI
-from apps.settings.constants import GPT_MODEL
 from apps.settings.models import Prompt
 
 
@@ -54,7 +55,7 @@ class TestRecipeAI:
     ) -> None:
         RecipeAI(source_text='Борщ')()
         call_kwargs = mock_openai_create.call_args.kwargs
-        assert call_kwargs['model'] == GPT_MODEL
+        assert call_kwargs['model'] == settings.GPT_MODEL
         assert call_kwargs['messages'] == [
             {'role': 'developer', 'content': text_to_dish_prompt.text},
             {'role': 'user', 'content': 'Борщ'},

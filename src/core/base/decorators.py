@@ -17,7 +17,7 @@ def cache_viewset_actions(actions: Sequence[CacheAction]) -> Callable:
     def decorator[Decorator: Callable](viewset_class: Decorator) -> Decorator:
         for action in actions:
             viewset_class = method_decorator(
-                cache_page(action.seconds, cache=settings.API_CACHE_KEY_PREFIX),
+                cache_page(action.seconds, cache=settings.API_CACHE_ALIAS),
                 name=action.name,
             )(viewset_class)
         return viewset_class

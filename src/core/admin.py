@@ -27,11 +27,11 @@ def _clear_cache_view(request: HttpRequest, cache_alias: str, cache_name: str) -
 
 
 def _clear_api_cache_view(request: HttpRequest) -> HttpResponse:
-    return _clear_cache_view(request, settings.API_CACHE_KEY_PREFIX, 'API')
+    return _clear_cache_view(request, settings.API_CACHE_ALIAS, 'API')
 
 
 def _clear_ai_cache_view(request: HttpRequest) -> HttpResponse:
-    return _clear_cache_view(request, settings.AI_CACHE_KEY_PREFIX, 'AI')
+    return _clear_cache_view(request, settings.AI_CACHE_ALIAS, 'AI')
 
 
 _original_get_urls = admin.site.get_urls

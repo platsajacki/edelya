@@ -147,7 +147,7 @@ class RecipeSchemaBuilder(BaseService[JSONSchema]):
         return units
 
     def act(self) -> JSONSchema:
-        cache = caches[settings.AI_CACHE_KEY_PREFIX]
+        cache = caches[settings.AI_CACHE_ALIAS]
         if cached_schema := cache.get(self.cache_key):
             return cached_schema
         schema = self._build_recipe_json_schema()

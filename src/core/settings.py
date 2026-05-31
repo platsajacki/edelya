@@ -197,17 +197,17 @@ REDIS_DB_AI_CACHE = 5
 
 TELEGRAM_REDIS_LIMITER_URL = f'{REDIS_HOST}/{REDIS_DB_CACHE}'
 CLUSTER_REDIS_URL = getenv('CLUSTER_REDIS_URL', 'redis://127.0.0.1:6379/0')
-API_CACHE_KEY_PREFIX = 'api_cache'
-AI_CACHE_KEY_PREFIX = 'ai_cache'
+API_CACHE_ALIAS = 'api_cache'
+AI_CACHE_ALIAS = 'ai_cache'
 
 CACHES: dict = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
     },
-    API_CACHE_KEY_PREFIX: {
+    API_CACHE_ALIAS: {
         'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
     },
-    AI_CACHE_KEY_PREFIX: {
+    AI_CACHE_ALIAS: {
         'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
     },
 }
@@ -219,12 +219,12 @@ if not DEBUG:
             'LOCATION': f'{REDIS_HOST}/{REDIS_DB_CACHE}',
             'OPTIONS': REDIS_CACHE_OPTIONS,
         },
-        API_CACHE_KEY_PREFIX: {
+        API_CACHE_ALIAS: {
             'BACKEND': 'django.core.cache.backends.redis.RedisCache',
             'LOCATION': f'{REDIS_HOST}/{REDIS_DB_API_CACHE}',
             'OPTIONS': REDIS_CACHE_OPTIONS,
         },
-        AI_CACHE_KEY_PREFIX: {
+        AI_CACHE_ALIAS: {
             'BACKEND': 'django.core.cache.backends.redis.RedisCache',
             'LOCATION': f'{REDIS_HOST}/{REDIS_DB_AI_CACHE}',
             'OPTIONS': REDIS_CACHE_OPTIONS,
@@ -261,3 +261,7 @@ LOGGING = get_logging_dict(
     loki_app_name=LOKI_APP_NAME,
     debug=DEBUG,
 )
+
+
+# AI settings
+GPT_MODEL = getenv('GPT_MODEL', 'gpt-5-mini')
