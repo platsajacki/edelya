@@ -1,10 +1,17 @@
 import pytest
+from pytest_mock import MockerFixture, MockType
 
 from decimal import Decimal
+from typing import Any, cast
+
+from openai.types.shared_params.response_format_json_schema import JSONSchema
 
 from _tests import FixtureFactory
 from apps.dishes.models import Dish, DishCategory, DishIngredient
-from apps.dishes.models.ingredients import Ingredient
+from apps.dishes.models.ingredients import Ingredient, IngredientCategory
+from apps.dishes.services.recipe_schema_builder import RecipeSchemaBuilder
+from apps.settings.model_enums import PromptName
+from apps.settings.models import Prompt
 from apps.users.models import User
 
 
@@ -75,3 +82,39 @@ def dish_user_with_ingredient(dish_user: Dish, ingredient_global: Ingredient) ->
         is_optional=False,
     )
     return dish_user
+
+
+@pytest.fixture
+def recipe_schema(dish_category: DishCategory, ingredient_category: IngredientCategory) -> JSONSchema:
+    return RecipeSchemaBuilder()._build_recipe_json_schema()
+
+
+@pytest.fixture
+def recipe_root_schema(recipe_schema: JSONSchema) -> dict[str, Any]:
+    return cast(dict[str, Any], recipe_schema['schema'])
+
+
+@pytest.fixture
+def text_to_dish_prompt() -> Prompt:
+    return Prompt.objects.create(name=PromptName.TEXT_TO_DISH, text='Parse recipe')
+
+
+@pytest.fixture
+def recipe_ai_response(mocker: MockerFixture) -> MockType:
+    response = mocker.MagicMock()
+    response.choices[0].message.content = '{"result": {"status": "error"}}'
+    response.usage.model_dump.return_value = {'prompt_tokens': 10, 'completion_tokens': 5}
+    return response
+
+
+@pytest.fixture
+def mock_openai_create(mocker: MockerFixture, recipe_ai_response: MockType) -> MockType:
+    return mocker.patch(
+        'apps.dishes.services.dish_parser.openai_client.chat.completions.create',
+        return_value=recipe_ai_response,
+    )
+
+
+@pytest.fixture
+def mock_recipe_schema_builder(mocker: MockerFixture, recipe_schema: JSONSchema) -> MockType:
+    return mocker.patch.object(RecipeSchemaBuilder, '__call__', return_value=recipe_schema)

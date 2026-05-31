@@ -4,18 +4,18 @@
 {% block breadcrumbs %}
 <div class="breadcrumbs">
   <a href="{% url 'admin:index' %}">{% trans "Home" %}</a>
-  &rsaquo; {% trans "Clear API Cache" %}
+  &rsaquo; {{ title }}
 </div>
 {% endblock %}
 
 {% block content %}
 <div class="module aligned">
-  <h2>{% trans "Clear API Cache" %}</h2>
-  <p>{% trans "This will clear all entries in the API cache. Are you sure?" %}</p>
+  <h2>{{ title }}</h2>
+  <p>This will clear all entries in the {{ cache_name }} cache. Are you sure?</p>
   <form method="post">
     {% csrf_token %}
     <div class="submit-row">
-      <input type="submit" value="{% trans "Clear API Cache" %}" class="default">
+      <input type="submit" value="{{ title }}" class="default">
       &nbsp;
       <a href="{% url 'admin:index' %}">{% trans "Cancel" %}</a>
     </div>
