@@ -339,12 +339,13 @@ def past_due_subscription_ready_for_retry(
 ) -> Subscription:
     """PAST_DUE subscription whose grace period expires within the next 5 minutes — time for retry."""
     now = timezone.now()
+    period_start = now - timedelta(days=GRACE_PERIOD_DAYS) + timedelta(minutes=2)
     return Subscription.objects.create(
         user=telegram_user,
         tariff=paid_tariff,
         status=SubscriptionStatus.PAST_DUE,
-        current_period_start=now - timedelta(days=30),
-        current_period_end=now - timedelta(days=GRACE_PERIOD_DAYS) + timedelta(minutes=2),
+        current_period_start=period_start,
+        current_period_end=paid_tariff.get_next_period_end(period_start),
         payment_method=active_payment_method,
     )
 
@@ -390,12 +391,13 @@ def past_due_subscription_for_expiry(
 ) -> Subscription:
     """PAST_DUE subscription whose grace period has already expired — ready for final expiry."""
     now = timezone.now()
+    period_start = now - timedelta(days=GRACE_PERIOD_DAYS + 1)
     return Subscription.objects.create(
         user=telegram_user,
         tariff=paid_tariff,
         status=SubscriptionStatus.PAST_DUE,
-        current_period_start=now - timedelta(days=30 + GRACE_PERIOD_DAYS),
-        current_period_end=now - timedelta(days=GRACE_PERIOD_DAYS + 1),
+        current_period_start=period_start,
+        current_period_end=paid_tariff.get_next_period_end(period_start),
     )
 
 

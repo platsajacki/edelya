@@ -1,14 +1,15 @@
 from collections.abc import Iterable
 
+from django.contrib.postgres.indexes import GinIndex, OpClass
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, Value
 from django.db.models.base import ModelBase
-from django.db.models.functions import Lower
+from django.db.models.functions import Lower, Replace
 
 from apps.dishes.models.managers.ingredients import IngredientCategoryManager, IngredientManager
 from apps.dishes.models.model_enums import Unit
 from core.base.abstract_models import BaseActiveModel
-from core.utils import normalize_string
+from core.utils import normalize_name
 
 
 class IngredientCategory(BaseActiveModel):
@@ -76,8 +77,22 @@ class Ingredient(BaseActiveModel):
         ]
         indexes = [
             models.Index(
-                fields=['owner', 'name'],
-                name='idx_ingredient_owner_name',
+                Lower('name'),
+                name='idx_ing_global_lname_active',
+                condition=Q(is_active=True, owner__isnull=True),
+            ),
+            models.Index(
+                'owner',
+                Lower('name'),
+                name='idx_ing_user_lname_active',
+                condition=Q(is_active=True, owner__isnull=False),
+            ),
+            GinIndex(
+                OpClass(
+                    Replace(Lower('name'), Value('ё'), Value('е')),
+                    name='gin_trgm_ops',
+                ),
+                name='idx_ing_norm_name_trgm_active',
                 condition=Q(is_active=True),
             ),
         ]
@@ -89,7 +104,7 @@ class Ingredient(BaseActiveModel):
         using: str | None = None,
         update_fields: Iterable[str] | None = None,
     ) -> None:
-        self.name = normalize_string(self.name)
+        self.name = normalize_name(self.name)
         return super().save(
             force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields
         )

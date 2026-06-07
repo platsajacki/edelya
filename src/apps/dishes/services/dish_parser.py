@@ -1,7 +1,7 @@
 import json
 from dataclasses import dataclass
 from dataclasses import field as dc_field
-from typing import Any
+from typing import Any, Literal, TypedDict
 
 from django.conf import settings
 from django.core.cache import caches
@@ -18,9 +18,52 @@ from core.open_ai import openai_client
 ai_cache = caches[settings.AI_CACHE_ALIAS]
 
 
+type RecipeParseErrorCode = Literal[
+    'not_recipe',
+    'too_short',
+    'not_enough_data',
+    'only_dish_name',
+    'multiple_recipes',
+]
+
+
+class RecipeAIDishData(TypedDict):
+    name: str
+    recipe: str
+    category_name: str
+
+
+class RecipeAIIngredientData(TypedDict):
+    name: str
+    category_name: str
+    base_unit: str
+    amount: float
+    position: int
+    is_optional: bool
+
+
+class RecipeAISuccessData(TypedDict):
+    status: Literal['success']
+    dish: RecipeAIDishData
+    ingredients: list[RecipeAIIngredientData]
+
+
+class RecipeAIErrorData(TypedDict):
+    status: Literal['error']
+    error_code: RecipeParseErrorCode
+    error_message: str
+
+
+type RecipeAIParsedData = RecipeAISuccessData | RecipeAIErrorData
+
+
+class RecipeAIData(TypedDict):
+    result: RecipeAIParsedData
+
+
 @dataclass
 class RecipeAIResult:
-    data: dict[str, Any]
+    data: RecipeAIData
     usage: dict[str, Any] | None
 
 

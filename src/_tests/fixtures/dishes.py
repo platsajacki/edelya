@@ -7,9 +7,11 @@ from typing import Any, cast
 from openai.types.shared_params.response_format_json_schema import JSONSchema
 
 from _tests import FixtureFactory
+from apps.dishes.data_types import DishPayloadData
 from apps.dishes.models import Dish, DishAIDraft, DishCategory, DishIngredient
 from apps.dishes.models.ingredients import Ingredient, IngredientCategory
-from apps.dishes.models.model_enums import DishAIDraftStatus
+from apps.dishes.models.model_enums import DishAIDraftStatus, Unit
+from apps.dishes.services.dish_parser import RecipeAIErrorData, RecipeAIResult, RecipeAISuccessData
 from apps.dishes.services.recipe_schema_builder import RecipeSchemaBuilder
 from apps.settings.model_enums import PromptName
 from apps.settings.models import Prompt
@@ -159,3 +161,67 @@ def mock_openai_create(mocker: MockerFixture, recipe_ai_response: MockType) -> M
 @pytest.fixture
 def mock_recipe_schema_builder(mocker: MockerFixture, recipe_schema: JSONSchema) -> MockType:
     return mocker.patch.object(RecipeSchemaBuilder, '__call__', return_value=recipe_schema)
+
+
+@pytest.fixture
+def recipe_ai_success_data(
+    dish_category: DishCategory,
+    ingredient_category: IngredientCategory,
+) -> RecipeAISuccessData:
+    return {
+        'status': 'success',
+        'dish': {
+            'name': '  Борщ   домашний  ',
+            'recipe': '1. Нарезать овощи\n2. Сварить суп',
+            'category_name': dish_category.name,
+        },
+        'ingredients': [
+            {
+                'name': '  Свекла  ',
+                'category_name': ingredient_category.name,
+                'base_unit': Unit.GRAM,
+                'amount': 300.0,
+                'position': 1,
+                'is_optional': False,
+            },
+        ],
+    }
+
+
+@pytest.fixture
+def recipe_ai_error_data() -> RecipeAIErrorData:
+    return {
+        'status': 'error',
+        'error_code': 'not_recipe',
+        'error_message': 'Текст не похож на рецепт. Пришлите описание блюда с ингредиентами и приготовлением.',
+    }
+
+
+@pytest.fixture
+def recipe_ai_success_result(recipe_ai_success_data: RecipeAISuccessData) -> RecipeAIResult:
+    return RecipeAIResult(data={'result': recipe_ai_success_data}, usage={'prompt_tokens': 10})
+
+
+@pytest.fixture
+def recipe_ai_error_result(recipe_ai_error_data: RecipeAIErrorData) -> RecipeAIResult:
+    return RecipeAIResult(data={'result': recipe_ai_error_data}, usage={'prompt_tokens': 10})
+
+
+@pytest.fixture
+def valid_dish_payload(dish_category: DishCategory, ingredient_category: IngredientCategory) -> DishPayloadData:
+    return {
+        'name': 'Борщ домашний',
+        'recipe': '1. Нарезать овощи\n2. Сварить суп',
+        'category': str(dish_category.id),
+        'ingredients': [
+            {
+                'name': 'Свекла',
+                'category': str(ingredient_category.id),
+                'base_unit': Unit.GRAM,
+                'amount': 300.0,
+                'is_optional': False,
+                'new': True,
+                'suggested_ids': [],
+            },
+        ],
+    }

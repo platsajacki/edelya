@@ -53,12 +53,12 @@ class SubscriptionQuerySet(BaseQuerySet['Subscription']):
 
     def get_past_due_for_retry(self) -> SubscriptionQuerySet:
         """PAST_DUE подписки, у которых grace period истекает — вторая и последняя попытка списания."""
-        current_period_end__lte = (
+        current_period_start__lte = (
             timezone.now() + CHECK_SUBSCRIPTION_PAYMENT_TIMEDELTA - timedelta(days=GRACE_PERIOD_DAYS)
         )
         return self.filter(
             status=SubscriptionStatus.PAST_DUE,
-            current_period_end__lte=current_period_end__lte,
+            current_period_start__lte=current_period_start__lte,
             payment_method__isnull=False,
         ).select_related('tariff', 'pending_tariff', 'payment_method', 'user')
 
@@ -75,7 +75,7 @@ class SubscriptionQuerySet(BaseQuerySet['Subscription']):
         grace_deadline = timezone.now() - timedelta(days=GRACE_PERIOD_DAYS)
         return self.filter(
             status=SubscriptionStatus.PAST_DUE,
-            current_period_end__lte=grace_deadline,
+            current_period_start__lte=grace_deadline,
         )
 
     def get_cancelled_for_expiry(self) -> SubscriptionQuerySet:

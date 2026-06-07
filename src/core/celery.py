@@ -21,7 +21,7 @@ def on_worker_ready(**kwargs: Any) -> None:
     from apps.marketing.tasks.seed_templates import seed_message_templates
     from apps.marketing.tasks.validate_templates import validate_message_templates
     from apps.settings.tasks.seed_prompts import task_seed_prompts
-    from apps.subscriptions.tasks.setup import setup_periodic_tasks
+    from apps.settings.tasks.setup import setup_periodic_tasks
 
     validate_message_templates.delay()
     seed_message_templates.delay()

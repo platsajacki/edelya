@@ -2,8 +2,10 @@ from __future__ import annotations
 
 from django.db import models
 
+from apps.dishes.data_types import DishPayloadData
 from apps.dishes.models.managers.ai_drafts import DishAIDraftManager
 from apps.dishes.models.model_enums import DishAIDraftStatus
+from apps.dishes.models.validators import DishPayloadValidator
 from core.base.abstract_models import BaseModel
 
 
@@ -32,6 +34,7 @@ class DishAIDraft(BaseModel):
         verbose_name='Payload формы создания блюда',
         null=True,
         blank=True,
+        validators=[DishPayloadValidator()],
     )
     validation_errors = models.JSONField(
         verbose_name='Ошибки валидации',
@@ -71,3 +74,18 @@ class DishAIDraft(BaseModel):
 
     def __str__(self) -> str:
         return f'AI Draft #{self.id} - Status: {self.status}'
+
+    def set_validation_error(self, error_code: str, error_message: str, save: bool = True) -> None:
+        error = {
+            'error_code': error_code,
+            'error_message': error_message,
+        }
+        self.validation_errors = (self.validation_errors or []) + [error]
+        if save:
+            self.save(update_fields=['validation_errors'])
+
+    @property
+    def payload_data(self) -> DishPayloadData | None:
+        if self.payload is None:
+            return None
+        return DishPayloadData(**self.payload)  # type: ignore[typeddict-item]

@@ -139,7 +139,7 @@ class TestTelegramA12nJWTService:
             user=telegram_user,
             tariff=paid_tariff,
             status=SubscriptionStatus.PAST_DUE,
-            current_period_end=timezone.now() - timedelta(days=GRACE_PERIOD_DAYS - 1),
+            current_period_start=timezone.now() - timedelta(days=GRACE_PERIOD_DAYS - 1),
         )
         access_token = self._get_access_token(api_client, valid_tg_data)
         api_client.credentials(HTTP_AUTHORIZATION=f'Bearer {access_token}')
@@ -158,7 +158,7 @@ class TestTelegramA12nJWTService:
             user=telegram_user,
             tariff=paid_tariff,
             status=SubscriptionStatus.PAST_DUE,
-            current_period_end=timezone.now() - timedelta(days=GRACE_PERIOD_DAYS + 1),
+            current_period_start=timezone.now() - timedelta(days=GRACE_PERIOD_DAYS + 1),
         )
         access_token = self._get_access_token(api_client, valid_tg_data)
         api_client.credentials(HTTP_AUTHORIZATION=f'Bearer {access_token}')

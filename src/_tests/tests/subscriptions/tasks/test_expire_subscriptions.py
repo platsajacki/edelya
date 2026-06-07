@@ -107,8 +107,8 @@ class TestExpirePastDueService:
         """PAST_DUE subscription still within grace period is not expired yet."""
         from apps.subscriptions.constants import GRACE_PERIOD_DAYS
 
-        past_due_subscription_for_expiry.current_period_end = timezone.now() - timedelta(days=GRACE_PERIOD_DAYS - 1)
-        past_due_subscription_for_expiry.save(update_fields=['current_period_end'])
+        past_due_subscription_for_expiry.current_period_start = timezone.now() - timedelta(days=GRACE_PERIOD_DAYS - 1)
+        past_due_subscription_for_expiry.save(update_fields=['current_period_start'])
         service = ExpirePastDueService()
         count = service()
         assert count == 0

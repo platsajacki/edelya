@@ -139,13 +139,13 @@ class TestProcessPayment:
         past_due_subscription_ready_for_retry.refresh_from_db()
         assert past_due_subscription_ready_for_retry.status == SubscriptionStatus.ACTIVE
 
-    def test_sets_current_period_start_to_old_period_end(
+    def test_keeps_current_period_start_on_success(
         self,
         past_due_subscription_ready_for_retry: Subscription,
         paid_tariff: Tariff,
     ) -> None:
-        old_period_end = past_due_subscription_ready_for_retry.current_period_end
-        assert old_period_end is not None
+        period_start = past_due_subscription_ready_for_retry.current_period_start
+        assert period_start is not None
         service = ChargePastDueService()
         payment = service.create_payment(
             past_due_subscription_ready_for_retry, paid_tariff, action=WebhookAction.RECURRING
@@ -155,20 +155,19 @@ class TestProcessPayment:
             paid_tariff,
             past_due_subscription_ready_for_retry,
             succeeded=True,
-            period_start=old_period_end,
+            period_start=period_start,
             failed_status=SubscriptionStatus.EXPIRED,
         )
         past_due_subscription_ready_for_retry.refresh_from_db()
-        assert past_due_subscription_ready_for_retry.current_period_start == old_period_end
+        assert past_due_subscription_ready_for_retry.current_period_start == period_start
 
-    def test_sets_current_period_end_via_get_next_period_end(
+    def test_keeps_current_period_end_on_success(
         self,
         past_due_subscription_ready_for_retry: Subscription,
         paid_tariff: Tariff,
     ) -> None:
-        old_period_end = past_due_subscription_ready_for_retry.current_period_end
-        assert old_period_end is not None
-        expected_end = paid_tariff.get_next_period_end(old_period_end)
+        period_end = past_due_subscription_ready_for_retry.current_period_end
+        assert period_end is not None
         service = ChargePastDueService()
         payment = service.create_payment(
             past_due_subscription_ready_for_retry, paid_tariff, action=WebhookAction.RECURRING
@@ -178,11 +177,11 @@ class TestProcessPayment:
             paid_tariff,
             past_due_subscription_ready_for_retry,
             succeeded=True,
-            period_start=old_period_end,
+            period_start=period_end,
             failed_status=SubscriptionStatus.EXPIRED,
         )
         past_due_subscription_ready_for_retry.refresh_from_db()
-        assert past_due_subscription_ready_for_retry.current_period_end == expected_end
+        assert past_due_subscription_ready_for_retry.current_period_end == period_end
 
     def test_sets_payment_canceled_with_reason(
         self,
@@ -362,9 +361,9 @@ class TestAct:
         past_due_subscription_ready_for_retry: Subscription,
         mock_yookassa_payment_create: MockType,
     ) -> None:
-        """Subscription with current_period_end too recent (grace period not ending yet) is not in queryset."""
-        past_due_subscription_ready_for_retry.current_period_end = timezone.now()
-        past_due_subscription_ready_for_retry.save(update_fields=['current_period_end'])
+        """Subscription with current_period_start too recent is not in queryset."""
+        past_due_subscription_ready_for_retry.current_period_start = timezone.now()
+        past_due_subscription_ready_for_retry.save(update_fields=['current_period_start'])
         service = ChargePastDueService()
         count = service()
         assert count == 0

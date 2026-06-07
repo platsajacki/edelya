@@ -1,5 +1,6 @@
 from pytest_mock import MockType
 
+from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
@@ -95,7 +96,8 @@ class TestDishAIDraftViewSetCreate:
         mock_process_ai_draft_delay: MockType,
     ) -> None:
         api_client.force_authenticate(user=telegram_user)
-        response = api_client.post(self.list_url, data={'source_text': 'Recipe source text'})
+        with TestCase.captureOnCommitCallbacks(execute=True):
+            response = api_client.post(self.list_url, data={'source_text': 'Recipe source text'})
         assert response.status_code == status.HTTP_201_CREATED
         draft = DishAIDraft.objects.get(id=response.data['id'])
         assert draft.owner == telegram_user

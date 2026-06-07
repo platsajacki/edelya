@@ -165,7 +165,7 @@ TEMPLATES = [
 ]
 
 # Redis and Celery Settings
-REDIS_HOST = getenv('REDIS_HOST', 'redis://127.0.0.1:6379')
+REDIS_URL = getenv('REDIS_URL', 'redis://127.0.0.1:6379')
 REDIS_TOTAL_CONNECTION_ATTEMPTS = int(getenv('REDIS_TOTAL_CONNECTION_ATTEMPTS', '5'))
 REDIS_SOCKET_CONNECT_TIMEOUT = float(getenv('REDIS_SOCKET_CONNECT_TIMEOUT', '2'))
 REDIS_SOCKET_TIMEOUT = float(getenv('REDIS_SOCKET_TIMEOUT', '3'))
@@ -195,7 +195,7 @@ REDIS_DB_CELERY_BACKEND = 3
 REDIS_DB_API_CACHE = 4
 REDIS_DB_AI_CACHE = 5
 
-TELEGRAM_REDIS_LIMITER_URL = f'{REDIS_HOST}/{REDIS_DB_CACHE}'
+TELEGRAM_REDIS_LIMITER_URL = f'{REDIS_URL}/{REDIS_DB_CACHE}'
 CLUSTER_REDIS_URL = getenv('CLUSTER_REDIS_URL', 'redis://127.0.0.1:6379/0')
 API_CACHE_ALIAS = 'api_cache'
 AI_CACHE_ALIAS = 'ai_cache'
@@ -216,22 +216,22 @@ if not DEBUG:
     CACHES = {
         'default': {
             'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-            'LOCATION': f'{REDIS_HOST}/{REDIS_DB_CACHE}',
+            'LOCATION': f'{REDIS_URL}/{REDIS_DB_CACHE}',
             'OPTIONS': REDIS_CACHE_OPTIONS,
         },
         API_CACHE_ALIAS: {
             'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-            'LOCATION': f'{REDIS_HOST}/{REDIS_DB_API_CACHE}',
+            'LOCATION': f'{REDIS_URL}/{REDIS_DB_API_CACHE}',
             'OPTIONS': REDIS_CACHE_OPTIONS,
         },
         AI_CACHE_ALIAS: {
             'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-            'LOCATION': f'{REDIS_HOST}/{REDIS_DB_AI_CACHE}',
+            'LOCATION': f'{REDIS_URL}/{REDIS_DB_AI_CACHE}',
             'OPTIONS': REDIS_CACHE_OPTIONS,
         },
     }
-    CELERY_BROKER_URL = f'{REDIS_HOST}/{REDIS_DB_CELERY_BROKER}'
-    CELERY_BACKEND_URL = f'{REDIS_HOST}/{REDIS_DB_CELERY_BACKEND}'
+    CELERY_BROKER_URL = f'{REDIS_URL}/{REDIS_DB_CELERY_BROKER}'
+    CELERY_BACKEND_URL = f'{REDIS_URL}/{REDIS_DB_CELERY_BACKEND}'
     CELERY_TASK_SERIALIZER = 'json'
     CELERY_TIMEZONE = TIME_ZONE
     CELERY_RESULT_EXPIRES = 3600
@@ -264,4 +264,4 @@ LOGGING = get_logging_dict(
 
 
 # AI settings
-GPT_MODEL = getenv('GPT_MODEL', 'gpt-5-mini')
+GPT_MODEL = getenv('GPT_MODEL', 'gpt-5-nano')

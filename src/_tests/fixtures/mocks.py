@@ -83,3 +83,13 @@ def mock_notification_sender(mocker: MockFixture) -> MockType:
 @pytest.fixture
 def mock_process_ai_draft_delay(mocker: MockFixture) -> MockType:
     return mocker.patch('apps.dishes.api.services.ai_draft_creator.process_ai_draft.delay')
+
+
+@pytest.fixture
+def mock_ai_draft_processor_recipe_ai(mocker: MockFixture) -> MockType:
+    return mocker.patch('apps.dishes.tasks.ai_draft_processor.RecipeAI')
+
+
+@pytest.fixture
+def mock_ai_draft_processor_redis_set(mocker: MockFixture) -> MockType:
+    return mocker.patch('apps.dishes.tasks.ai_draft_processor.redis_client.set')

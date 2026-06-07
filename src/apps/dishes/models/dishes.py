@@ -8,7 +8,7 @@ from django.db.models.functions import Lower
 
 from apps.dishes.models.managers.dishes import DishCategoryManager, DishIngredientManager, DishManager
 from core.base.abstract_models import BaseActiveModel, BaseModel
-from core.utils import normalize_string
+from core.utils import normalize_name
 
 
 class DishCategory(BaseActiveModel):
@@ -97,7 +97,7 @@ class Dish(BaseActiveModel):
         using: str | None = None,
         update_fields: Iterable[str] | None = None,
     ) -> None:
-        self.name = normalize_string(self.name)
+        self.name = normalize_name(self.name)
         return super().save(
             force_insert=force_insert,
             force_update=force_update,

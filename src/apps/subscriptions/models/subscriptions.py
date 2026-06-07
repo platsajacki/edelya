@@ -126,9 +126,9 @@ class Subscription(BaseModel):
 
     @property
     def is_in_grace_period(self) -> bool:
-        if self.status != SubscriptionStatus.PAST_DUE or self.current_period_end is None:
+        if self.status != SubscriptionStatus.PAST_DUE or self.current_period_start is None:
             return False
-        return timezone.now() <= self.current_period_end + timedelta(days=GRACE_PERIOD_DAYS)
+        return timezone.now() <= self.current_period_start + timedelta(days=GRACE_PERIOD_DAYS)
 
     @property
     def started_at(self) -> datetime | None:

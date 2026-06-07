@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from apps.subscriptions.exceptions import PaymentPendingRecurringError
 from apps.subscriptions.models import Subscription, Tariff
 from apps.subscriptions.models.model_enums import PaymentStatus, SubscriptionStatus
@@ -8,6 +10,11 @@ from core.logging_handlers import loki_logger
 
 
 class ChargePastDueService(RecurringTaskService):
+    def _apply_tariff(self, subscription: Subscription, tariff: Tariff, period_start: datetime) -> None:
+        _ = period_start
+        subscription.tariff = tariff
+        subscription.pending_tariff = None
+
     def process_subscription(self, subscription: Subscription, tariff: Tariff) -> None:
         self.check_pending_recurring_payment(subscription)
         payment = self.create_payment(subscription, tariff, action=WebhookAction.RECURRING)
@@ -80,8 +87,8 @@ def process_past_due_charge() -> str:
     Запускается раз в CHECK_SUBSCRIPTION_PAYMENT_TIMEDELTA. При неуспехе → EXPIRED.
     Обрабатывает подписки, у которых grace period истекает в следующие CHECK_SUBSCRIPTION_PAYMENT_TIMEDELTA.
 
-    current_period_end + GRACE_PERIOD_DAYS <= now + CHECK_SUBSCRIPTION_PAYMENT_TIMEDELTA
-    ↔ current_period_end <= now + CHECK_SUBSCRIPTION_PAYMENT_TIMEDELTA - GRACE_PERIOD_DAYS
+    current_period_start + GRACE_PERIOD_DAYS <= now + CHECK_SUBSCRIPTION_PAYMENT_TIMEDELTA
+    ↔ current_period_start <= now + CHECK_SUBSCRIPTION_PAYMENT_TIMEDELTA - GRACE_PERIOD_DAYS
     """
     service = ChargePastDueService()
     charged = service()

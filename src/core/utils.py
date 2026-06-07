@@ -39,6 +39,10 @@ def normalize_string(s: str) -> str:
     return s
 
 
+def normalize_name(name: str) -> str:
+    return normalize_string(name)
+
+
 def get_random_color(existing_colors: list | None = None) -> str:
     if existing_colors is None:
         return choice(DEFAULT_COLORS)
