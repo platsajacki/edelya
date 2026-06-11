@@ -1,7 +1,7 @@
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import status
 
-from apps.dishes.api.serializers.ai_drafts import DishAIDraftSerializer
+from apps.dishes.api.serializers.ai_drafts import DishAIDraftCreateDishSerializer, DishAIDraftSerializer
 from apps.dishes.api.serializers.dishes import DishCategorySerializer, DishReadSerializer, DishWriteSerializer
 from apps.dishes.api.serializers.ingredients import IngredientCategorySerializer, IngredientSerializer
 from core.schemas import STANDARD_ERROR_RESPONSES
@@ -14,6 +14,8 @@ DISH_TAG = 'Dishes'
 
 
 class DishAIDraftViewSetSchema:
+    custom_actions = {'create_dish'}
+
     list = extend_schema(
         tags=[AI_DRAFT_TAG],
         summary='List AI dish drafts',
@@ -72,6 +74,40 @@ class DishAIDraftViewSetSchema:
                 response=DishAIDraftSerializer(),
             ),
             **STANDARD_ERROR_RESPONSES,
+        },
+    )
+    create_dish = extend_schema(
+        tags=[AI_DRAFT_TAG],
+        summary='Create dish from AI draft',
+        description=(
+            'Creates a dish from a frontend-confirmed AI draft payload. '
+            'The draft must be in the parsed status. '
+            'New ingredients from the payload are created for the authenticated user, '
+            'and existing ingredients must be global or owned by the authenticated user. '
+            'If the requested dish name is already used by the user, the service tries "{name} (AI)" once; '
+            'if that name is also used, a validation error is returned. '
+            'The operation is atomic: on validation errors the dish, dish ingredients, new ingredients, '
+            'and draft status update are rolled back.'
+        ),
+        request=DishAIDraftCreateDishSerializer(),
+        responses={
+            status.HTTP_201_CREATED: OpenApiResponse(
+                description='The created dish',
+                response=DishReadSerializer(),
+            ),
+            **STANDARD_ERROR_RESPONSES,
+            status.HTTP_400_BAD_REQUEST: OpenApiResponse(
+                description=(
+                    'Validation error. Possible reasons include: the draft is not parsed, '
+                    'the payload is invalid, the new ingredient data is invalid, all ingredients are optional, '
+                    'or both the original dish name and the "{name} (AI)" fallback are already used.'
+                ),
+                response=STANDARD_ERROR_RESPONSES[status.HTTP_400_BAD_REQUEST].response,
+            ),
+            status.HTTP_404_NOT_FOUND: OpenApiResponse(
+                description='Draft not found, or an existing ingredient from the payload is not available to the user.',
+                response=STANDARD_ERROR_RESPONSES[status.HTTP_404_NOT_FOUND].response,
+            ),
         },
     )
 

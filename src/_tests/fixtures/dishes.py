@@ -215,6 +215,7 @@ def valid_dish_payload(dish_category: DishCategory, ingredient_category: Ingredi
         'category': str(dish_category.id),
         'ingredients': [
             {
+                'ingredient': None,
                 'name': 'Свекла',
                 'category': str(ingredient_category.id),
                 'base_unit': Unit.GRAM,

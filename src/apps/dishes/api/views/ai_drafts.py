@@ -1,12 +1,18 @@
+from typing import Any
+
 from django.db.models import QuerySet
+from rest_framework.decorators import action
 from rest_framework.permissions import BasePermission, IsAuthenticated
+from rest_framework.request import Request
+from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from apps.dishes.api.schemas import DishAIDraftViewSetSchema
-from apps.dishes.api.serializers.ai_drafts import DishAIDraftSerializer
+from apps.dishes.api.serializers.ai_drafts import DishAIDraftCreateDishSerializer, DishAIDraftSerializer
 from apps.dishes.api.services.ai_draft_creator import AIDraftCreator
+from apps.dishes.api.services.ai_draft_dish_creator import AIDraftDishCreator
 from apps.dishes.api.views.filters.ai_drafts import DishAIDraftFilter
-from apps.dishes.models import DishAIDraft
+from apps.dishes.models import Dish, DishAIDraft
 from apps.users.models import User
 from core.base.decorators import extend_schema_view_from_class
 from core.base.permissions import CanCreateAIRecipes, OwnerObjectPermission
@@ -33,3 +39,16 @@ class DishAIDraftViewSet(ModelViewSet):
 
     def perform_create(self, serializer: DishAIDraftSerializer) -> None:
         AIDraftCreator(serializer=serializer)()
+
+    @action(detail=True, methods=['post'], url_path='create-dish')
+    def create_dish(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        draft = self.get_object()
+        serializer = DishAIDraftCreateDishSerializer(
+            data=request.data,
+            context=self.get_serializer_context(),
+        )
+        return AIDraftDishCreator(
+            serializer=serializer,
+            draft=draft,
+            queryset=Dish.objects.for_user(request.user),
+        )()

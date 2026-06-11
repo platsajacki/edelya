@@ -158,6 +158,7 @@ class AIDraftProcessor(TaskService):
         self, ingredient: Ingredient, ingredient_data: RecipeAIIngredientData
     ) -> IngredientPayloadData:
         return {
+            'ingredient': str(ingredient.id),
             'name': ingredient.name,
             'category': str(ingredient.category_id),
             'base_unit': ingredient.base_unit,
@@ -171,6 +172,7 @@ class AIDraftProcessor(TaskService):
         self, ingredient_data: RecipeAIIngredientData, category_id: str, suggested_ids: list[str]
     ) -> IngredientPayloadData:
         return {
+            'ingredient': None,
             'name': normalize_name(ingredient_data['name']),
             'category': category_id,
             'base_unit': ingredient_data['base_unit'],

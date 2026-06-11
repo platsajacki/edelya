@@ -4,6 +4,7 @@ from typing import TypedDict
 
 
 class IngredientPayloadData(TypedDict):
+    ingredient: str | None
     name: str
     category: str
     base_unit: str

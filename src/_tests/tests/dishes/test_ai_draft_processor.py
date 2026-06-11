@@ -64,6 +64,7 @@ class TestPreparePayload:
             'category': str(dish_category.id),
             'ingredients': [
                 {
+                    'ingredient': None,
                     'name': 'Свекла',
                     'category': str(ingredient_category.id),
                     'base_unit': Unit.GRAM,
@@ -107,6 +108,7 @@ class TestPreparePayload:
         payload = processor._prepare_payload(data, dish_ai_draft)
         assert payload['category'] == str(dish_category.id)
         assert payload['ingredients'][0] == {
+            'ingredient': str(ingredient_user.id),
             'name': ingredient_user.name,
             'category': str(ingredient_user.category_id),
             'base_unit': ingredient_user.base_unit,
@@ -138,6 +140,7 @@ class TestPreparePayload:
             category_name_to_id={ingredient_global.category.name.lower(): str(ingredient_global.category_id)},
         )
         assert payload == {
+            'ingredient': str(ingredient_global.id),
             'name': ingredient_global.name,
             'category': str(ingredient_global.category_id),
             'base_unit': ingredient_global.base_unit,
@@ -206,6 +209,7 @@ class TestProcessDraft:
             'category': str(dish_category.id),
             'ingredients': [
                 {
+                    'ingredient': None,
                     'name': 'Свекла',
                     'category': str(ingredient_category.id),
                     'base_unit': Unit.GRAM,

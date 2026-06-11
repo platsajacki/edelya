@@ -9,7 +9,7 @@ from apps.dishes.data_types import DishPayloadData
 @deconstructible
 class DishPayloadValidator:
     REQUIRED_DISH_KEYS = {'name', 'recipe', 'category', 'ingredients'}
-    REQUIRED_ING_KEYS = {'name', 'category', 'base_unit', 'amount', 'is_optional', 'new', 'suggested_ids'}
+    REQUIRED_ING_KEYS = {'ingredient', 'name', 'category', 'base_unit', 'amount', 'is_optional', 'new', 'suggested_ids'}
 
     def validate(self, payload: Any) -> DishPayloadData | None:
         if payload is None:
@@ -40,6 +40,8 @@ class DishPayloadValidator:
         missing = self.REQUIRED_ING_KEYS - ing.keys()
         if missing:
             raise ValidationError(f'Ingredient #{idx} missing keys: {", ".join(sorted(missing))}.')
+        if ing['ingredient'] is not None and not isinstance(ing['ingredient'], str):
+            raise ValidationError(f'Ingredient #{idx} ingredient must be null or string.')
         if not all(isinstance(ing[k], str) for k in ('name', 'category', 'base_unit')):
             raise ValidationError(f'Ingredient #{idx} name/category/base_unit must be strings.')
         if not isinstance(ing['amount'], (int, float)):
@@ -51,3 +53,6 @@ class DishPayloadValidator:
 
     def __call__(self, payload: Any) -> DishPayloadData | None:
         return self.validate(payload)
+
+
+dish_payload_validator = DishPayloadValidator()
