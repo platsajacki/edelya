@@ -1,3 +1,7 @@
-from openai import OpenAI
+from django.conf import settings
 
-openai_client = OpenAI()
+from openai import DefaultHttpxClient, OpenAI
+
+openai_client = OpenAI(
+    http_client=DefaultHttpxClient(proxy=settings.OPENAI_PROXY_URL if settings.OPENAI_PROXY_URL else None),
+)
