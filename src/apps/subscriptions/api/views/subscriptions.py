@@ -10,6 +10,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from apps.subscriptions.api.schemas import SubscriptionViewSetSchema
 from apps.subscriptions.api.serializers.subscriptions import SubscriptionSerializer, SubscriptionTariffSelectSerializer
+from apps.subscriptions.api.services.ai_recipe_usage_getter import AIRecipeUsageGetter
 from apps.subscriptions.api.services.subscription_canceller import SubscriptionCanceller
 from apps.subscriptions.api.services.subscription_getter import SubscriptionGetter
 from apps.subscriptions.api.services.subscription_resumer import SubscriptionResumer
@@ -32,6 +33,10 @@ class SubscriptionViewSet(GenericViewSet):
     @action(detail=False, methods=['get'], url_path='me')
     def me(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         return SubscriptionGetter(request=request, serializer_class=self.get_serializer_class())()
+
+    @action(detail=False, methods=['get'], url_path='ai-recipe-usage')
+    def ai_recipe_usage(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        return AIRecipeUsageGetter(request=request)()
 
     @action(detail=False, methods=['post'], url_path='start-trial')
     def start_trial(self, request: Request, *args: Any, **kwargs: Any) -> Response:

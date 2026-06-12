@@ -36,3 +36,9 @@ class SubscriptionTariffSelectSerializer(ModelSerializer):
     class Meta:
         model = Subscription
         fields = ['tariff_id']
+
+
+class AIRecipeUsageSerializer(serializers.Serializer):
+    used = serializers.IntegerField(read_only=True)
+    limit = serializers.IntegerField(read_only=True)
+    remaining = serializers.IntegerField(read_only=True)

@@ -57,6 +57,9 @@ migrate:
 	python src/manage.py migrate
 
 
+celery:
+	PYTHONPATH=src DJANGO_SETTINGS_MODULE=core.settings celery -A core worker --loglevel=DEBUG
+
 APP ?= ''
 NUM ?= ''
 
