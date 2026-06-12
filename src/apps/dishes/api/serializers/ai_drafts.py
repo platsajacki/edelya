@@ -9,7 +9,7 @@ from apps.dishes.models.validators import dish_payload_validator
 
 class DishAIDraftSerializer(serializers.ModelSerializer):
     owner = serializers.HiddenField(default=serializers.CurrentUserDefault())
-    source_text = serializers.CharField(min_length=10, max_length=20_000)
+    source_text = serializers.CharField(min_length=10, max_length=10_000)
 
     class Meta:
         model = DishAIDraft
@@ -19,6 +19,7 @@ class DishAIDraftSerializer(serializers.ModelSerializer):
             'source_text',
             'status',
             'payload',
+            'created_dish',
             'validation_errors',
             'created_at',
             'updated_at',
@@ -27,6 +28,7 @@ class DishAIDraftSerializer(serializers.ModelSerializer):
             'id',
             'status',
             'payload',
+            'created_dish',
             'validation_errors',
             'created_at',
             'updated_at',

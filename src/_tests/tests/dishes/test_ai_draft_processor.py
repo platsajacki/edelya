@@ -76,6 +76,19 @@ class TestPreparePayload:
             ],
         }
 
+    def test_normalizes_literal_recipe_newlines(
+        self,
+        dish_ai_draft: DishAIDraft,
+        recipe_ai_success_data: RecipeAISuccessData,
+        mocker: MockFixture,
+    ) -> None:
+        data = deepcopy(recipe_ai_success_data)
+        data['dish']['recipe'] = '1. Нарезать овощи\\n2. Сварить суп\\r\\n3. Подать'
+        processor = AIDraftProcessor(draft_id=str(dish_ai_draft.id))
+        mocker.patch.object(processor, '_prepare_ingredients', return_value=[])
+        payload = processor._prepare_payload(data, dish_ai_draft)
+        assert payload['recipe'] == '1. Нарезать овощи\n2. Сварить суп\n3. Подать'
+
     def test_unknown_dish_category_uses_another_category(
         self,
         dish_ai_draft: DishAIDraft,
@@ -220,6 +233,8 @@ class TestProcessDraft:
                 },
             ],
         }
+        assert dish_ai_draft.ai_raw_response == recipe_ai_success_result.data
+        assert dish_ai_draft.usage == recipe_ai_success_result.usage
 
     def test_ai_error_sets_failed_status_and_validation_error(
         self,
@@ -238,6 +253,8 @@ class TestProcessDraft:
                 'error_message': 'Текст не похож на рецепт. Пришлите описание блюда с ингредиентами и приготовлением.',
             },
         ]
+        assert dish_ai_draft.ai_raw_response == recipe_ai_error_result.data
+        assert dish_ai_draft.usage == recipe_ai_error_result.usage
 
     def test_skips_draft_with_non_processing_status(
         self,
@@ -270,6 +287,8 @@ class TestProcessDraft:
                 'error_message': 'Invalid categories',
             },
         ]
+        assert dish_ai_draft.ai_raw_response is None
+        assert dish_ai_draft.usage is None
 
 
 class TestAct:

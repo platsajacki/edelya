@@ -35,7 +35,7 @@ class PreparedIngredientData:
 class AIDraftProcessor(TaskService):
     draft_id: str
     _redis_lock_prefix: str = dc_field(default='ai_draft_processor_lock:')
-    _redis_lock_expire: int = dc_field(default=180)
+    _redis_lock_expire: int = dc_field(default=240)  # 4 минуты
     _max_retries: int = dc_field(default=3)
     _another_category_name: str = dc_field(default='Другое')
     _exact_ingredient_similarity: float = dc_field(default=0.95)
@@ -56,12 +56,16 @@ class AIDraftProcessor(TaskService):
             f'Failed to create RecipeAI for draft {self.draft_id} after {self._max_retries} attempts.'
         )
 
+    def _set_ai_response_data(self, draft: DishAIDraft, recipe_ai: RecipeAIResult) -> None:
+        draft.ai_raw_response = recipe_ai.data
+        draft.usage = recipe_ai.usage
+
     def _handle_processing_error(self, draft: DishAIDraft, error_data: RecipeAIErrorData) -> None:
         draft.status = DishAIDraftStatus.FAILED
         draft.set_validation_error(
             error_code=error_data['error_code'], error_message=error_data['error_message'], save=False
         )
-        draft.save(update_fields=['status', 'validation_errors'])
+        draft.save(update_fields=['status', 'validation_errors', 'ai_raw_response', 'usage'])
 
     def _get_category_id(self, category_name: str) -> str:
         category = DishCategory.objects.filter(name__iexact=category_name).first()
@@ -192,13 +196,16 @@ class AIDraftProcessor(TaskService):
             self._get_ingredient_payload(ing, draft, name_to_ingredient, category_name_to_id) for ing in prepared_data
         ]
 
+    def _normalize_recipe_text(self, recipe: str) -> str:
+        return recipe.replace('\\r\\n', '\n').replace('\\n', '\n').replace('\\r', '\n')
+
     def _prepare_payload(self, success_data: RecipeAISuccessData, draft: DishAIDraft) -> DishPayloadData:
         category_name = success_data['dish']['category_name']
         category_id = self._get_category_id(category_name)
         ingredients = self._prepare_ingredients(success_data['ingredients'], draft)
         return {
             'name': normalize_name(success_data['dish']['name']),
-            'recipe': success_data['dish']['recipe'],
+            'recipe': self._normalize_recipe_text(success_data['dish']['recipe']),
             'category': category_id,
             'ingredients': ingredients,
         }
@@ -206,7 +213,7 @@ class AIDraftProcessor(TaskService):
     def _handle_processing_success(self, draft: DishAIDraft, success_data: RecipeAISuccessData) -> None:
         draft.payload = self._prepare_payload(success_data, draft)
         draft.status = DishAIDraftStatus.PARSED
-        draft.save(update_fields=['status', 'payload'])
+        draft.save(update_fields=['status', 'payload', 'ai_raw_response', 'usage'])
 
     def _process_draft(self) -> None:
         try:
@@ -217,6 +224,7 @@ class AIDraftProcessor(TaskService):
                 )
                 return
             recipe_ai = self.get_recipe_ai(draft)
+            self._set_ai_response_data(draft, recipe_ai)
             if recipe_ai.data['result']['status'] == 'error':
                 return self._handle_processing_error(draft, recipe_ai.data['result'])
             self._handle_processing_success(draft, recipe_ai.data['result'])
@@ -226,7 +234,10 @@ class AIDraftProcessor(TaskService):
         except AIDraftProcessingError as e:
             draft.status = DishAIDraftStatus.FAILED
             draft.set_validation_error(error_code='processing_error', error_message=str(e), save=False)
-            draft.save(update_fields=['status', 'validation_errors'])
+            update_fields = ['status', 'validation_errors']
+            if draft.ai_raw_response is not None or draft.usage is not None:
+                update_fields += ['ai_raw_response', 'usage']
+            draft.save(update_fields=update_fields)
 
     def act(self) -> str:
         key = f'{self._redis_lock_prefix}{self.draft_id}'
@@ -247,7 +258,7 @@ def process_ai_draft(draft_id: str) -> str:
 
 
 @celery_app.task
-def process_ai_drafts_background(minutes: int = 3) -> None:
+def process_ai_drafts_background(minutes: int = 4) -> None:
     """
     Периодическая задача для обработки AI-черновиков блюд,
     которые находятся в статусе PROCESSING дольше заданного количества минут.
