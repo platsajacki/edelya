@@ -2,7 +2,11 @@ from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import status
 
 from apps.subscriptions.api.serializers.payment_methods import PaymentMethodSerializer
-from apps.subscriptions.api.serializers.subscriptions import AIRecipeUsageSerializer, SubscriptionSerializer
+from apps.subscriptions.api.serializers.subscriptions import (
+    AIRecipeUsageSerializer,
+    SubscriptionDictionarySerializer,
+    SubscriptionSerializer,
+)
 from apps.subscriptions.api.serializers.tariffs import TariffSerializer
 from core.schemas import STANDARD_ERROR_RESPONSES
 
@@ -112,7 +116,7 @@ class TariffViewSetSchema:
 
 
 class SubscriptionViewSetSchema:
-    custom_actions = {'me', 'ai_recipe_usage', 'start_trial', 'select_tariff', 'cancel', 'resume'}
+    custom_actions = {'me', 'ai_recipe_usage', 'dictionary', 'start_trial', 'select_tariff', 'cancel', 'resume'}
 
     me = extend_schema(
         tags=[SUBSCRIPTION_TAG],
@@ -134,6 +138,18 @@ class SubscriptionViewSetSchema:
             status.HTTP_200_OK: OpenApiResponse(
                 description='AI recipe draft usage',
                 response=AIRecipeUsageSerializer(),
+            ),
+            **STANDARD_ERROR_RESPONSES,
+        },
+    )
+    dictionary = extend_schema(
+        tags=[SUBSCRIPTION_TAG],
+        summary='Get subscription dictionary',
+        description='Retrieve cached subscription constants for frontend configuration.',
+        responses={
+            status.HTTP_200_OK: OpenApiResponse(
+                description='Subscription constants dictionary',
+                response=SubscriptionDictionarySerializer(),
             ),
             **STANDARD_ERROR_RESPONSES,
         },

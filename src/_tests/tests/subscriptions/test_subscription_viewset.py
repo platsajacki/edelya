@@ -6,7 +6,7 @@ from rest_framework.test import APIClient
 from apps.dishes.models import DishAIDraft
 from apps.marketing.models import Notification
 from apps.marketing.models.model_enums import MessageTemplateName
-from apps.subscriptions.constants import AI_RECIPE_LIMIT_PER_PERIOD
+from apps.subscriptions.constants import AI_RECIPE_LIMIT_PER_PERIOD, DEFAULT_TRIAL_DAYS, GRACE_PERIOD_DAYS
 from apps.subscriptions.models import Subscription, Tariff
 from apps.subscriptions.models.model_enums import SubscriptionStatus
 from apps.users.models import ConsentLog, User
@@ -14,6 +14,7 @@ from apps.users.models.model_enums import ConsentAction, ConsentType
 
 SUBSCRIPTION_ME_URL = reverse('api_v1:subscriptions:subscriptions:subscription-me')
 AI_RECIPE_USAGE_URL = reverse('api_v1:subscriptions:subscriptions:subscription-ai-recipe-usage')
+SUBSCRIPTION_DICTIONARY_URL = reverse('api_v1:subscriptions:subscriptions:subscription-dictionary')
 START_TRIAL_URL = reverse('api_v1:subscriptions:subscriptions:subscription-start-trial')
 CANCEL_URL = reverse('api_v1:subscriptions:subscriptions:subscription-cancel')
 RESUME_URL = reverse('api_v1:subscriptions:subscriptions:subscription-resume')
@@ -154,6 +155,26 @@ class TestAIRecipeUsage:
             'used': 0,
             'limit': AI_RECIPE_LIMIT_PER_PERIOD,
             'remaining': 0,
+        }
+
+
+class TestSubscriptionDictionary:
+    def test_anon_user_gets_401(self, api_client: APIClient) -> None:
+        response = api_client.get(SUBSCRIPTION_DICTIONARY_URL)
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_authenticated_user_gets_constants(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+    ) -> None:
+        api_client.force_authenticate(user=telegram_user)
+        response = api_client.get(SUBSCRIPTION_DICTIONARY_URL)
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data == {
+            'default_trial_days': DEFAULT_TRIAL_DAYS,
+            'grace_period_days': GRACE_PERIOD_DAYS,
+            'ai_recipe_limit_per_period': AI_RECIPE_LIMIT_PER_PERIOD,
         }
 
 
