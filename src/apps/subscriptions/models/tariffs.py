@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
 from dateutil.relativedelta import relativedelta
@@ -23,6 +24,13 @@ class Tariff(BaseModel):
     )
     description = models.TextField(
         verbose_name='Описание',
+        blank=True,
+        null=True,
+    )
+    description_items = ArrayField(
+        models.CharField(max_length=255),
+        verbose_name='Пункты описания',
+        default=list,
         blank=True,
         null=True,
     )
