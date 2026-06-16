@@ -26,6 +26,7 @@ class WebhookAction(StrEnum):
     CARD_BINDING = 'card_binding'
     FIRST_PAYMENT = 'first_payment'
     RECURRING = 'recurring'
+    RETRY_PAYMENT = 'retry_payment'
     UPGRADE = 'upgrade'
 
 

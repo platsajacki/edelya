@@ -116,7 +116,16 @@ class TariffViewSetSchema:
 
 
 class SubscriptionViewSetSchema:
-    custom_actions = {'me', 'ai_recipe_usage', 'dictionary', 'start_trial', 'select_tariff', 'cancel', 'resume'}
+    custom_actions = {
+        'me',
+        'ai_recipe_usage',
+        'dictionary',
+        'start_trial',
+        'select_tariff',
+        'cancel',
+        'resume',
+        'retry_payment',
+    }
 
     me = extend_schema(
         tags=[SUBSCRIPTION_TAG],
@@ -261,6 +270,44 @@ class SubscriptionViewSetSchema:
             status.HTTP_200_OK: OpenApiResponse(
                 description='Cancellation undone — subscription will continue',
                 response=SubscriptionSerializer(),
+            ),
+            **STANDARD_ERROR_RESPONSES,
+        },
+    )
+    retry_payment = extend_schema(
+        tags=[SUBSCRIPTION_TAG],
+        summary='Retry subscription payment',
+        description=(
+            'Synchronously retries a one-time payment for an expired subscription using the saved payment method. '
+            'Expired subscriptions are created by the billing flow after failed recurring charges.'
+        ),
+        request=None,
+        responses={
+            status.HTTP_200_OK: OpenApiResponse(
+                description='Payment succeeded and subscription was activated',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'action': {'type': 'string', 'enum': ['success']},
+                        'payment_status': {'type': 'string', 'enum': ['succeeded']},
+                        'subscription': {'type': 'object'},
+                        'description': {'type': 'string'},
+                    },
+                    'required': ['action', 'payment_status', 'subscription', 'description'],
+                },
+            ),
+            status.HTTP_402_PAYMENT_REQUIRED: OpenApiResponse(
+                description='Payment was attempted but failed',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'action': {'type': 'string', 'enum': ['payment_failed']},
+                        'payment_status': {'type': 'string', 'enum': ['canceled']},
+                        'subscription': {'type': 'object'},
+                        'description': {'type': 'string'},
+                    },
+                    'required': ['action', 'payment_status', 'subscription', 'description'],
+                },
             ),
             **STANDARD_ERROR_RESPONSES,
         },

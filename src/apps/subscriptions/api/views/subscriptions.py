@@ -18,6 +18,7 @@ from apps.subscriptions.api.services.ai_recipe_usage_getter import AIRecipeUsage
 from apps.subscriptions.api.services.subscription_canceller import SubscriptionCanceller
 from apps.subscriptions.api.services.subscription_getter import SubscriptionGetter
 from apps.subscriptions.api.services.subscription_resumer import SubscriptionResumer
+from apps.subscriptions.api.services.subscription_retry_payment_starter import SubscriptionRetryPaymentStarter
 from apps.subscriptions.api.services.tariff_selector import TariffSelector
 from apps.subscriptions.api.services.trial_startrer import TrialStarter
 from apps.subscriptions.constants import AI_RECIPE_LIMIT_PER_PERIOD, DEFAULT_TRIAL_DAYS, GRACE_PERIOD_DAYS
@@ -71,3 +72,7 @@ class SubscriptionViewSet(GenericViewSet):
     @action(detail=False, methods=['post'], url_path='resume')
     def resume(self, request: Request) -> Response:
         return SubscriptionResumer(request=request, serializer_class=self.get_serializer_class())()
+
+    @action(detail=False, methods=['post'], url_path='retry-payment')
+    def retry_payment(self, request: Request) -> Response:
+        return SubscriptionRetryPaymentStarter(request=request, serializer_class=self.get_serializer_class())()
