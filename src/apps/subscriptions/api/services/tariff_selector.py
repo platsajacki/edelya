@@ -14,6 +14,7 @@ from rest_framework.response import Response
 from apps.marketing.models.model_enums import MessageTemplateName
 from apps.marketing.services.sender import NotificationSender, fmt_date
 from apps.subscriptions.api.serializers.subscriptions import SubscriptionSerializer
+from apps.subscriptions.constants import MIN_PRORATION_AMOUNT
 from apps.subscriptions.models import Subscription, Tariff
 from apps.subscriptions.models.model_enums import PaymentStatus, PaymentType, SubscriptionStatus
 from apps.subscriptions.models.payment_methods import PaymentMethod
@@ -187,7 +188,10 @@ class TariffSwitcher(TariffService):
         new_price = Decimal(str(self.tariff.price))
         current_price = Decimal(str(subscription.tariff.price))
         proration = Decimal(remaining_days) / Decimal(total_days) * (new_price - current_price)
-        return proration.quantize(Decimal('0.01'))
+        amount = proration.quantize(Decimal('0.01'))
+        if Decimal(0) < proration and amount < MIN_PRORATION_AMOUNT:
+            return MIN_PRORATION_AMOUNT
+        return amount
 
     def create_upgrade_payment(
         self,

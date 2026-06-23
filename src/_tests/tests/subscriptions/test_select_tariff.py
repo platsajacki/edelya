@@ -2,6 +2,7 @@ import pytest
 from pytest_mock import MockType
 
 import uuid
+from datetime import timedelta
 from decimal import Decimal
 from unittest.mock import MagicMock
 
@@ -12,6 +13,7 @@ from rest_framework.test import APIClient
 
 from apps.marketing.models import Notification
 from apps.marketing.models.model_enums import MessageTemplateName
+from apps.subscriptions.constants import MIN_PRORATION_AMOUNT
 from apps.subscriptions.models import PaymentMethod, Subscription, Tariff
 from apps.subscriptions.models.model_enums import PaymentStatus, PaymentType, SubscriptionStatus
 from apps.subscriptions.models.payments import Payment
@@ -321,6 +323,43 @@ class TestSelectTariff:
         assert payment.metadata['tariff_id'] == str(upgrade_tariff.id)
         # proration = remaining_days/30 * (199-99); remaining ≈ 14-15 days → ~46-50 RUB
         assert Decimal('0') < payment.amount < Decimal('100.00')
+
+    def test_active_upgrade_uses_min_proration_amount(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        active_subscription_with_period: Subscription,
+        mock_yookassa_payment_create: MockType,
+    ) -> None:
+        """ACTIVE upgrade with tiny positive proration creates payment for minimum amount."""
+        low_price_upgrade_tariff = Tariff.objects.create(
+            name='Low Price Upgrade',
+            price='99.01',
+            published=True,
+            is_active=True,
+            is_trial_tariff=False,
+            can_use_base_features=True,
+            can_create_ai_recipes=True,
+        )
+        now = timezone.now()
+        active_subscription_with_period.current_period_start = now - timedelta(days=29)
+        active_subscription_with_period.current_period_end = now + timedelta(days=1, minutes=1)
+        active_subscription_with_period.save(update_fields=['current_period_start', 'current_period_end'])
+        fake_payment = MagicMock()
+        fake_payment.id = 'yoo-upgrade-pay-min-proration'
+        fake_payment.status = 'pending'
+        mock_yookassa_payment_create.return_value = fake_payment
+        api_client.force_authenticate(user=telegram_user)
+        response = api_client.post(
+            SELECT_TARIFF_URL,
+            data={'tariff_id': str(low_price_upgrade_tariff.id)},
+            format='json',
+        )
+        assert response.status_code == status.HTTP_200_OK
+        payment = Payment.objects.get(yookassa_payment_id='yoo-upgrade-pay-min-proration')
+        assert payment.amount == MIN_PRORATION_AMOUNT
+        payment_params = mock_yookassa_payment_create.call_args[0][0]
+        assert payment_params['amount']['value'] == str(MIN_PRORATION_AMOUNT)
 
     def test_active_upgrade_switches_tariff_and_resets_period(
         self,
