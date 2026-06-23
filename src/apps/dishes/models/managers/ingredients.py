@@ -4,7 +4,7 @@ from django.contrib.postgres.search import TrigramSimilarity
 from django.db.models import Q, Value
 from django.db.models.functions import Lower, Replace
 
-from core.base.managers import ActiveManager, ActiveQuerySet
+from core.base.managers import ActiveManager, ActiveQuerySet, NameSearchManager, NameSearchQuerySet
 from core.utils import normalize_name
 
 if TYPE_CHECKING:
@@ -26,7 +26,7 @@ class IngredientCategoryManager(ActiveManager['IngredientCategory', IngredientCa
         return self.get_queryset().get_by_names(names)
 
 
-class IngredientQueryset(ActiveQuerySet['Ingredient']):
+class IngredientQueryset(NameSearchQuerySet['Ingredient']):
     def for_user(self, user: User) -> IngredientQueryset:
         return self.actived().filter(Q(owner__isnull=True) | Q(owner=user))
 
@@ -59,7 +59,7 @@ class IngredientQueryset(ActiveQuerySet['Ingredient']):
         return self.for_user(user).search_by_name(query, threshold, limit)
 
 
-class IngredientManager(ActiveManager['Ingredient', IngredientQueryset]):
+class IngredientManager(NameSearchManager['Ingredient', IngredientQueryset]):
     def get_queryset_class(self) -> type[IngredientQueryset]:
         return IngredientQueryset
 

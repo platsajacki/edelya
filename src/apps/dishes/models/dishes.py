@@ -1,10 +1,11 @@
 from collections.abc import Iterable
 
+from django.contrib.postgres.indexes import GinIndex, OpClass
 from django.core.validators import MinValueValidator
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, Value
 from django.db.models.base import ModelBase
-from django.db.models.functions import Lower
+from django.db.models.functions import Lower, Replace
 
 from apps.dishes.models.managers.dishes import DishCategoryManager, DishIngredientManager, DishManager
 from core.base.abstract_models import BaseActiveModel, BaseModel
@@ -86,6 +87,14 @@ class Dish(BaseActiveModel):
             models.Index(
                 fields=['owner', 'name'],
                 name='idx_dish_owner_name',
+                condition=Q(is_active=True),
+            ),
+            GinIndex(
+                OpClass(
+                    Replace(Lower('name'), Value('ё'), Value('е')),
+                    name='gin_trgm_ops',
+                ),
+                name='idx_dish_norm_name_trgm_active',
                 condition=Q(is_active=True),
             ),
         ]
