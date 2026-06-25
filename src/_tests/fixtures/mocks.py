@@ -1,6 +1,8 @@
 import pytest
 from pytest_mock import MockFixture, MockType
 
+from uuid import uuid4
+
 
 @pytest.fixture
 def mock_tg_validator(mocker: MockFixture, valid_tg_user_data: dict) -> MockType:
@@ -43,6 +45,7 @@ def mock_yookassa_payment_method_find_one(mocker: MockFixture) -> MockType:
 @pytest.fixture
 def yookassa_succeeded_response(mocker: MockFixture) -> MockType:
     obj = mocker.MagicMock()
+    obj.id = str(uuid4())
     obj.status = 'succeeded'
     obj.cancellation_details = None
     return obj
@@ -56,6 +59,7 @@ def mock_tax3r_post(mocker: MockFixture) -> MockType:
 @pytest.fixture
 def yookassa_canceled_response(mocker: MockFixture) -> MockType:
     obj = mocker.MagicMock()
+    obj.id = str(uuid4())
     obj.status = 'canceled'
     obj.cancellation_details.reason = 'card_expired'
     return obj
@@ -74,3 +78,18 @@ def mock_lpop(mocker: MockFixture) -> MockType:
 @pytest.fixture
 def mock_notification_sender(mocker: MockFixture) -> MockType:
     return mocker.patch('apps.subscriptions.services.tax3r_check_processor.NotificationSender')
+
+
+@pytest.fixture
+def mock_process_ai_draft_delay(mocker: MockFixture) -> MockType:
+    return mocker.patch('apps.dishes.api.services.ai_draft_creator.process_ai_draft.delay')
+
+
+@pytest.fixture
+def mock_ai_draft_processor_recipe_ai(mocker: MockFixture) -> MockType:
+    return mocker.patch('apps.dishes.tasks.ai_draft_processor.RecipeAI')
+
+
+@pytest.fixture
+def mock_ai_draft_processor_redis_set(mocker: MockFixture) -> MockType:
+    return mocker.patch('apps.dishes.tasks.ai_draft_processor.redis_client.set')

@@ -13,6 +13,7 @@ from apps.subscriptions.models import Subscription, Tariff
 from apps.subscriptions.models.model_enums import PaymentStatus, SubscriptionStatus
 from apps.subscriptions.models.payment_methods import PaymentMethod
 from apps.subscriptions.models.payments import Payment
+from apps.subscriptions.services.sync_controler import payment_sync_flag_controler
 from apps.subscriptions.services.tax_check import TaxCheckSender
 from apps.users.models.consents import ConsentLog
 from apps.users.models.model_enums import ConsentAction, ConsentType
@@ -25,6 +26,7 @@ class WebhookAction(StrEnum):
     CARD_BINDING = 'card_binding'
     FIRST_PAYMENT = 'first_payment'
     RECURRING = 'recurring'
+    RETRY_PAYMENT = 'retry_payment'
     UPGRADE = 'upgrade'
 
 
@@ -146,8 +148,6 @@ class PaymentSucceededHandler(BaseService):
                 },
             )
             TaxCheckSender(self.payment, f'Первый платеж по подписке на сервис Edelya — {tariff.name}')()
-        elif action == WebhookAction.UPGRADE:
-            pass  # subscription already updated synchronously during upgrade
         elif action == WebhookAction.RECURRING:
             self._renew_subscription(self.payment.subscription, payment_method)
             self.send_notification(
@@ -246,11 +246,32 @@ class WebhookHandler(BaseService):
     object_data: dict
 
     def _get_payment(self, yookassa_id: str) -> Payment:
-        return (
-            Payment.objects.select_related('user', 'subscription', 'subscription__tariff')
-            .select_for_update()
-            .get(yookassa_payment_id=yookassa_id)
-        )
+        try:
+            return (
+                Payment.objects.select_related('user', 'subscription', 'subscription__tariff')
+                .select_for_update()
+                .get(yookassa_payment_id=yookassa_id)
+            )
+        except Payment.DoesNotExist:
+            loki_logger.warning('Payment not found for YooKassa ID: %s', self.object_data)
+            raise
+
+    def _check_idempotence(self) -> bool:
+        idempotence_key = self.object_data.get('metadata', {}).get('idempotence_key')
+        if idempotence_key:
+            if payment_sync_flag_controler.check_payment_sync_flag(idempotence_key):
+                loki_logger.info(
+                    'Payment with idempotence_key=%s was processed synchronously, skipping webhook',
+                    idempotence_key,
+                )
+                return True
+        else:
+            loki_logger.warning(
+                'No idempotence_key in webhook metadata for event %s and object %s',
+                self.event,
+                self.object_data,
+            )
+        return False
 
     def act(self) -> None:
         try:
@@ -259,6 +280,11 @@ class WebhookHandler(BaseService):
             loki_logger.info('Unsupported YooKassa webhook event: %s', self.event)
             return
         loki_logger.info('Processing YooKassa webhook event: %s', event_type)
+        if (
+            event_type in (WebhookEventType.PAYMENT_SUCCEEDED, WebhookEventType.PAYMENT_CANCELED, WebhookAction.UPGRADE)
+            and self._check_idempotence()
+        ):
+            return
         if event_type == WebhookEventType.PAYMENT_SUCCEEDED:
             yoo_payment = PaymentResponse(self.object_data)
             PaymentSucceededHandler(

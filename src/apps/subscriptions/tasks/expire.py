@@ -1,7 +1,7 @@
 from apps.marketing.models.model_enums import MessageTemplateName
 from apps.marketing.services.sender import NotificationSender
 from apps.subscriptions.models import Payment, Subscription
-from apps.subscriptions.models.model_enums import SubscriptionStatus
+from apps.subscriptions.models.model_enums import PaymentStatus, SubscriptionStatus
 from apps.subscriptions.tasks.base import RecurringTaskService
 from core import celery_app
 from core.logging_handlers import loki_logger
@@ -90,3 +90,19 @@ def expire_cancelled_subscriptions() -> str:
     service = ExpireCancelledService()
     count = service()
     return service.get_log_msg(f'Expired {count} cancelled subscriptions.')
+
+
+class ExpireZeroAmountBindingsService(RecurringTaskService):
+    def act(self) -> int:
+        return Payment.objects.get_stale_zero_amount_bindings().update(status=PaymentStatus.CANCELED)
+
+
+@celery_app.task
+def expire_zero_amount_bindings() -> str:
+    """
+    Переводит в CANCELED платежи типа ZERO_AMOUNT_BINDING, застрявшие в статусе PENDING более 24 часов
+    (клиент не перешёл по ссылке привязки карты).
+    """
+    service = ExpireZeroAmountBindingsService()
+    count = service()
+    return service.get_log_msg(f'Expired {count} stale zero-amount binding payments.')

@@ -3,6 +3,7 @@ from django.db.models import F, OrderBy, QuerySet
 from django_filters import rest_framework as filters
 
 from apps.dishes.models import Dish, DishCategory
+from apps.dishes.models.managers.dishes import DishQueryset
 
 
 class DishCategoryFilter(filters.FilterSet):
@@ -30,6 +31,7 @@ class DishFilter(filters.FilterSet):
     owened_first = filters.BooleanFilter(method='order_owned_first')
     only_owned = filters.BooleanFilter(field_name='owner_id', lookup_expr='isnull', exclude=True)
     only_global = filters.BooleanFilter(field_name='owner_id', lookup_expr='isnull')
+    search = filters.CharFilter(method='filter_search')
     ordering = filters.OrderingFilter(
         fields=(
             ('id', 'id'),
@@ -52,3 +54,6 @@ class DishFilter(filters.FilterSet):
         if value:
             return queryset.order_by(OrderBy(F('owner_id'), nulls_last=True))
         return queryset
+
+    def filter_search(self, queryset: DishQueryset, name: str, value: str) -> QuerySet:
+        return queryset.search_by_normalized_name(value)

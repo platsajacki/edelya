@@ -28,6 +28,7 @@ class TestCreatePayment:
         assert payment.amount == paid_tariff.price
         assert payment.payment_type == PaymentType.RECURRING
         assert payment.status == PaymentStatus.PENDING
+        assert payment.payment_method == trial_subscription_ready_to_charge.payment_method
         assert payment.metadata['action'] == WebhookAction.FIRST_PAYMENT
         assert payment.metadata['tariff_id'] == str(paid_tariff.id)
 
@@ -255,6 +256,7 @@ class TestProcessPayment:
         payment.refresh_from_db()
         assert payment.status == PaymentStatus.CANCELED
         assert payment.cancellation_reason == 'card_expired'
+        assert payment.payment_method == trial_subscription_ready_to_charge.payment_method
 
     def test_sets_subscription_past_due(
         self,
@@ -275,7 +277,9 @@ class TestProcessPayment:
             failed_status=SubscriptionStatus.PAST_DUE,
             cancellation_reason='insufficient_funds',
         )
+        payment.refresh_from_db()
         trial_subscription_ready_to_charge.refresh_from_db()
+        assert payment.payment_method == trial_subscription_ready_to_charge.payment_method
         assert trial_subscription_ready_to_charge.status == SubscriptionStatus.PAST_DUE
 
     def test_applies_pending_tariff_on_cancel(

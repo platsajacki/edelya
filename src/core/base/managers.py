@@ -2,11 +2,17 @@ from abc import abstractmethod
 from typing import TYPE_CHECKING, Self
 
 from django.apps import apps
-from django.db.models import Manager, Model, QuerySet
+from django.contrib.postgres.search import TrigramSimilarity
+from django.db.models import Manager, Model, Q, QuerySet, Value
+from django.db.models.functions import Lower, Replace
+
+from core.utils import normalize_name
 
 if TYPE_CHECKING:
     from apps.dishes.models import DishIngredient
     from apps.planning.models import MealPlanItem
+
+TRIGRAM_SEARCH_THRESHOLD = 0.3
 
 
 class BaseQuerySet[ModelType: Model](QuerySet[ModelType]):
@@ -35,3 +41,22 @@ class ActiveQuerySet[ModelType: Model](BaseQuerySet[ModelType]):
 class ActiveManager[ModelType: Model, QuerySetType: ActiveQuerySet](BaseManager[ModelType, QuerySetType]):
     def actived(self) -> QuerySetType:
         return self.get_queryset().actived()
+
+
+class NameSearchQuerySet[ModelType: Model](ActiveQuerySet[ModelType]):
+    def search_by_normalized_name(self, query: str, threshold: float = TRIGRAM_SEARCH_THRESHOLD) -> Self:
+        query = normalize_name(query).lower()
+        if not query:
+            return self
+        normalized_name = Replace(Lower('name'), Value('ё'), Value('е'))
+        normalized_query = query.replace('ё', 'е')
+        return (
+            self.annotate(similarity=TrigramSimilarity(normalized_name, normalized_query))
+            .filter(Q(name__icontains=query) | Q(similarity__gte=threshold))
+            .order_by('-similarity', 'name')
+        )
+
+
+class NameSearchManager[ModelType: Model, QuerySetType: NameSearchQuerySet](ActiveManager[ModelType, QuerySetType]):
+    def search_by_normalized_name(self, query: str, threshold: float = TRIGRAM_SEARCH_THRESHOLD) -> QuerySetType:
+        return self.get_queryset().search_by_normalized_name(query, threshold)

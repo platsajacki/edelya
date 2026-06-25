@@ -2,7 +2,11 @@ from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import status
 
 from apps.subscriptions.api.serializers.payment_methods import PaymentMethodSerializer
-from apps.subscriptions.api.serializers.subscriptions import SubscriptionSerializer
+from apps.subscriptions.api.serializers.subscriptions import (
+    AIRecipeUsageSerializer,
+    SubscriptionDictionarySerializer,
+    SubscriptionSerializer,
+)
 from apps.subscriptions.api.serializers.tariffs import TariffSerializer
 from core.schemas import STANDARD_ERROR_RESPONSES
 
@@ -112,7 +116,16 @@ class TariffViewSetSchema:
 
 
 class SubscriptionViewSetSchema:
-    custom_actions = {'me', 'start_trial', 'select_tariff', 'cancel', 'resume'}
+    custom_actions = {
+        'me',
+        'ai_recipe_usage',
+        'dictionary',
+        'start_trial',
+        'select_tariff',
+        'cancel',
+        'resume',
+        'retry_payment',
+    }
 
     me = extend_schema(
         tags=[SUBSCRIPTION_TAG],
@@ -122,6 +135,30 @@ class SubscriptionViewSetSchema:
             status.HTTP_200_OK: OpenApiResponse(
                 description='Current subscription',
                 response=SubscriptionSerializer(),
+            ),
+            **STANDARD_ERROR_RESPONSES,
+        },
+    )
+    ai_recipe_usage = extend_schema(
+        tags=[SUBSCRIPTION_TAG],
+        summary='Get AI recipe usage',
+        description='Retrieve AI recipe draft usage for the current subscription period.',
+        responses={
+            status.HTTP_200_OK: OpenApiResponse(
+                description='AI recipe draft usage',
+                response=AIRecipeUsageSerializer(),
+            ),
+            **STANDARD_ERROR_RESPONSES,
+        },
+    )
+    dictionary = extend_schema(
+        tags=[SUBSCRIPTION_TAG],
+        summary='Get subscription dictionary',
+        description='Retrieve cached subscription constants for frontend configuration.',
+        responses={
+            status.HTTP_200_OK: OpenApiResponse(
+                description='Subscription constants dictionary',
+                response=SubscriptionDictionarySerializer(),
             ),
             **STANDARD_ERROR_RESPONSES,
         },
@@ -233,6 +270,44 @@ class SubscriptionViewSetSchema:
             status.HTTP_200_OK: OpenApiResponse(
                 description='Cancellation undone — subscription will continue',
                 response=SubscriptionSerializer(),
+            ),
+            **STANDARD_ERROR_RESPONSES,
+        },
+    )
+    retry_payment = extend_schema(
+        tags=[SUBSCRIPTION_TAG],
+        summary='Retry subscription payment',
+        description=(
+            'Synchronously retries a one-time payment for an expired subscription using the saved payment method. '
+            'Expired subscriptions are created by the billing flow after failed recurring charges.'
+        ),
+        request=None,
+        responses={
+            status.HTTP_200_OK: OpenApiResponse(
+                description='Payment succeeded and subscription was activated',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'action': {'type': 'string', 'enum': ['success']},
+                        'payment_status': {'type': 'string', 'enum': ['succeeded']},
+                        'subscription': {'type': 'object'},
+                        'description': {'type': 'string'},
+                    },
+                    'required': ['action', 'payment_status', 'subscription', 'description'],
+                },
+            ),
+            status.HTTP_402_PAYMENT_REQUIRED: OpenApiResponse(
+                description='Payment was attempted but failed',
+                response={
+                    'type': 'object',
+                    'properties': {
+                        'action': {'type': 'string', 'enum': ['payment_failed']},
+                        'payment_status': {'type': 'string', 'enum': ['canceled']},
+                        'subscription': {'type': 'object'},
+                        'description': {'type': 'string'},
+                    },
+                    'required': ['action', 'payment_status', 'subscription', 'description'],
+                },
             ),
             **STANDARD_ERROR_RESPONSES,
         },

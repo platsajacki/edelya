@@ -1,6 +1,9 @@
+from django.db.models import QuerySet
+
 from django_filters import rest_framework as filters
 
 from apps.dishes.models import Ingredient, IngredientCategory
+from apps.dishes.models.managers.ingredients import IngredientQueryset
 
 
 class IngredientCategoryFilter(filters.FilterSet):
@@ -25,6 +28,7 @@ class IngredientCategoryFilter(filters.FilterSet):
 
 class IngredientFilter(filters.FilterSet):
     category = filters.UUIDFilter(field_name='category__id')
+    search = filters.CharFilter(method='filter_search')
 
     class Meta:
         model = Ingredient
@@ -36,3 +40,6 @@ class IngredientFilter(filters.FilterSet):
             'created_at': ['exact', 'lte', 'gte'],
             'updated_at': ['exact', 'lte', 'gte'],
         }
+
+    def filter_search(self, queryset: IngredientQueryset, name: str, value: str) -> QuerySet:
+        return queryset.search_by_normalized_name(value)

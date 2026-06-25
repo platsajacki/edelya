@@ -12,6 +12,7 @@ class TariffSerializer(ModelSerializer):
             'price',
             'billing_period',
             'description',
+            'description_items',
             'trial_days',
             'soon',
             'is_trial_tariff',

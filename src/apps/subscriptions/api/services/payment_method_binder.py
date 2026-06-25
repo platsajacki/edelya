@@ -35,7 +35,7 @@ class PaymentMethodBinder(BaseService):
             status=PaymentStatus.PENDING,
             idempotence_key=self.idempotence_key,
             yookassa_payment_id=yookassa_payment.id,
-            metadata={'action': WebhookAction.CARD_BINDING},
+            metadata={'action': WebhookAction.CARD_BINDING, 'idempotence_key': self.idempotence_key},
         )
         return RedirectResponse(
             action=ResponseAction.REDIRECT.value,

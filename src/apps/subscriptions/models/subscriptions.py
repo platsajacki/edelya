@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 from django.db import models
 from django.utils import timezone
 
-from apps.subscriptions.constants import DEFAULT_TRIAL_DAYS
+from apps.subscriptions.constants import DEFAULT_TRIAL_DAYS, GRACE_PERIOD_DAYS
 from apps.subscriptions.models.managers import SubscriptionManager
 from apps.subscriptions.models.model_enums import SubscriptionStatus
 from core.base.abstract_models import BaseModel
@@ -123,3 +123,21 @@ class Subscription(BaseModel):
         if self.trial_ended_at and self.trial_ended_at <= now:
             return True
         return self.get_trial_end_date() <= now
+
+    @property
+    def is_in_grace_period(self) -> bool:
+        if self.status != SubscriptionStatus.PAST_DUE or self.current_period_start is None:
+            return False
+        return timezone.now() <= self.current_period_start + timedelta(days=GRACE_PERIOD_DAYS)
+
+    @property
+    def started_at(self) -> datetime | None:
+        if self.status == SubscriptionStatus.TRIAL:
+            return self.trial_started_at
+        return self.current_period_start
+
+    @property
+    def ended_at(self) -> datetime | None:
+        if self.status == SubscriptionStatus.TRIAL:
+            return self.trial_ended_at
+        return self.current_period_end

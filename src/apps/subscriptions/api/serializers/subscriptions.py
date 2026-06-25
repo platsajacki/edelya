@@ -36,3 +36,15 @@ class SubscriptionTariffSelectSerializer(ModelSerializer):
     class Meta:
         model = Subscription
         fields = ['tariff_id']
+
+
+class AIRecipeUsageSerializer(serializers.Serializer):
+    used = serializers.IntegerField(read_only=True)
+    limit = serializers.IntegerField(read_only=True)
+    remaining = serializers.IntegerField(read_only=True)
+
+
+class SubscriptionDictionarySerializer(serializers.Serializer):
+    default_trial_days = serializers.IntegerField(read_only=True)
+    grace_period_days = serializers.IntegerField(read_only=True)
+    ai_recipe_limit_per_period = serializers.IntegerField(read_only=True)

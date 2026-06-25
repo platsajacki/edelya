@@ -3,7 +3,10 @@ import pytest
 from datetime import timedelta
 
 from django.utils import timezone
+from rest_framework.request import Request
+from rest_framework.test import APIRequestFactory
 
+from _tests.tests.subscriptions.test_subscription_retry_payment import RETRY_PAYMENT_URL
 from apps.subscriptions.constants import DEFAULT_TRIAL_DAYS, GRACE_PERIOD_DAYS
 from apps.subscriptions.models import PaymentMethod, Subscription, Tariff
 from apps.subscriptions.models.model_enums import BillingPeriod, PaymentStatus, PaymentType, SubscriptionStatus
@@ -339,12 +342,13 @@ def past_due_subscription_ready_for_retry(
 ) -> Subscription:
     """PAST_DUE subscription whose grace period expires within the next 5 minutes — time for retry."""
     now = timezone.now()
+    period_start = now - timedelta(days=GRACE_PERIOD_DAYS) + timedelta(minutes=2)
     return Subscription.objects.create(
         user=telegram_user,
         tariff=paid_tariff,
         status=SubscriptionStatus.PAST_DUE,
-        current_period_start=now - timedelta(days=30),
-        current_period_end=now - timedelta(days=GRACE_PERIOD_DAYS) + timedelta(minutes=2),
+        current_period_start=period_start,
+        current_period_end=paid_tariff.get_next_period_end(period_start),
         payment_method=active_payment_method,
     )
 
@@ -390,12 +394,13 @@ def past_due_subscription_for_expiry(
 ) -> Subscription:
     """PAST_DUE subscription whose grace period has already expired — ready for final expiry."""
     now = timezone.now()
+    period_start = now - timedelta(days=GRACE_PERIOD_DAYS + 1)
     return Subscription.objects.create(
         user=telegram_user,
         tariff=paid_tariff,
         status=SubscriptionStatus.PAST_DUE,
-        current_period_start=now - timedelta(days=30 + GRACE_PERIOD_DAYS),
-        current_period_end=now - timedelta(days=GRACE_PERIOD_DAYS + 1),
+        current_period_start=period_start,
+        current_period_end=paid_tariff.get_next_period_end(period_start),
     )
 
 
@@ -435,3 +440,27 @@ def payment_ready_for_check(
         is_check_sent=False,
         metadata={'action': 'recurring'},
     )
+
+
+@pytest.fixture
+def expired_subscription_with_payment_method(
+    telegram_user: User,
+    paid_tariff: Tariff,
+    active_payment_method: PaymentMethod,
+) -> Subscription:
+    now = timezone.now()
+    return Subscription.objects.create(
+        user=telegram_user,
+        tariff=paid_tariff,
+        status=SubscriptionStatus.EXPIRED,
+        current_period_start=now - timedelta(days=60),
+        current_period_end=now - timedelta(days=30),
+        payment_method=active_payment_method,
+    )
+
+
+@pytest.fixture
+def retry_payment_request(telegram_user: User) -> Request:
+    request = APIRequestFactory().post(RETRY_PAYMENT_URL)
+    request.user = telegram_user
+    return request

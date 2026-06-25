@@ -6,9 +6,12 @@ from django.utils import timezone
 
 from yookassa.payment import PaymentResponse
 
+from apps.marketing.models.model_enums import MessageTemplateName
+from apps.marketing.services.sender import NotificationSender, fmt_date
 from apps.subscriptions.exceptions import PaymentPendingRecurringError
 from apps.subscriptions.models import Payment, Subscription, Tariff
 from apps.subscriptions.models.model_enums import PaymentStatus, PaymentType, SubscriptionStatus
+from apps.subscriptions.services.sync_controler import payment_sync_flag_controler
 from apps.subscriptions.services.tax_check import TaxCheckSender
 from apps.subscriptions.services.webhook_handler import WebhookAction
 from apps.subscriptions.services.yookassa_payments import yookassa_service
@@ -48,7 +51,9 @@ class RecurringTaskService(TaskService):
     ) -> None:
         payment.status = PaymentStatus.SUCCEEDED
         payment.paid_at = timezone.now()
-        payment.save(update_fields=['status', 'paid_at'])
+        if subscription.payment_method and not payment.payment_method:
+            payment.payment_method = subscription.payment_method
+        payment.save(update_fields=['status', 'paid_at', 'payment_method'])
         subscription.status = SubscriptionStatus.ACTIVE
         loki_logger.info(
             self.get_log_msg(
@@ -56,6 +61,29 @@ class RecurringTaskService(TaskService):
                 f'Status set to ACTIVE.'
             )
         )
+        action = payment.metadata.get('action')
+        if action == WebhookAction.FIRST_PAYMENT:
+            NotificationSender(
+                payment.user,
+                MessageTemplateName.SUBSCRIPTION_FIRST_PAYMENT_SUCCEEDED,
+                {
+                    'tariff_name': subscription.tariff.name,
+                    'amount': str(payment.amount),
+                    'currency': str(payment.currency),
+                    'period_end': fmt_date(subscription.current_period_end),
+                },
+            )()
+        elif action == WebhookAction.RECURRING:
+            NotificationSender(
+                payment.user,
+                MessageTemplateName.SUBSCRIPTION_RECURRING_PAYMENT_SUCCEEDED,
+                {
+                    'tariff_name': subscription.tariff.name,
+                    'amount': str(payment.amount),
+                    'currency': str(payment.currency),
+                    'period_end': fmt_date(subscription.current_period_end),
+                },
+            )()
         TaxCheckSender(payment, service_name)()
 
     def _process_failed_payment(
@@ -75,6 +103,15 @@ class RecurringTaskService(TaskService):
                 f'for subscription {subscription.id!r} due to failed payment. Reason: {cancellation_reason}'
             )
         )
+        NotificationSender(
+            payment.user,
+            MessageTemplateName.SUBSCRIPTION_PAYMENT_FAILED,
+            {
+                'tariff_name': subscription.tariff.name,
+                'amount': str(payment.amount),
+                'currency': str(payment.currency),
+            },
+        )()
 
     def _save_subscription_after_payment(self, subscription: Subscription) -> None:
         subscription.save(
@@ -88,16 +125,19 @@ class RecurringTaskService(TaskService):
         )
 
     def create_payment(self, subscription: Subscription, tariff: Tariff, action: WebhookAction) -> Payment:
+        idempotence_key = str(uuid4())
         return Payment.objects.create(
             subscription=subscription,
             user=subscription.user,
             amount=tariff.price,
             payment_type=PaymentType.RECURRING,
             status=PaymentStatus.PENDING,
-            idempotence_key=str(uuid4()),
+            idempotence_key=idempotence_key,
+            payment_method=subscription.payment_method,
             metadata={
                 'action': action,
                 'tariff_id': str(tariff.id),
+                'idempotence_key': idempotence_key,
             },
         )
 
@@ -105,8 +145,9 @@ class RecurringTaskService(TaskService):
         self, payment: Payment, tariff: Tariff, subscription: Subscription, description: str
     ) -> PaymentResponse:
         try:
+            payment_sync_flag_controler.set_payment_sync_flag(str(payment.idempotence_key))
             yoo_payment_method_id = getattr(subscription.payment_method, 'yookassa_payment_method_id', None)
-            return yookassa_service.create_payment(
+            yoo_response = yookassa_service.create_payment(
                 amount=tariff.price,
                 payment_method_id=yoo_payment_method_id,
                 capture=True,
@@ -114,6 +155,9 @@ class RecurringTaskService(TaskService):
                 description=description,
                 metadata=payment.metadata,
             )
+            payment.yookassa_payment_id = yoo_response.id
+            payment.save(update_fields=['yookassa_payment_id'])
+            return yoo_response
         except Exception as e:
             raise PaymentPendingRecurringError(subscription_id=payment.subscription_id, message=str(e)) from e
 

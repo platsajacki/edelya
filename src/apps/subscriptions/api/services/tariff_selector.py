@@ -14,10 +14,12 @@ from rest_framework.response import Response
 from apps.marketing.models.model_enums import MessageTemplateName
 from apps.marketing.services.sender import NotificationSender, fmt_date
 from apps.subscriptions.api.serializers.subscriptions import SubscriptionSerializer
+from apps.subscriptions.constants import MIN_PRORATION_AMOUNT
 from apps.subscriptions.models import Subscription, Tariff
 from apps.subscriptions.models.model_enums import PaymentStatus, PaymentType, SubscriptionStatus
 from apps.subscriptions.models.payment_methods import PaymentMethod
 from apps.subscriptions.models.payments import Payment
+from apps.subscriptions.services.sync_controler import payment_sync_flag_controler
 from apps.subscriptions.services.tax_check import TaxCheckSender
 from apps.subscriptions.services.webhook_handler import WebhookAction
 from apps.subscriptions.services.yookassa_payments import yookassa_service
@@ -71,6 +73,13 @@ class TariffService(BaseService):
     tariff: Tariff
     idempotence_key: str = dc_field(default_factory=lambda: str(uuid4()))
 
+    def get_metadata(self, metadata: dict | None) -> dict:
+        if metadata is None:
+            metadata = {'idempotence_key': self.idempotence_key}
+        else:
+            metadata['idempotence_key'] = self.idempotence_key
+        return metadata
+
 
 @dataclass
 class TrialTariffBinder(TariffService):
@@ -85,7 +94,7 @@ class TrialTariffBinder(TariffService):
             status=PaymentStatus.PENDING,
             idempotence_key=self.idempotence_key,
             yookassa_payment_id=yookassa_payment_id,
-            metadata=metadata or {},
+            metadata=self.get_metadata(metadata),
         )
 
     @transaction.atomic
@@ -132,7 +141,7 @@ class TariffActivator(TariffService):
             status=PaymentStatus.PENDING,
             idempotence_key=self.idempotence_key,
             yookassa_payment_id=yookassa_payment_id,
-            metadata=metadata or {},
+            metadata=self.get_metadata(metadata),
         )
 
     @transaction.atomic
@@ -179,7 +188,10 @@ class TariffSwitcher(TariffService):
         new_price = Decimal(str(self.tariff.price))
         current_price = Decimal(str(subscription.tariff.price))
         proration = Decimal(remaining_days) / Decimal(total_days) * (new_price - current_price)
-        return proration.quantize(Decimal('0.01'))
+        amount = proration.quantize(Decimal('0.01'))
+        if Decimal(0) < proration and amount < MIN_PRORATION_AMOUNT:
+            return MIN_PRORATION_AMOUNT
+        return amount
 
     def create_upgrade_payment(
         self,
@@ -200,7 +212,11 @@ class TariffSwitcher(TariffService):
             yookassa_payment_id=yookassa_payment_id,
             payment_method=payment_method,
             paid_at=paid_at,
-            metadata={'action': WebhookAction.UPGRADE, 'tariff_id': str(self.tariff.id)},
+            metadata={
+                'action': WebhookAction.UPGRADE,
+                'tariff_id': str(self.tariff.id),
+                'idempotence_key': self.idempotence_key,
+            },
         )
 
     def update_subscription_to_downgrade(self, subscription: Subscription) -> None:
@@ -237,12 +253,17 @@ class TariffSwitcher(TariffService):
     def upgrade(self, subscription: Subscription, payment_method: PaymentMethod) -> TariffSelectorResponse:
         proration = self._calc_proration(subscription)
         if proration > 0:
+            payment_sync_flag_controler.set_payment_sync_flag(self.idempotence_key)
             yoo_payment = yookassa_service.create_payment(
                 amount=proration,
                 payment_method_id=payment_method.yookassa_payment_method_id,
                 idempotence_key=self.idempotence_key,
                 description=f'Смена тарифа на «{self.tariff.name}»',
-                metadata={'tariff_id': str(self.tariff.id)},
+                metadata={
+                    'tariff_id': str(self.tariff.id),
+                    'action': WebhookAction.UPGRADE,
+                    'idempotence_key': self.idempotence_key,
+                },
             )
             payment = self.create_upgrade_payment(
                 yookassa_payment_id=yoo_payment.id,

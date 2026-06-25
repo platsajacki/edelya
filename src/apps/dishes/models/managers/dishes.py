@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 from django.db.models import Q, Sum
 
 from apps.shopping.data_types import IngredientTotalAmountData
-from core.base.managers import ActiveManager, ActiveQuerySet
+from core.base.managers import ActiveManager, ActiveQuerySet, NameSearchManager, NameSearchQuerySet
 
 if TYPE_CHECKING:
     from apps.dishes.models import Dish, DishCategory, DishIngredient  # noqa: F401
@@ -19,7 +19,7 @@ class DishCategoryManager(ActiveManager['DishCategory', DishCategoryQueryset]):
         return DishCategoryQueryset
 
 
-class DishQueryset(ActiveQuerySet['Dish']):
+class DishQueryset(NameSearchQuerySet['Dish']):
     def for_user(self, user: User) -> DishQueryset:
         return self.actived().filter(Q(owner__isnull=True) | Q(owner=user))
 
@@ -30,7 +30,7 @@ class DishQueryset(ActiveQuerySet['Dish']):
         return self.prefetch_related('dish_ingredients__ingredient')
 
 
-class DishManager(ActiveManager['Dish', DishQueryset]):
+class DishManager(NameSearchManager['Dish', DishQueryset]):
     def get_queryset_class(self) -> type[DishQueryset]:
         return DishQueryset
 

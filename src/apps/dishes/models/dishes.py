@@ -1,14 +1,15 @@
 from collections.abc import Iterable
 
+from django.contrib.postgres.indexes import GinIndex, OpClass
 from django.core.validators import MinValueValidator
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, Value
 from django.db.models.base import ModelBase
-from django.db.models.functions import Lower
+from django.db.models.functions import Lower, Replace
 
 from apps.dishes.models.managers.dishes import DishCategoryManager, DishIngredientManager, DishManager
 from core.base.abstract_models import BaseActiveModel, BaseModel
-from core.utils import normalize_string
+from core.utils import normalize_name
 
 
 class DishCategory(BaseActiveModel):
@@ -88,6 +89,14 @@ class Dish(BaseActiveModel):
                 name='idx_dish_owner_name',
                 condition=Q(is_active=True),
             ),
+            GinIndex(
+                OpClass(
+                    Replace(Lower('name'), Value('ё'), Value('е')),
+                    name='gin_trgm_ops',
+                ),
+                name='idx_dish_norm_name_trgm_active',
+                condition=Q(is_active=True),
+            ),
         ]
 
     def save(
@@ -97,7 +106,7 @@ class Dish(BaseActiveModel):
         using: str | None = None,
         update_fields: Iterable[str] | None = None,
     ) -> None:
-        self.name = normalize_string(self.name)
+        self.name = normalize_name(self.name)
         return super().save(
             force_insert=force_insert,
             force_update=force_update,

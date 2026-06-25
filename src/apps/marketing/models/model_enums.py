@@ -1,6 +1,14 @@
 from django.db import models
 
 
+class FeedbackRating(models.IntegerChoices):
+    BAD = 1, 'Плохо'
+    NORMAL = 2, 'Нормально'
+    GOOD = 3, 'Хорошо'
+    EXCELLENT = 4, 'Отлично'
+    GREAT = 5, 'Великолепно'
+
+
 class MessageTemplateName(models.TextChoices):
     SUBSCRIPTION_FIRST_PAYMENT_SUCCEEDED = (
         'subscription_first_payment_succeeded',

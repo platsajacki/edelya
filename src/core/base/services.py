@@ -8,10 +8,10 @@ from django.db.models import Model, QuerySet
 from rest_framework.serializers import BaseSerializer
 
 
-class BaseService(metaclass=ABCMeta):
+class BaseService[ReturnType: Any](metaclass=ABCMeta):
     __call___called: bool = False
 
-    def __call__(self) -> Any:
+    def __call__(self) -> ReturnType:
         self.__call___called = True
         self.validate()
         return self.__act()
@@ -27,13 +27,13 @@ class BaseService(metaclass=ABCMeta):
         for validator in validators:
             validator()
 
-    def __act(self) -> Any:
+    def __act(self) -> ReturnType:
         if not self.__call___called:
             raise RuntimeError('Please call the service instance to execute the action')
         return self.act()
 
     @abstractmethod
-    def act(self) -> Any:
+    def act(self) -> ReturnType:
         raise NotImplementedError('Please implement in the services class')
 
 

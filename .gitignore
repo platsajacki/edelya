@@ -4,6 +4,8 @@ staticfiles
 *.x.md
 .start_data.yaml
 recipes.ipynb
+.agents
+.codex
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

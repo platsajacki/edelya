@@ -1,9 +1,11 @@
 from django_celery_beat.models import CrontabSchedule, IntervalSchedule, PeriodicTask
 
+from apps.dishes.tasks.ai_draft_processor import process_ai_drafts_background
 from apps.subscriptions.tasks.expire import (
     expire_cancelled_subscriptions,
     expire_past_due_subscriptions,
     expire_trials_without_payment,
+    expire_zero_amount_bindings,
 )
 from apps.subscriptions.tasks.past_due import process_past_due_charge
 from apps.subscriptions.tasks.renewals import process_subscription_renewals
@@ -20,17 +22,10 @@ class SetupPeriodicTasksService(TaskService):
     Идемпотентна: повторный вызов не создаёт дубли — использует update_or_create.
     """
 
-    def get_every_5_minutes_schedule(self) -> IntervalSchedule:
+    def get_interval_schedule(self, every: int, period: str) -> IntervalSchedule:
         schedule, _ = IntervalSchedule.objects.get_or_create(
-            every=5,
-            period=IntervalSchedule.MINUTES,
-        )
-        return schedule
-
-    def get_every_20_seconds_schedule(self) -> IntervalSchedule:
-        schedule, _ = IntervalSchedule.objects.get_or_create(
-            every=20,
-            period=IntervalSchedule.SECONDS,
+            every=every,
+            period=period,
         )
         return schedule
 
@@ -42,11 +37,13 @@ class SetupPeriodicTasksService(TaskService):
         return schedule
 
     def get_task_definitions(self) -> list[dict]:
-        every_5_minutes = self.get_every_5_minutes_schedule()
-        every_20_seconds = self.get_every_20_seconds_schedule()
+        every_20_seconds = self.get_interval_schedule(every=20, period=IntervalSchedule.SECONDS)
+        every_2_minutes = self.get_interval_schedule(every=2, period=IntervalSchedule.MINUTES)
+        every_5_minutes = self.get_interval_schedule(every=5, period=IntervalSchedule.MINUTES)
         daily_0700 = self.get_crontab_schedule(hour='7', minute='0')
         daily_0715 = self.get_crontab_schedule(hour='7', minute='15')
         daily_0730 = self.get_crontab_schedule(hour='7', minute='30')
+        daily_0745 = self.get_crontab_schedule(hour='7', minute='45')
         return [
             {
                 'name': 'Конвертация триала в платную подписку',
@@ -87,6 +84,16 @@ class SetupPeriodicTasksService(TaskService):
                 'schedule_field': 'interval',
             },
             {
+                'name': 'Фоновая обработка AI-черновиков блюд',
+                'task': process_ai_drafts_background.name,
+                'description': (
+                    'Каждые 2 минуты. Повторно ставит в очередь AI-черновики блюд, '
+                    'которые находятся в статусе PROCESSING дольше 2 минут.'
+                ),
+                'schedule': every_2_minutes,
+                'schedule_field': 'interval',
+            },
+            {
                 'name': 'Истечение брошенных триалов',
                 'task': expire_trials_without_payment.name,
                 'description': (
@@ -114,6 +121,16 @@ class SetupPeriodicTasksService(TaskService):
                     'с auto_renew=False и истёкшим current_period_end.'
                 ),
                 'schedule': daily_0730,
+                'schedule_field': 'crontab',
+            },
+            {
+                'name': 'Истечение брошенных привязок карты',
+                'task': expire_zero_amount_bindings.name,
+                'description': (
+                    'Ежедневно в 07:45. Переводит в CANCELED платежи ZERO_AMOUNT_BINDING, '
+                    'застрявшие в статусе PENDING более 24 часов (клиент не заполнил данные карты).'
+                ),
+                'schedule': daily_0745,
                 'schedule_field': 'crontab',
             },
         ]

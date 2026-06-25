@@ -360,3 +360,28 @@ class TestIngredientFilterCaseInsensitive:
         response = auth_telegram_api_client.get(self.list_url, data={'name__icontains': 'potato'})
         assert response.status_code == status.HTTP_200_OK
         assert response.data['count'] == 1
+
+    def test_search_finds_fuzzy_match(self, auth_telegram_api_client: APIClient, ingredient_global: Ingredient) -> None:
+        ingredient_global.name = 'Картофель'
+        ingredient_global.save(update_fields=['name'])
+        response = auth_telegram_api_client.get(self.list_url, data={'search': 'картопель'})
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['count'] == 1
+        assert response.data['results'][0]['id'] == str(ingredient_global.id)
+
+    def test_search_finds_substring_match(
+        self, auth_telegram_api_client: APIClient, ingredient_global: Ingredient
+    ) -> None:
+        ingredient_global.name = 'Картофель молодой'
+        ingredient_global.save(update_fields=['name'])
+        response = auth_telegram_api_client.get(self.list_url, data={'search': 'картоф'})
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['count'] == 1
+        assert response.data['results'][0]['id'] == str(ingredient_global.id)
+
+    def test_search_returns_empty_on_no_match(
+        self, auth_telegram_api_client: APIClient, ingredient_global: Ingredient
+    ) -> None:
+        response = auth_telegram_api_client.get(self.list_url, data={'search': 'zzzzNotExist'})
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['count'] == 0

@@ -34,7 +34,7 @@ class PaymentAdmin(ModelAdmin):
         (
             'Details',
             {
-                'fields': ('paid_at', 'description', 'cancellation_reason', 'metadata'),
+                'fields': ('paid_at', 'description', 'cancellation_reason', 'metadata', 'is_check_sent', 'check_url'),
             },
         ),
         (
@@ -45,10 +45,29 @@ class PaymentAdmin(ModelAdmin):
             },
         ),
     )
-    readonly_fields = ('id', 'idempotence_key', 'created_at', 'updated_at')
+    readonly_fields = (
+        'id',
+        'idempotence_key',
+        'user',
+        'subscription',
+        'payment_type',
+        'status',
+        'send_to_tax3r',
+        'amount',
+        'currency',
+        'payment_method',
+        'yookassa_payment_id',
+        'paid_at',
+        'description',
+        'cancellation_reason',
+        'metadata',
+        'is_check_sent',
+        'check_url',
+        'created_at',
+        'updated_at',
+    )
     list_display = ('id', 'user', 'subscription', 'payment_type', 'status', 'amount', 'currency', 'paid_at')
     list_filter = ('status', 'payment_type', 'currency')
     list_select_related = ('user', 'subscription')
     search_fields = ('user__username', 'user__telegram_username', 'yookassa_payment_id')
     ordering = ('-created_at',)
-    autocomplete_fields = ('user', 'subscription', 'payment_method')

@@ -3,14 +3,18 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
+from apps.dishes.models import DishAIDraft
 from apps.marketing.models import Notification
 from apps.marketing.models.model_enums import MessageTemplateName
+from apps.subscriptions.constants import AI_RECIPE_LIMIT_PER_PERIOD, DEFAULT_TRIAL_DAYS, GRACE_PERIOD_DAYS
 from apps.subscriptions.models import Subscription, Tariff
 from apps.subscriptions.models.model_enums import SubscriptionStatus
 from apps.users.models import ConsentLog, User
 from apps.users.models.model_enums import ConsentAction, ConsentType
 
 SUBSCRIPTION_ME_URL = reverse('api_v1:subscriptions:subscriptions:subscription-me')
+AI_RECIPE_USAGE_URL = reverse('api_v1:subscriptions:subscriptions:subscription-ai-recipe-usage')
+SUBSCRIPTION_DICTIONARY_URL = reverse('api_v1:subscriptions:subscriptions:subscription-dictionary')
 START_TRIAL_URL = reverse('api_v1:subscriptions:subscriptions:subscription-start-trial')
 CANCEL_URL = reverse('api_v1:subscriptions:subscriptions:subscription-cancel')
 RESUME_URL = reverse('api_v1:subscriptions:subscriptions:subscription-resume')
@@ -88,6 +92,90 @@ class TestSubscriptionMe:
             'updated_at',
         }
         assert set(response.data.keys()) == expected_fields
+
+
+class TestAIRecipeUsage:
+    def test_user_with_period_and_no_drafts_gets_full_limit(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        active_subscription_with_period: Subscription,
+    ) -> None:
+        api_client.force_authenticate(user=telegram_user)
+        response = api_client.get(AI_RECIPE_USAGE_URL)
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data == {
+            'used': 0,
+            'limit': AI_RECIPE_LIMIT_PER_PERIOD,
+            'remaining': AI_RECIPE_LIMIT_PER_PERIOD,
+        }
+
+    def test_user_with_period_and_drafts_gets_usage(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        active_subscription_with_period: Subscription,
+        dish_ai_draft: DishAIDraft,
+    ) -> None:
+        api_client.force_authenticate(user=telegram_user)
+        response = api_client.get(AI_RECIPE_USAGE_URL)
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data == {
+            'used': 1,
+            'limit': AI_RECIPE_LIMIT_PER_PERIOD,
+            'remaining': AI_RECIPE_LIMIT_PER_PERIOD - 1,
+        }
+
+    def test_user_at_period_limit_gets_zero_remaining(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        active_subscription_with_period: Subscription,
+        dish_ai_draft_limit: list[DishAIDraft],
+    ) -> None:
+        api_client.force_authenticate(user=telegram_user)
+        response = api_client.get(AI_RECIPE_USAGE_URL)
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data == {
+            'used': AI_RECIPE_LIMIT_PER_PERIOD,
+            'limit': AI_RECIPE_LIMIT_PER_PERIOD,
+            'remaining': 0,
+        }
+
+    def test_user_without_valid_period_gets_zero_usage(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        active_subscription: Subscription,
+    ) -> None:
+        api_client.force_authenticate(user=telegram_user)
+        response = api_client.get(AI_RECIPE_USAGE_URL)
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data == {
+            'used': 0,
+            'limit': AI_RECIPE_LIMIT_PER_PERIOD,
+            'remaining': 0,
+        }
+
+
+class TestSubscriptionDictionary:
+    def test_anon_user_gets_401(self, api_client: APIClient) -> None:
+        response = api_client.get(SUBSCRIPTION_DICTIONARY_URL)
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_authenticated_user_gets_constants(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+    ) -> None:
+        api_client.force_authenticate(user=telegram_user)
+        response = api_client.get(SUBSCRIPTION_DICTIONARY_URL)
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data == {
+            'default_trial_days': DEFAULT_TRIAL_DAYS,
+            'grace_period_days': GRACE_PERIOD_DAYS,
+            'ai_recipe_limit_per_period': AI_RECIPE_LIMIT_PER_PERIOD,
+        }
 
 
 class TestStartTrial:

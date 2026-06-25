@@ -19,6 +19,8 @@ jobs:
       SQL_HOST: localhost
       SQL_PORT: 5432
       EDELYA_BOT_TOKEN: '9999999999:AAAAAAAAAAAAAAAAAAAAA'
+      OPENAI_API_KEY: 'fake_key_for_tests'
+
     outputs:
       actions_url: ${{ steps.set-action-url.outputs.actions_url }}
 
