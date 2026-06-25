@@ -19,6 +19,16 @@ def check_delay_between_retries(delay: float) -> float:
 
 
 DELAY_BETWEEN_DB_RETRIES = check_delay_between_retries(settings.DELAY_BETWEEN_DB_RETRIES)
+TRANSIENT_CONNECTION_ERROR_MARKERS = (
+    'could not connect to server',
+    'could not translate host name',
+    'temporary failure in name resolution',
+)
+
+
+def is_transient_connection_error(error: BaseException) -> bool:
+    msg = str(error).lower()
+    return any(marker in msg for marker in TRANSIENT_CONNECTION_ERROR_MARKERS)
 
 
 class DatabaseWrapper(PostgresDatabaseWrapper):
@@ -28,11 +38,10 @@ class DatabaseWrapper(PostgresDatabaseWrapper):
             try:
                 return super().get_new_connection(conn_params)
             except (OperationalError, psycopg2.OperationalError) as e:
-                msg = str(e)
-                transient = 'Temporary failure in name resolution' in msg or 'could not connect to server' in msg
-                if not transient:
+                if not is_transient_connection_error(e):
                     raise
                 last_error = e
+                msg = str(e)
                 loki_logger.warning(
                     'Database connection attempt %s/%s failed: %s',
                     attempt,
