@@ -13,10 +13,6 @@ from core.base.services import BaseService
 
 _RECIPE_PARSE_ERROR_MESSAGES = {
     'not_recipe': 'Текст не похож на рецепт. Пришлите описание блюда с ингредиентами и приготовлением.',
-    'too_short': 'Текст слишком короткий для рецепта. Пришлите ингредиенты и шаги приготовления.',
-    'not_enough_data': (
-        'Недостаточно данных для разбора рецепта. Укажите ингредиенты, количество и способ приготовления.'
-    ),
     'multiple_recipes': 'В тексте найдено несколько рецептов. Пришлите один рецепт за раз.',
     'prompt_injection': (
         'Обнаружены подозрительные данные, похожие на попытку обойти систему. '
@@ -64,7 +60,7 @@ class RecipeSchemaBuilder(BaseService[JSONSchema]):
         return self._object_schema(
             {
                 'name': self._string_schema('Название блюда с заглавной буквы, в именительном падеже.'),
-                'recipe': self._string_schema('Пронумерованные шаги приготовления. Если шагов нет, пустая строка.'),
+                'recipe': self._string_schema('Пронумерованные шаги приготовления. Каждый шаг с новой строки.'),
                 'category_name': self._string_schema(
                     'Категория блюда. Выбрать наиболее подходящее значение из enum.',
                     self.get_dish_categories(),
@@ -89,7 +85,7 @@ class RecipeSchemaBuilder(BaseService[JSONSchema]):
                 'amount': {
                     'type': 'number',
                     'exclusiveMinimum': 0,
-                    'description': 'Количество ингредиента в base_unit. Если количество не указано, использовать 1.',
+                    'description': 'Количество ингредиента в base_unit.',
                 },
                 'position': {
                     'type': 'integer',
