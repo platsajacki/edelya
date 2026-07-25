@@ -116,6 +116,7 @@ FRONTEND_URL = getenv('FRONTEND_URL', '')
 YOOKASSA_SHOP_ID = getenv('YOOKASSA_SHOP_ID', '')
 YOOKASSA_SECRET_KEY = getenv('YOOKASSA_SECRET_KEY', '')
 YOOKASSA_RETURN_URL = f'{FRONTEND_URL.rstrip("/")}/cabinet?payment_return=1' if FRONTEND_URL else ''
+YOOKASSA_PROXY_URL = getenv('YOOKASSA_PROXY_URL', '')
 
 # Tax3r (fiscal check) settings
 TAX3R_URL = getenv('TAX3R_URL', '')
