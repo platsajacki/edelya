@@ -1,10 +1,12 @@
 from datetime import date, timedelta
 from importlib import import_module
+from ipaddress import ip_address
 from pathlib import Path
 from pkgutil import iter_modules
 from random import choice
 from types import ModuleType
 
+from django.conf import settings
 from django.db.models import Q
 from rest_framework.request import Request
 
@@ -77,7 +79,12 @@ def build_redis_retry_policy(attempts: int, base: float, cap: float) -> Retry:
 
 
 def get_client_ip(request: Request) -> str | None:
-    forwarded = request.META.get('HTTP_X_FORWARDED_FOR', '')
-    if forwarded:
-        return forwarded.split(',')[0].strip()
-    return request.META.get('REMOTE_ADDR')
+    value = request.META.get(settings.IP_HEADER)
+    if not value:
+        value = request.META.get('REMOTE_ADDR')
+    if not value:
+        return None
+    try:
+        return str(ip_address(value.strip()))
+    except ValueError:
+        return None

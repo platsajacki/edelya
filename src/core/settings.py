@@ -24,6 +24,7 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
     'x-tg-init-data',
 ]
 CSRF_TRUSTED_ORIGINS = getenv('CSRF_TRUSTED_ORIGINS', 'http://127.0.0.1').split(', ')
+IP_HEADER = getenv('IP_HEADER', 'HTTP_X_ENVOY_EXTERNAL_ADDRESS')
 
 DJANGO_APPS = [
     'django.contrib.admin',
