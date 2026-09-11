@@ -246,6 +246,36 @@ class TestPaymentMethodDestroy:
         assert active_subscription_with_period.payment_method is None
         assert active_subscription_with_period.status == SubscriptionStatus.ACTIVE
 
+    def test_delete_creates_revoked_recurring_payments_log(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        active_subscription_with_period: Subscription,
+    ) -> None:
+        """Отключение автопродления при удалении карты фиксируется как отзыв согласия на рекуррентные платежи."""
+        api_client.force_authenticate(user=telegram_user)
+        api_client.delete(PAYMENT_METHOD_URL)
+        assert ConsentLog.objects.filter(
+            user=telegram_user,
+            consent_type=ConsentType.RECURRING_PAYMENTS,
+            action=ConsentAction.REVOKED,
+        ).exists()
+
+    def test_delete_without_auto_renew_does_not_create_recurring_payments_log(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        active_subscription_with_period: Subscription,
+    ) -> None:
+        active_subscription_with_period.auto_renew = False
+        active_subscription_with_period.save(update_fields=['auto_renew'])
+        api_client.force_authenticate(user=telegram_user)
+        api_client.delete(PAYMENT_METHOD_URL)
+        assert not ConsentLog.objects.filter(
+            user=telegram_user,
+            consent_type=ConsentType.RECURRING_PAYMENTS,
+        ).exists()
+
     def test_delete_during_trial_clears_pending_tariff(
         self,
         api_client: APIClient,

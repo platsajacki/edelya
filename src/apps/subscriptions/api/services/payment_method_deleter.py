@@ -17,11 +17,11 @@ from core.utils import get_client_ip
 class PaymentMethodDeleter(BaseInstanceService):
     request: Request
 
-    def create_log(self) -> None:
+    def create_log(self, consent_type: ConsentType) -> None:
         try:
             ConsentLog.objects.create(
                 user=self.request.user,
-                consent_type=ConsentType.PAYMENT_METHOD_STORAGE,
+                consent_type=consent_type,
                 action=ConsentAction.REVOKED,
                 metadata={'action': 'delete_payment_method'},
                 ip_address=get_client_ip(self.request),
@@ -36,14 +36,18 @@ class PaymentMethodDeleter(BaseInstanceService):
             )
 
     @transaction.atomic
-    def delete_payment_method(self) -> None:
+    def delete_payment_method(self) -> bool:
         subscription = Subscription.objects.select_for_update().filter(user=self.request.user).first()
+        auto_renew_disabled = False
         if subscription is not None and subscription.auto_renew:
             subscription.disable_auto_renew()
+            auto_renew_disabled = True
         self.instance.delete()
+        return auto_renew_disabled
 
     def act(self) -> None:
-        self.create_log()
+        self.create_log(ConsentType.PAYMENT_METHOD_STORAGE)
         card_name = getattr(self.instance, 'card_name', 'Your card')
-        self.delete_payment_method()
+        if self.delete_payment_method():
+            self.create_log(ConsentType.RECURRING_PAYMENTS)
         NotificationSender(self.request.user, MessageTemplateName.SUBSCRIPTION_CARD_UNBOUND, {'card_name': card_name})()
