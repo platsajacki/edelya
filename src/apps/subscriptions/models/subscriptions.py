@@ -104,6 +104,15 @@ class Subscription(BaseModel):
             return timezone.now() + timedelta(days=self.days_in_trial)
         return self.trial_started_at + timedelta(days=self.days_in_trial)
 
+    def disable_auto_renew(self) -> None:
+        self.auto_renew = False
+        self.cancelled_at = timezone.now()
+        update_fields = ['auto_renew', 'cancelled_at']
+        if self.status == SubscriptionStatus.TRIAL:
+            self.pending_tariff = None
+            update_fields.append('pending_tariff')
+        self.save(update_fields=update_fields)
+
     @property
     def is_active(self) -> bool:
         now = timezone.now()

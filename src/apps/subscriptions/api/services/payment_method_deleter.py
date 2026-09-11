@@ -1,9 +1,11 @@
 from dataclasses import dataclass
 
+from django.db import transaction
 from rest_framework.request import Request
 
 from apps.marketing.models.model_enums import MessageTemplateName
 from apps.marketing.services.sender import NotificationSender
+from apps.subscriptions.models import Subscription
 from apps.users.models.consents import ConsentLog
 from apps.users.models.model_enums import ConsentAction, ConsentType
 from core.base.services import BaseInstanceService
@@ -33,8 +35,15 @@ class PaymentMethodDeleter(BaseInstanceService):
                 exc_info=True,
             )
 
+    @transaction.atomic
+    def delete_payment_method(self) -> None:
+        subscription = Subscription.objects.select_for_update().filter(user=self.request.user).first()
+        if subscription is not None and subscription.auto_renew:
+            subscription.disable_auto_renew()
+        self.instance.delete()
+
     def act(self) -> None:
         self.create_log()
         card_name = getattr(self.instance, 'card_name', 'Your card')
-        self.instance.delete()
+        self.delete_payment_method()
         NotificationSender(self.request.user, MessageTemplateName.SUBSCRIPTION_CARD_UNBOUND, {'card_name': card_name})()

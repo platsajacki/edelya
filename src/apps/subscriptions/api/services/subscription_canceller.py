@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 
 from django.db import transaction
-from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
@@ -47,13 +46,7 @@ class SubscriptionCanceller(CurrentSubscriptionService):
 
     @transaction.atomic
     def act(self) -> Response:
-        self.subscription.auto_renew = False
-        self.subscription.cancelled_at = timezone.now()
-        if self.subscription.status == SubscriptionStatus.TRIAL:
-            self.subscription.pending_tariff = None
-            self.subscription.save(update_fields=['auto_renew', 'cancelled_at', 'pending_tariff'])
-        else:
-            self.subscription.save(update_fields=['auto_renew', 'cancelled_at'])
+        self.subscription.disable_auto_renew()
         self._log_revoked_recurring_payments()
         NotificationSender(
             self.authenticated_user,
