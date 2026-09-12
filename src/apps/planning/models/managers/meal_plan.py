@@ -79,7 +79,12 @@ class MealPlanItemManager(BaseManager['MealPlanItem', MealPlanItemQuerySet]):
         return self.get_queryset().for_user(user).filter(date__range=(start_date, end_date))
 
     def get_for_week(self, user: User, start_week: str | date, end_week: str | date) -> MealPlanItemQuerySet:
-        return self.get_for_user_and_date_range(user, start_week, end_week).with_dish().with_dish_category()
+        return (
+            self.get_for_user_and_date_range(user, start_week, end_week)
+            .with_dish()
+            .with_dish_category()
+            .prefetch_dish_ingredients_full()
+        )
 
     def get_max_position_for_user_and_dates(
         self, user: User, dates: list[date], position_step: int = 100

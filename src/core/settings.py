@@ -82,6 +82,8 @@ DATABASES = {
         'PASSWORD': getenv('POSTGRES_PASSWORD', 'password'),
         'HOST': getenv('POSTGRES_HOST', 'localhost'),
         'PORT': getenv('POSTGRES_PORT', '5432'),
+        'CONN_MAX_AGE': int(getenv('DB_CONN_MAX_AGE', '60')),
+        'CONN_HEALTH_CHECKS': True,
     }
 }
 MAX_DB_CONNECTION_RETRIES = int(getenv('MAX_DB_CONNECTION_RETRIES', '3'))

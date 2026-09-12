@@ -45,16 +45,8 @@ class MealPlanItem(BaseModel, ColoredModel):
         ordering = ['date', 'position', 'created_at']
         indexes = [
             models.Index(
-                fields=['owner', 'date'],
-                name='idx_meal_owner_date',
-            ),
-            models.Index(
-                fields=['owner', 'date', 'position'],
-                name='idx_meal_owner_date_pos',
-            ),
-            models.Index(
-                fields=['cooking_event'],
-                name='idx_meal_cooking_event',
+                fields=['owner', 'date', 'position', 'created_at'],
+                name='idx_meal_owner_date_pos_cr',
             ),
         ]
 

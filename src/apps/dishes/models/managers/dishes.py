@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from django.db.models import Q, Sum
+from django.db.models import Prefetch, Q, Sum
 
 from apps.shopping.data_types import IngredientTotalAmountData
 from core.base.managers import ActiveManager, ActiveQuerySet, NameSearchManager, NameSearchQuerySet
@@ -26,8 +26,19 @@ class DishQueryset(NameSearchQuerySet['Dish']):
     def with_category(self) -> DishQueryset:
         return self.select_related('category')
 
+    def _prefetch_related_dish_ingredients(self) -> Prefetch:
+        return Prefetch(
+            'dish_ingredients',
+            queryset=self.get_dish_ingredient_model()
+            .objects.select_related(
+                'ingredient',
+                'ingredient__category',
+            )
+            .order_by('position', 'created_at'),
+        )
+
     def with_ingredients(self) -> DishQueryset:
-        return self.prefetch_related('dish_ingredients__ingredient')
+        return self.prefetch_related(self._prefetch_related_dish_ingredients())
 
 
 class DishManager(NameSearchManager['Dish', DishQueryset]):

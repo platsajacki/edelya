@@ -89,6 +89,11 @@ class Dish(BaseActiveModel):
                 name='idx_dish_owner_name',
                 condition=Q(is_active=True),
             ),
+            models.Index(
+                fields=['name'],
+                name='idx_dish_name_active',
+                condition=Q(is_active=True),
+            ),
             GinIndex(
                 OpClass(
                     Replace(Lower('name'), Value('ё'), Value('е')),
@@ -160,11 +165,7 @@ class DishIngredient(BaseModel):
         ]
         indexes = [
             models.Index(
-                fields=['dish'],
-                name='idx_dish_ingredient_dish',
-            ),
-            models.Index(
-                fields=['ingredient'],
-                name='idx_dish_ingredient_ingredient',
+                fields=['dish', 'position', 'created_at'],
+                name='idx_dish_ing_dish_pos_cr',
             ),
         ]

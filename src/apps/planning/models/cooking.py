@@ -38,12 +38,8 @@ class CookingEvent(BaseModel, ColoredModel):
         ordering = ['cooking_date', 'created_at']
         indexes = [
             models.Index(
-                fields=['owner', 'cooking_date'],
-                name='idx_cook_owner_date',
-            ),
-            models.Index(
-                fields=['owner', 'dish'],
-                name='idx_cook_owner_dish',
+                fields=['owner', 'cooking_date', 'created_at'],
+                name='idx_cook_owner_date_cr',
             ),
         ]
 
