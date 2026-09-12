@@ -1,4 +1,4 @@
-from uuid import uuid4
+from uuid import uuid7
 
 from django.db import models
 from django.utils import timezone
@@ -11,7 +11,7 @@ class BaseModel(models.Model):
     id = models.UUIDField(
         verbose_name='ID',
         primary_key=True,
-        default=uuid4,
+        default=uuid7,
         editable=False,
     )
     created_at = models.DateTimeField(
