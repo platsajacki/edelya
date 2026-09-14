@@ -197,6 +197,22 @@ def pending_payment_zero_amount_with_tariff(
 
 
 @pytest.fixture
+def pending_payment_resume_card_binding(telegram_user: User, active_subscription: Subscription) -> Payment:
+    """Card binding started by resuming a cancelled ACTIVE subscription without a card."""
+    active_subscription.disable_auto_renew()
+    return Payment.objects.create(
+        subscription=active_subscription,
+        user=telegram_user,
+        amount=0,
+        payment_type=PaymentType.ZERO_AMOUNT_BINDING,
+        status=PaymentStatus.PENDING,
+        idempotence_key='33333333-3333-3333-3333-333333333333',
+        yookassa_payment_id='yoo-pm-id-001',
+        metadata={'action': WebhookAction.RESUME_CARD_BINDING},
+    )
+
+
+@pytest.fixture
 def pending_payment_first(
     telegram_user: User,
     expired_subscription: Subscription,

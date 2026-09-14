@@ -1,16 +1,36 @@
+from collections.abc import Callable
 from decimal import Decimal
-from typing import Any
+from typing import Any, ClassVar
 from uuid import uuid4
 
 from django.conf import settings
 
+import requests
 from yookassa import Configuration
 from yookassa import Payment as YooPayment
 from yookassa import PaymentMethod as YooPaymentMethod
+from yookassa.client import ApiClient
 from yookassa.payment import PaymentResponse
 from yookassa.payment_method import PaymentMethodResponse
 
 from core.logging_handlers import loki_logger
+
+
+class YookassaProxyConfigurator:
+    _configured: ClassVar[bool] = False
+    _original_get_session: Callable[[ApiClient], requests.Session] = ApiClient.get_session
+
+    def configure(self) -> None:
+        if self._configured or not settings.YOOKASSA_PROXY_URL:
+            return
+        ApiClient.get_session = self._get_proxied_session
+        type(self)._configured = True
+
+    @staticmethod
+    def _get_proxied_session(client: ApiClient) -> requests.Session:
+        session = YookassaProxyConfigurator._original_get_session(client)
+        session.proxies['https'] = settings.YOOKASSA_PROXY_URL
+        return session
 
 
 class YookassaPaymentsService:
@@ -32,6 +52,7 @@ class YookassaPaymentsService:
             account_id=settings.YOOKASSA_SHOP_ID,
             secret_key=settings.YOOKASSA_SECRET_KEY,
         )
+        YookassaProxyConfigurator().configure()
 
     def create_payment(
         self,

@@ -24,6 +24,7 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
     'x-tg-init-data',
 ]
 CSRF_TRUSTED_ORIGINS = getenv('CSRF_TRUSTED_ORIGINS', 'http://127.0.0.1').split(', ')
+IP_HEADER = getenv('IP_HEADER', 'HTTP_X_ENVOY_EXTERNAL_ADDRESS')
 
 DJANGO_APPS = [
     'django.contrib.admin',
@@ -81,6 +82,8 @@ DATABASES = {
         'PASSWORD': getenv('POSTGRES_PASSWORD', 'password'),
         'HOST': getenv('POSTGRES_HOST', 'localhost'),
         'PORT': getenv('POSTGRES_PORT', '5432'),
+        'CONN_MAX_AGE': int(getenv('DB_CONN_MAX_AGE', '60')),
+        'CONN_HEALTH_CHECKS': True,
     }
 }
 MAX_DB_CONNECTION_RETRIES = int(getenv('MAX_DB_CONNECTION_RETRIES', '3'))
@@ -115,6 +118,7 @@ FRONTEND_URL = getenv('FRONTEND_URL', '')
 YOOKASSA_SHOP_ID = getenv('YOOKASSA_SHOP_ID', '')
 YOOKASSA_SECRET_KEY = getenv('YOOKASSA_SECRET_KEY', '')
 YOOKASSA_RETURN_URL = f'{FRONTEND_URL.rstrip("/")}/cabinet?payment_return=1' if FRONTEND_URL else ''
+YOOKASSA_PROXY_URL = getenv('YOOKASSA_PROXY_URL', '')
 
 # Tax3r (fiscal check) settings
 TAX3R_URL = getenv('TAX3R_URL', '')
@@ -265,5 +269,5 @@ LOGGING = get_logging_dict(
 
 
 # AI settings
-GPT_MODEL = getenv('GPT_MODEL', 'gpt-5-nano')
+GPT_MODEL = getenv('GPT_MODEL', 'gpt-5.4-nano')
 OPENAI_PROXY_URL = getenv('OPENAI_PROXY_URL', '')

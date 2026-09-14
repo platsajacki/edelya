@@ -369,6 +369,18 @@ class TestAct:
         assert count == 0
         mock_yookassa_payment_create.assert_not_called()
 
+    def test_cancelled_subscription_not_processed(
+        self,
+        past_due_subscription_ready_for_retry: Subscription,
+        mock_yookassa_payment_create: MockType,
+    ) -> None:
+        """Subscription cancelled during grace period (auto_renew=False) is not charged."""
+        past_due_subscription_ready_for_retry.disable_auto_renew()
+        service = ChargePastDueService()
+        count = service()
+        assert count == 0
+        mock_yookassa_payment_create.assert_not_called()
+
     def test_uses_pending_tariff_when_present(
         self,
         past_due_subscription_ready_for_retry: Subscription,

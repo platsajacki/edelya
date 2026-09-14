@@ -70,7 +70,13 @@ class CookingEventManager(BaseManager['CookingEvent', CookingEventQuerySet]):
         return self.get_queryset().for_user(user).filter(cooking_date__range=(start_date, end_date))
 
     def get_for_week(self, user: User, start_week: str | date, end_week: str | date) -> CookingEventQuerySet:
-        return self.get_for_user_and_date_range(user, start_week, end_week).with_dish().with_dish_category()
+        return (
+            self.get_for_user_and_date_range(user, start_week, end_week)
+            .with_dish()
+            .with_dish_category()
+            .with_meal_plan_items()
+            .prefetch_dish_ingredients_full()
+        )
 
     def get_existing_colors_for_dates(self, owner: User, eat_dates: list[date]) -> list[str]:
         return self.get_queryset().get_existing_colors_for_dates(owner, eat_dates)

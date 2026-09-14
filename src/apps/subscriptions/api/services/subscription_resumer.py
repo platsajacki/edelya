@@ -4,11 +4,11 @@ from django.db import transaction
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
-from apps.marketing.models.model_enums import MessageTemplateName
-from apps.marketing.services.sender import NotificationSender, fmt_date
 from apps.subscriptions.api.serializers.subscriptions import SubscriptionSerializer
 from apps.subscriptions.api.services.base import CurrentSubscriptionService
-from apps.subscriptions.models.model_enums import SubscriptionStatus
+from apps.subscriptions.api.services.payment_method_binder import PaymentMethodBinder
+from apps.subscriptions.services.auto_renew_enabler import AutoRenewEnabler
+from apps.subscriptions.services.webhook_handler import WebhookAction
 from apps.users.models.consents import ConsentLog
 from apps.users.models.model_enums import ConsentAction, ConsentType
 from core.logging_handlers import loki_logger
@@ -20,7 +20,7 @@ class SubscriptionResumer(CurrentSubscriptionService):
     serializer_class: type[SubscriptionSerializer]
 
     def _validate_resuming(self) -> None:
-        if self.subscription.status not in (SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIAL):
+        if not self.subscription.is_resumable:
             raise ValidationError('Subscription cannot be resumed in current status.')
 
     def get_validators(self) -> list:
@@ -42,19 +42,15 @@ class SubscriptionResumer(CurrentSubscriptionService):
                 exc_info=True,
             )
 
+    def _start_card_binding(self) -> Response:
+        binder = PaymentMethodBinder(user=self.authenticated_user, action=WebhookAction.RESUME_CARD_BINDING)
+        return Response(binder())
+
     @transaction.atomic
     def act(self) -> Response:
-        self.subscription.auto_renew = True
-        self.subscription.cancelled_at = None
-        self.subscription.save(update_fields=['auto_renew', 'cancelled_at'])
         self._log_granted_recurring_payments()
-        NotificationSender(
-            self.authenticated_user,
-            MessageTemplateName.SUBSCRIPTION_AUTO_RENEW_RESUMED,
-            {
-                'tariff_name': self.subscription.tariff.name,
-                'period_end': fmt_date(self.subscription.current_period_end),
-            },
-        )()
+        if self.subscription.payment_method is None:
+            return self._start_card_binding()
+        AutoRenewEnabler(self.subscription)()
         serializer = self.serializer_class(self.subscription)
         return Response(serializer.data)

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
+from datetime import datetime
 
 from django.db import transaction
-from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
@@ -45,22 +45,21 @@ class SubscriptionCanceller(CurrentSubscriptionService):
                 exc_info=True,
             )
 
+    def _get_access_end(self) -> datetime | None:
+        if self.subscription.status == SubscriptionStatus.PAST_DUE:
+            return self.subscription.get_grace_period_end()
+        return self.subscription.current_period_end
+
     @transaction.atomic
     def act(self) -> Response:
-        self.subscription.auto_renew = False
-        self.subscription.cancelled_at = timezone.now()
-        if self.subscription.status == SubscriptionStatus.TRIAL:
-            self.subscription.pending_tariff = None
-            self.subscription.save(update_fields=['auto_renew', 'cancelled_at', 'pending_tariff'])
-        else:
-            self.subscription.save(update_fields=['auto_renew', 'cancelled_at'])
+        self.subscription.disable_auto_renew()
         self._log_revoked_recurring_payments()
         NotificationSender(
             self.authenticated_user,
             MessageTemplateName.SUBSCRIPTION_AUTO_RENEW_CANCELLED,
             {
                 'tariff_name': self.subscription.tariff.name,
-                'period_end': fmt_date(self.subscription.current_period_end),
+                'period_end': fmt_date(self._get_access_end()),
             },
         )()
         serializer = self.serializer_class(self.subscription)

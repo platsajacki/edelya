@@ -59,6 +59,7 @@ class SubscriptionQuerySet(BaseQuerySet['Subscription']):
         return self.filter(
             status=SubscriptionStatus.PAST_DUE,
             current_period_start__lte=current_period_start__lte,
+            auto_renew=True,
             payment_method__isnull=False,
         ).select_related('tariff', 'pending_tariff', 'payment_method', 'user')
 

@@ -20,8 +20,6 @@ ai_cache = caches[settings.AI_CACHE_ALIAS]
 
 type RecipeParseErrorCode = Literal[
     'not_recipe',
-    'too_short',
-    'not_enough_data',
     'multiple_recipes',
     'prompt_injection',
     'not_processable',

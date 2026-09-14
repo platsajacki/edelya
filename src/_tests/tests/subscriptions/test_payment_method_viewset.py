@@ -1,16 +1,19 @@
 from pytest_mock import MockType
 
+from datetime import timedelta
 from unittest.mock import MagicMock
 
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
 from apps.marketing.models import Notification
 from apps.marketing.models.model_enums import MessageTemplateName
 from apps.subscriptions.models import PaymentMethod, Subscription
-from apps.subscriptions.models.model_enums import PaymentStatus, PaymentType
+from apps.subscriptions.models.model_enums import PaymentStatus, PaymentType, SubscriptionStatus
 from apps.subscriptions.models.payments import Payment
+from apps.subscriptions.tasks.renewals import ChargeRenewalService
 from apps.users.models import ConsentLog, User
 from apps.users.models.model_enums import ConsentAction, ConsentType
 
@@ -227,3 +230,99 @@ class TestPaymentMethodDestroy:
             template__name=MessageTemplateName.SUBSCRIPTION_CARD_UNBOUND,
             delivered=True,
         ).exists()
+
+    def test_delete_disables_auto_renew(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        active_subscription_with_period: Subscription,
+    ) -> None:
+        """Удаление карты отключает автопродление, как обещано в интерфейсе."""
+        api_client.force_authenticate(user=telegram_user)
+        api_client.delete(PAYMENT_METHOD_URL)
+        active_subscription_with_period.refresh_from_db()
+        assert active_subscription_with_period.auto_renew is False
+        assert active_subscription_with_period.cancelled_at is not None
+        assert active_subscription_with_period.payment_method is None
+        assert active_subscription_with_period.status == SubscriptionStatus.ACTIVE
+
+    def test_delete_creates_revoked_recurring_payments_log(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        active_subscription_with_period: Subscription,
+    ) -> None:
+        """Отключение автопродления при удалении карты фиксируется как отзыв согласия на рекуррентные платежи."""
+        api_client.force_authenticate(user=telegram_user)
+        api_client.delete(PAYMENT_METHOD_URL)
+        assert ConsentLog.objects.filter(
+            user=telegram_user,
+            consent_type=ConsentType.RECURRING_PAYMENTS,
+            action=ConsentAction.REVOKED,
+        ).exists()
+
+    def test_delete_without_auto_renew_does_not_create_recurring_payments_log(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        active_subscription_with_period: Subscription,
+    ) -> None:
+        active_subscription_with_period.auto_renew = False
+        active_subscription_with_period.save(update_fields=['auto_renew'])
+        api_client.force_authenticate(user=telegram_user)
+        api_client.delete(PAYMENT_METHOD_URL)
+        assert not ConsentLog.objects.filter(
+            user=telegram_user,
+            consent_type=ConsentType.RECURRING_PAYMENTS,
+        ).exists()
+
+    def test_delete_during_trial_clears_pending_tariff(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        trial_subscription_ready_to_charge: Subscription,
+    ) -> None:
+        """Удаление карты в триале сбрасывает выбранный тариф — триал не перейдёт в оплату."""
+        api_client.force_authenticate(user=telegram_user)
+        api_client.delete(PAYMENT_METHOD_URL)
+        trial_subscription_ready_to_charge.refresh_from_db()
+        assert trial_subscription_ready_to_charge.auto_renew is False
+        assert trial_subscription_ready_to_charge.pending_tariff is None
+
+    def test_delete_keeps_cancelled_at_if_auto_renew_already_disabled(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        active_subscription_with_period: Subscription,
+    ) -> None:
+        cancelled_at = timezone.now() - timedelta(days=3)
+        active_subscription_with_period.auto_renew = False
+        active_subscription_with_period.cancelled_at = cancelled_at
+        active_subscription_with_period.save(update_fields=['auto_renew', 'cancelled_at'])
+        api_client.force_authenticate(user=telegram_user)
+        api_client.delete(PAYMENT_METHOD_URL)
+        active_subscription_with_period.refresh_from_db()
+        assert active_subscription_with_period.cancelled_at == cancelled_at
+
+    def test_rebinding_card_after_period_end_does_not_trigger_renewal(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        active_subscription_with_period: Subscription,
+        mock_yookassa_payment_create: MockType,
+    ) -> None:
+        """Регресс: карта удалена, период истёк, карта привязана заново — списания быть не должно."""
+        api_client.force_authenticate(user=telegram_user)
+        api_client.delete(PAYMENT_METHOD_URL)
+        new_payment_method = PaymentMethod.objects.create(
+            user=telegram_user,
+            yookassa_payment_method_id='pm-test-rebound-xxx',
+            payment_method_type='bank_card',
+            card_last4='5909',
+        )
+        active_subscription_with_period.refresh_from_db()
+        active_subscription_with_period.payment_method = new_payment_method
+        active_subscription_with_period.current_period_end = timezone.now() - timedelta(minutes=2)
+        active_subscription_with_period.save(update_fields=['payment_method', 'current_period_end'])
+        assert ChargeRenewalService()() == 0
+        mock_yookassa_payment_create.assert_not_called()

@@ -19,7 +19,7 @@ class TestRecipeSchemaBuilder:
         assert recipe_root_schema['additionalProperties'] is False
         assert recipe_root_schema['required'] == ['result']
         assert variants[0]['properties']['status']['enum'] == ['success']
-        assert len(variants) == 7
+        assert len(variants) == 5
 
     def test_uses_active_categories_and_units(
         self,
