@@ -30,7 +30,7 @@ class RecurringTaskService(TaskService):
             raise PaymentPendingRecurringError(
                 subscription.id, 'Cannot process renewal: current_period_end is not set.'
             )
-        return subscription.current_period_end
+        return max(subscription.current_period_end, timezone.now())
 
     def _apply_tariff(
         self,

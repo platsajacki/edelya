@@ -402,6 +402,23 @@ class TestAct:
         assert count == 0
         mock_yookassa_payment_create.assert_not_called()
 
+    def test_long_overdue_subscription_charged_once_from_now(
+        self,
+        active_subscription_ready_to_renew: Subscription,
+        mock_yookassa_payment_create: MockType,
+        yookassa_succeeded_response: MockType,
+    ) -> None:
+        mock_yookassa_payment_create.return_value = yookassa_succeeded_response
+        active_subscription_ready_to_renew.current_period_end = timezone.now() - timedelta(days=75)
+        active_subscription_ready_to_renew.save(update_fields=['current_period_end'])
+        started_at = timezone.now()
+        ChargeRenewalService()()
+        ChargeRenewalService()()
+        active_subscription_ready_to_renew.refresh_from_db()
+        assert mock_yookassa_payment_create.call_count == 1
+        assert active_subscription_ready_to_renew.current_period_start
+        assert active_subscription_ready_to_renew.current_period_start >= started_at
+
 
 class TestProcessSubscriptionRenewalsTask:
     def test_task_returns_formatted_string(
