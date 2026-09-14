@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 
 from django.db import transaction
 from rest_framework.exceptions import ValidationError
@@ -44,6 +45,11 @@ class SubscriptionCanceller(CurrentSubscriptionService):
                 exc_info=True,
             )
 
+    def _get_access_end(self) -> datetime | None:
+        if self.subscription.status == SubscriptionStatus.PAST_DUE:
+            return self.subscription.get_grace_period_end()
+        return self.subscription.current_period_end
+
     @transaction.atomic
     def act(self) -> Response:
         self.subscription.disable_auto_renew()
@@ -53,7 +59,7 @@ class SubscriptionCanceller(CurrentSubscriptionService):
             MessageTemplateName.SUBSCRIPTION_AUTO_RENEW_CANCELLED,
             {
                 'tariff_name': self.subscription.tariff.name,
-                'period_end': fmt_date(self.subscription.current_period_end),
+                'period_end': fmt_date(self._get_access_end()),
             },
         )()
         serializer = self.serializer_class(self.subscription)

@@ -133,11 +133,17 @@ class Subscription(BaseModel):
             return True
         return self.get_trial_end_date() <= now
 
+    def get_grace_period_end(self) -> datetime | None:
+        if self.current_period_start is None:
+            return None
+        return self.current_period_start + timedelta(days=GRACE_PERIOD_DAYS)
+
     @property
     def is_in_grace_period(self) -> bool:
-        if self.status != SubscriptionStatus.PAST_DUE or self.current_period_start is None:
+        grace_period_end = self.get_grace_period_end()
+        if self.status != SubscriptionStatus.PAST_DUE or grace_period_end is None:
             return False
-        return timezone.now() <= self.current_period_start + timedelta(days=GRACE_PERIOD_DAYS)
+        return timezone.now() <= grace_period_end
 
     @property
     def started_at(self) -> datetime | None:

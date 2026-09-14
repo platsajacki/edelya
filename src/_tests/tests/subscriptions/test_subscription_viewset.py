@@ -1,3 +1,5 @@
+from pytest_mock import MockFixture
+
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
@@ -6,6 +8,7 @@ from rest_framework.test import APIClient
 from apps.dishes.models import DishAIDraft
 from apps.marketing.models import Notification
 from apps.marketing.models.model_enums import MessageTemplateName
+from apps.marketing.services.sender import fmt_date
 from apps.subscriptions.constants import AI_RECIPE_LIMIT_PER_PERIOD, DEFAULT_TRIAL_DAYS, GRACE_PERIOD_DAYS
 from apps.subscriptions.models import Subscription, Tariff
 from apps.subscriptions.models.model_enums import SubscriptionStatus
@@ -460,6 +463,20 @@ class TestCancelSubscription:
             template__name=MessageTemplateName.SUBSCRIPTION_AUTO_RENEW_CANCELLED,
             delivered=True,
         ).exists()
+
+    def test_cancel_past_due_notification_shows_grace_period_end(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        past_due_subscription_ready_for_retry: Subscription,
+        mocker: MockFixture,
+    ) -> None:
+        mock_sender = mocker.patch('apps.subscriptions.api.services.subscription_canceller.NotificationSender')
+        api_client.force_authenticate(user=telegram_user)
+        api_client.post(CANCEL_URL)
+        variables = mock_sender.call_args.args[2]
+        grace_period_end = past_due_subscription_ready_for_retry.get_grace_period_end()
+        assert variables['period_end'] == fmt_date(grace_period_end)
 
 
 class TestResumeSubscription:
