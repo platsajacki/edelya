@@ -19,6 +19,7 @@ from core.base.services import BaseService
 class PaymentMethodBinder(BaseService):
     user: User
     idempotence_key: str = dc_field(default_factory=lambda: str(uuid4()))
+    action: WebhookAction = WebhookAction.CARD_BINDING
 
     def validate(self) -> None:
         if PaymentMethod.objects.filter(user=self.user).exists():
@@ -35,7 +36,7 @@ class PaymentMethodBinder(BaseService):
             status=PaymentStatus.PENDING,
             idempotence_key=self.idempotence_key,
             yookassa_payment_id=yookassa_payment.id,
-            metadata={'action': WebhookAction.CARD_BINDING, 'idempotence_key': self.idempotence_key},
+            metadata={'action': self.action, 'idempotence_key': self.idempotence_key},
         )
         return RedirectResponse(
             action=ResponseAction.REDIRECT.value,

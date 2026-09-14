@@ -38,6 +38,13 @@ def mock_yookassa_payment_method_create(mocker: MockFixture) -> MockType:
 
 
 @pytest.fixture
+def mock_yookassa_card_binding(mock_yookassa_payment_method_create: MockType) -> MockType:
+    mock_yookassa_payment_method_create.return_value.id = 'yoo-pm-binding-001'
+    mock_yookassa_payment_method_create.return_value.confirmation.confirmation_url = 'https://yookassa.ru/pay'
+    return mock_yookassa_payment_method_create
+
+
+@pytest.fixture
 def mock_yookassa_payment_method_find_one(mocker: MockFixture) -> MockType:
     return mocker.patch('apps.subscriptions.services.yookassa_payments.YooPaymentMethod.find_one')
 

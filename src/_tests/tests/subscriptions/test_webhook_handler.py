@@ -14,9 +14,20 @@ from apps.marketing.models.model_enums import MessageTemplateName
 from apps.subscriptions.models import PaymentMethod, Subscription, Tariff
 from apps.subscriptions.models.model_enums import PaymentStatus, PaymentType, SubscriptionStatus
 from apps.subscriptions.models.payments import Payment
+from apps.subscriptions.services.webhook_handler import WebhookAction
 from apps.users.models import User
 
 WEBHOOK_URL = reverse('api_v1:subscriptions:yookassa-webhook')
+PAYMENT_METHOD_ACTIVE_PAYLOAD = {
+    'event': 'payment_method.active',
+    'object': {
+        'id': 'yoo-pm-id-001',
+        'type': 'bank_card',
+        'title': 'Bank card *4242',
+        'saved': True,
+        'card': {'last4': '4242', 'card_type': 'Visa'},
+    },
+}
 
 
 def make_payment_method_object(yookassa_id: str = 'yoo-pm-id-001') -> MagicMock:
@@ -250,6 +261,57 @@ class TestPaymentMethodActiveHandler:
             template__name=MessageTemplateName.SUBSCRIPTION_CARD_BOUND,
             delivered=True,
         ).exists()
+
+    def test_resume_card_binding_enables_auto_renew(
+        self,
+        api_client: APIClient,
+        active_subscription: Subscription,
+        pending_payment_resume_card_binding: Payment,
+    ) -> None:
+        api_client.post(WEBHOOK_URL, data=PAYMENT_METHOD_ACTIVE_PAYLOAD, format='json')
+        active_subscription.refresh_from_db()
+        assert active_subscription.payment_method is not None
+        assert active_subscription.auto_renew is True
+        assert active_subscription.cancelled_at is None
+
+    def test_resume_card_binding_sends_resumed_notification(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        pending_payment_resume_card_binding: Payment,
+    ) -> None:
+        api_client.post(WEBHOOK_URL, data=PAYMENT_METHOD_ACTIVE_PAYLOAD, format='json')
+        assert Notification.objects.filter(
+            user=telegram_user,
+            template__name=MessageTemplateName.SUBSCRIPTION_AUTO_RENEW_RESUMED,
+            delivered=True,
+        ).exists()
+
+    def test_resume_card_binding_does_not_resume_expired_subscription(
+        self,
+        api_client: APIClient,
+        active_subscription: Subscription,
+        pending_payment_resume_card_binding: Payment,
+    ) -> None:
+        active_subscription.status = SubscriptionStatus.EXPIRED
+        active_subscription.save(update_fields=['status'])
+        api_client.post(WEBHOOK_URL, data=PAYMENT_METHOD_ACTIVE_PAYLOAD, format='json')
+        active_subscription.refresh_from_db()
+        assert active_subscription.payment_method is not None
+        assert active_subscription.auto_renew is False
+
+    def test_plain_card_binding_does_not_enable_auto_renew(
+        self,
+        api_client: APIClient,
+        active_subscription: Subscription,
+        pending_payment_resume_card_binding: Payment,
+    ) -> None:
+        pending_payment_resume_card_binding.metadata = {'action': WebhookAction.CARD_BINDING}
+        pending_payment_resume_card_binding.save(update_fields=['metadata'])
+        api_client.post(WEBHOOK_URL, data=PAYMENT_METHOD_ACTIVE_PAYLOAD, format='json')
+        active_subscription.refresh_from_db()
+        assert active_subscription.payment_method is not None
+        assert active_subscription.auto_renew is False
 
 
 class TestPaymentSucceededHandlerFirstPayment:

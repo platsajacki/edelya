@@ -113,6 +113,15 @@ class Subscription(BaseModel):
             update_fields.append('pending_tariff')
         self.save(update_fields=update_fields)
 
+    def enable_auto_renew(self) -> None:
+        self.auto_renew = True
+        self.cancelled_at = None
+        self.save(update_fields=['auto_renew', 'cancelled_at'])
+
+    @property
+    def is_resumable(self) -> bool:
+        return self.status in (SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIAL)
+
     @property
     def is_active(self) -> bool:
         now = timezone.now()

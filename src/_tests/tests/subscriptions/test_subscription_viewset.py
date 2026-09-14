@@ -1,4 +1,4 @@
-from pytest_mock import MockFixture
+from pytest_mock import MockFixture, MockType
 
 from django.urls import reverse
 from django.utils import timezone
@@ -12,6 +12,8 @@ from apps.marketing.services.sender import fmt_date
 from apps.subscriptions.constants import AI_RECIPE_LIMIT_PER_PERIOD, DEFAULT_TRIAL_DAYS, GRACE_PERIOD_DAYS
 from apps.subscriptions.models import Subscription, Tariff
 from apps.subscriptions.models.model_enums import SubscriptionStatus
+from apps.subscriptions.models.payments import Payment
+from apps.subscriptions.services.webhook_handler import WebhookAction
 from apps.users.models import ConsentLog, User
 from apps.users.models.model_enums import ConsentAction, ConsentType
 
@@ -497,11 +499,11 @@ class TestResumeSubscription:
         self,
         api_client: APIClient,
         telegram_user: User,
-        active_subscription: Subscription,
+        active_subscription_with_period: Subscription,
     ) -> None:
-        active_subscription.cancelled_at = timezone.now()
-        active_subscription.auto_renew = False
-        active_subscription.save(update_fields=['cancelled_at', 'auto_renew'])
+        active_subscription_with_period.cancelled_at = timezone.now()
+        active_subscription_with_period.auto_renew = False
+        active_subscription_with_period.save(update_fields=['cancelled_at', 'auto_renew'])
         api_client.force_authenticate(user=telegram_user)
         response = api_client.post(RESUME_URL)
         assert response.status_code == status.HTTP_200_OK
@@ -510,39 +512,39 @@ class TestResumeSubscription:
         self,
         api_client: APIClient,
         telegram_user: User,
-        active_subscription: Subscription,
+        active_subscription_with_period: Subscription,
     ) -> None:
-        active_subscription.cancelled_at = timezone.now()
-        active_subscription.auto_renew = False
-        active_subscription.save(update_fields=['cancelled_at', 'auto_renew'])
+        active_subscription_with_period.cancelled_at = timezone.now()
+        active_subscription_with_period.auto_renew = False
+        active_subscription_with_period.save(update_fields=['cancelled_at', 'auto_renew'])
         api_client.force_authenticate(user=telegram_user)
         api_client.post(RESUME_URL)
-        active_subscription.refresh_from_db()
-        assert active_subscription.auto_renew is True
+        active_subscription_with_period.refresh_from_db()
+        assert active_subscription_with_period.auto_renew is True
 
     def test_resume_clears_cancelled_at(
         self,
         api_client: APIClient,
         telegram_user: User,
-        active_subscription: Subscription,
+        active_subscription_with_period: Subscription,
     ) -> None:
-        active_subscription.cancelled_at = timezone.now()
-        active_subscription.auto_renew = False
-        active_subscription.save(update_fields=['cancelled_at', 'auto_renew'])
+        active_subscription_with_period.cancelled_at = timezone.now()
+        active_subscription_with_period.auto_renew = False
+        active_subscription_with_period.save(update_fields=['cancelled_at', 'auto_renew'])
         api_client.force_authenticate(user=telegram_user)
         api_client.post(RESUME_URL)
-        active_subscription.refresh_from_db()
-        assert active_subscription.cancelled_at is None
+        active_subscription_with_period.refresh_from_db()
+        assert active_subscription_with_period.cancelled_at is None
 
     def test_resume_trial_pending_cancellation_returns_200(
         self,
         api_client: APIClient,
         telegram_user: User,
-        trial_subscription: Subscription,
+        trial_subscription_with_payment_method: Subscription,
     ) -> None:
-        trial_subscription.cancelled_at = timezone.now()
-        trial_subscription.auto_renew = False
-        trial_subscription.save(update_fields=['cancelled_at', 'auto_renew'])
+        trial_subscription_with_payment_method.cancelled_at = timezone.now()
+        trial_subscription_with_payment_method.auto_renew = False
+        trial_subscription_with_payment_method.save(update_fields=['cancelled_at', 'auto_renew'])
         api_client.force_authenticate(user=telegram_user)
         response = api_client.post(RESUME_URL)
         assert response.status_code == status.HTTP_200_OK
@@ -551,7 +553,7 @@ class TestResumeSubscription:
         self,
         api_client: APIClient,
         telegram_user: User,
-        active_subscription: Subscription,
+        active_subscription_with_period: Subscription,
     ) -> None:
         """ACTIVE with cancelled_at=None — nothing to resume."""
         api_client.force_authenticate(user=telegram_user)
@@ -579,25 +581,25 @@ class TestResumeSubscription:
         self,
         api_client: APIClient,
         telegram_user: User,
-        active_subscription: Subscription,
+        active_subscription_with_period: Subscription,
     ) -> None:
-        active_subscription.cancelled_at = timezone.now()
-        active_subscription.auto_renew = False
-        active_subscription.save(update_fields=['cancelled_at', 'auto_renew'])
+        active_subscription_with_period.cancelled_at = timezone.now()
+        active_subscription_with_period.auto_renew = False
+        active_subscription_with_period.save(update_fields=['cancelled_at', 'auto_renew'])
         api_client.force_authenticate(user=telegram_user)
         response = api_client.post(RESUME_URL)
-        assert response.data['id'] == str(active_subscription.id)
+        assert response.data['id'] == str(active_subscription_with_period.id)
         assert response.data['auto_renew'] is True
 
     def test_resume_creates_granted_recurring_payments_log(
         self,
         api_client: APIClient,
         telegram_user: User,
-        active_subscription: Subscription,
+        active_subscription_with_period: Subscription,
     ) -> None:
-        active_subscription.cancelled_at = timezone.now()
-        active_subscription.auto_renew = False
-        active_subscription.save(update_fields=['cancelled_at', 'auto_renew'])
+        active_subscription_with_period.cancelled_at = timezone.now()
+        active_subscription_with_period.auto_renew = False
+        active_subscription_with_period.save(update_fields=['cancelled_at', 'auto_renew'])
         api_client.force_authenticate(user=telegram_user)
         api_client.post(RESUME_URL)
         assert ConsentLog.objects.filter(
@@ -610,16 +612,61 @@ class TestResumeSubscription:
         self,
         api_client: APIClient,
         telegram_user: User,
-        active_subscription: Subscription,
+        active_subscription_with_period: Subscription,
     ) -> None:
         """Восстановление автопродления отправляет уведомление пользователю."""
-        active_subscription.cancelled_at = timezone.now()
-        active_subscription.auto_renew = False
-        active_subscription.save(update_fields=['cancelled_at', 'auto_renew'])
+        active_subscription_with_period.cancelled_at = timezone.now()
+        active_subscription_with_period.auto_renew = False
+        active_subscription_with_period.save(update_fields=['cancelled_at', 'auto_renew'])
         api_client.force_authenticate(user=telegram_user)
         api_client.post(RESUME_URL)
         assert Notification.objects.filter(
             user=telegram_user,
             template__name=MessageTemplateName.SUBSCRIPTION_AUTO_RENEW_RESUMED,
             delivered=True,
+        ).exists()
+
+    def test_resume_without_card_redirects_to_card_binding(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        active_subscription: Subscription,
+        mock_yookassa_card_binding: MockType,
+    ) -> None:
+        active_subscription.disable_auto_renew()
+        api_client.force_authenticate(user=telegram_user)
+        response = api_client.post(RESUME_URL)
+        payment = Payment.objects.get(yookassa_payment_id='yoo-pm-binding-001')
+        assert response.data['action'] == 'redirect'
+        assert response.data['confirmation_url'] == 'https://yookassa.ru/pay'
+        assert payment.metadata['action'] == WebhookAction.RESUME_CARD_BINDING
+
+    def test_resume_without_card_keeps_auto_renew_disabled(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        active_subscription: Subscription,
+        mock_yookassa_card_binding: MockType,
+    ) -> None:
+        active_subscription.disable_auto_renew()
+        api_client.force_authenticate(user=telegram_user)
+        api_client.post(RESUME_URL)
+        active_subscription.refresh_from_db()
+        assert active_subscription.auto_renew is False
+        assert active_subscription.cancelled_at is not None
+
+    def test_resume_without_card_creates_granted_recurring_payments_log(
+        self,
+        api_client: APIClient,
+        telegram_user: User,
+        active_subscription: Subscription,
+        mock_yookassa_card_binding: MockType,
+    ) -> None:
+        active_subscription.disable_auto_renew()
+        api_client.force_authenticate(user=telegram_user)
+        api_client.post(RESUME_URL)
+        assert ConsentLog.objects.filter(
+            user=telegram_user,
+            consent_type=ConsentType.RECURRING_PAYMENTS,
+            action=ConsentAction.GRANTED,
         ).exists()

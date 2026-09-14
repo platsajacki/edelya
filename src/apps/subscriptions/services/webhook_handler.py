@@ -13,6 +13,7 @@ from apps.subscriptions.models import Subscription, Tariff
 from apps.subscriptions.models.model_enums import PaymentStatus, SubscriptionStatus
 from apps.subscriptions.models.payment_methods import PaymentMethod
 from apps.subscriptions.models.payments import Payment
+from apps.subscriptions.services.auto_renew_enabler import AutoRenewEnabler
 from apps.subscriptions.services.sync_controler import payment_sync_flag_controler
 from apps.subscriptions.services.tax_check import TaxCheckSender
 from apps.users.models.consents import ConsentLog
@@ -24,6 +25,7 @@ from core.logging_handlers import loki_logger, tg_logger
 class WebhookAction(StrEnum):
     TRIAL_CARD_BINDING = 'trial_card_binding'
     CARD_BINDING = 'card_binding'
+    RESUME_CARD_BINDING = 'resume_card_binding'
     FIRST_PAYMENT = 'first_payment'
     RECURRING = 'recurring'
     RETRY_PAYMENT = 'retry_payment'
@@ -238,6 +240,11 @@ class PaymentMethodActiveHandler(BaseService):
             MessageTemplateName.SUBSCRIPTION_CARD_BOUND,
             {'card_name': payment_method.card_name},
         )()
+        self._resume_auto_renew(subscription)
+
+    def _resume_auto_renew(self, subscription: Subscription) -> None:
+        if self.payment.metadata.get('action') == WebhookAction.RESUME_CARD_BINDING and subscription.is_resumable:
+            AutoRenewEnabler(subscription)()
 
 
 @dataclass
