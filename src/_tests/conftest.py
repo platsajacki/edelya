@@ -25,6 +25,7 @@ pytest_plugins = [
     '_tests.fixtures.main',
     '_tests.fixtures.marketing',
     '_tests.fixtures.mocks',
+    '_tests.fixtures.open_ai',
     '_tests.fixtures.planning',
     '_tests.fixtures.shopping',
     '_tests.fixtures.subscriptions',

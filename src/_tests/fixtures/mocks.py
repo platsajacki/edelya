@@ -98,5 +98,10 @@ def mock_ai_draft_processor_recipe_ai(mocker: MockFixture) -> MockType:
 
 
 @pytest.fixture
+def mock_ai_draft_processor_sleep(mocker: MockFixture) -> MockType:
+    return mocker.patch('apps.dishes.tasks.ai_draft_processor.sleep')
+
+
+@pytest.fixture
 def mock_ai_draft_processor_redis_set(mocker: MockFixture) -> MockType:
     return mocker.patch('apps.dishes.tasks.ai_draft_processor.redis_client.set')

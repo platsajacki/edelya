@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from dataclasses import field as dc_field
 from datetime import timedelta
+from time import sleep
 
 from django.utils import timezone
 
@@ -17,6 +18,7 @@ from apps.dishes.services.dish_parser import (
 from core import celery_app
 from core.base.services import TaskService
 from core.logging_handlers import tg_logger
+from core.open_ai_retry import OpenAIRetryPolicy
 from core.redis import redis_client
 from core.utils import normalize_name
 
@@ -35,26 +37,32 @@ class PreparedIngredientData:
 class AIDraftProcessor(TaskService):
     draft_id: str
     _redis_lock_prefix: str = dc_field(default='ai_draft_processor_lock:')
-    _redis_lock_expire: int = dc_field(default=240)  # 4 минуты
-    _max_retries: int = dc_field(default=3)
+    _redis_lock_expire: int = dc_field(default=300)  # 5 минут
+    _max_attempts: int = dc_field(default=3)
+    _retry_policy: OpenAIRetryPolicy = dc_field(default_factory=OpenAIRetryPolicy)
     _another_category_name: str = dc_field(default='Другое')
     _exact_ingredient_similarity: float = dc_field(default=0.95)
     _similar_ingredient_similarity: float = dc_field(default=0.8)
     _similar_ingredients_limit: int = dc_field(default=3)
 
     def get_recipe_ai(self, draft: DishAIDraft) -> RecipeAIResult:
-        attempt = 1
-        while attempt <= self._max_retries:
+        attempt = 0
+        while True:
             try:
                 return RecipeAI(source_text=draft.source_text)()
-            except Exception as e:
-                tg_logger.error(
-                    self.get_log_msg(f'Error creating RecipeAI for draft {self.draft_id} on attempt {attempt}: {e}')
-                )
+            except Exception as error:
+                self._wait_or_raise(error, attempt)
                 attempt += 1
-        raise AIDraftProcessingError(
-            f'Failed to create RecipeAI for draft {self.draft_id} after {self._max_retries} attempts.'
-        )
+
+    def _wait_or_raise(self, error: Exception, attempt: int) -> None:
+        delay = self._retry_policy.get_delay(error, attempt)
+        if delay is None or attempt + 1 >= self._max_attempts:
+            tg_logger.error(
+                self.get_log_msg(f'Draft {self.draft_id}: AI request failed on attempt {attempt + 1}: {error!r}')
+            )
+            raise AIDraftProcessingError(f'AI request failed for draft {self.draft_id}.') from error
+        tg_logger.warning(self.get_log_msg(f'Draft {self.draft_id}: {error!r}, retry in {delay}s'))
+        sleep(delay)
 
     def _set_ai_response_data(self, draft: DishAIDraft, recipe_ai: RecipeAIResult) -> None:
         draft.ai_raw_response = recipe_ai.data

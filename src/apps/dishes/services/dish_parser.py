@@ -85,6 +85,8 @@ class RecipeAI(BaseService[RecipeAIResult]):
             model=settings.GPT_MODEL,
             messages=messages,
             response_format=response_format,
+            reasoning_effort='medium',
+            prompt_cache_key='text_to_dish',
         )
 
     def get_cache_key(self, prompt_name: PromptName) -> str:

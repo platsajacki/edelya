@@ -271,3 +271,4 @@ LOGGING = get_logging_dict(
 # AI settings
 GPT_MODEL = getenv('GPT_MODEL', 'gpt-5.4-nano')
 OPENAI_PROXY_URL = getenv('OPENAI_PROXY_URL', '')
+OPENAI_TIMEOUT_SEC = float(getenv('OPENAI_TIMEOUT_SEC', '120'))

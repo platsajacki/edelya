@@ -1,9 +1,12 @@
 import pytest
 from pytest_mock import MockFixture, MockType
 
+import json
+from collections.abc import Callable
 from copy import deepcopy
 from uuid import uuid4
 
+from _tests.fixtures.open_ai import OpenAIErrorFactory
 from apps.dishes.models import DishAIDraft, DishCategory, Ingredient, IngredientCategory, Unit
 from apps.dishes.models.model_enums import DishAIDraftStatus
 from apps.dishes.services.dish_parser import RecipeAIResult, RecipeAISuccessData
@@ -21,29 +24,80 @@ class TestGetRecipeAI:
         result = AIDraftProcessor(draft_id=str(dish_ai_draft.id)).get_recipe_ai(dish_ai_draft)
         assert result == recipe_ai_success_result
 
-    def test_retries_until_recipe_ai_succeeds(
+    def test_retries_rate_limit_with_retry_after_delay(
         self,
         dish_ai_draft: DishAIDraft,
         recipe_ai_success_result: RecipeAIResult,
         mock_ai_draft_processor_recipe_ai: MockType,
+        mock_ai_draft_processor_sleep: MockType,
+        openai_error_factory: OpenAIErrorFactory,
     ) -> None:
         recipe_ai = mock_ai_draft_processor_recipe_ai.return_value
-        recipe_ai.side_effect = [Exception('network error'), recipe_ai_success_result]
-        result = AIDraftProcessor(draft_id=str(dish_ai_draft.id)).get_recipe_ai(dish_ai_draft)
+        error = openai_error_factory.rate_limit(headers={'retry-after-ms': '1500'})
+        recipe_ai.side_effect = [error, recipe_ai_success_result]
+        processor = AIDraftProcessor(draft_id=str(dish_ai_draft.id))
+        result = processor.get_recipe_ai(dish_ai_draft)
         assert result == recipe_ai_success_result
         assert recipe_ai.call_count == 2
+        delay = mock_ai_draft_processor_sleep.call_args.args[0]
+        assert 1.5 <= delay <= 1.5 + processor._retry_policy.jitter_sec
 
-    def test_raises_processing_error_after_retry_exhaustion(
+    @pytest.mark.parametrize('error_name', ['server_error', 'connection_error'])
+    def test_retries_transient_openai_errors(
+        self,
+        error_name: str,
+        dish_ai_draft: DishAIDraft,
+        recipe_ai_success_result: RecipeAIResult,
+        mock_ai_draft_processor_recipe_ai: MockType,
+        mock_ai_draft_processor_sleep: MockType,
+        openai_error_factory: OpenAIErrorFactory,
+    ) -> None:
+        recipe_ai = mock_ai_draft_processor_recipe_ai.return_value
+        recipe_ai.side_effect = [getattr(openai_error_factory, error_name)(), recipe_ai_success_result]
+        result = AIDraftProcessor(draft_id=str(dish_ai_draft.id)).get_recipe_ai(dish_ai_draft)
+        assert result == recipe_ai_success_result
+        mock_ai_draft_processor_sleep.assert_called_once()
+
+    def test_raises_processing_error_after_attempts_exhaustion(
         self,
         dish_ai_draft: DishAIDraft,
         mock_ai_draft_processor_recipe_ai: MockType,
+        mock_ai_draft_processor_sleep: MockType,
+        openai_error_factory: OpenAIErrorFactory,
     ) -> None:
         recipe_ai = mock_ai_draft_processor_recipe_ai.return_value
-        recipe_ai.side_effect = Exception('network error')
+        recipe_ai.side_effect = openai_error_factory.rate_limit()
         processor = AIDraftProcessor(draft_id=str(dish_ai_draft.id))
         with pytest.raises(AIDraftProcessingError):
             processor.get_recipe_ai(dish_ai_draft)
-        assert recipe_ai.call_count == processor._max_retries
+        assert recipe_ai.call_count == processor._max_attempts
+        assert mock_ai_draft_processor_sleep.call_count == processor._max_attempts - 1
+
+    @pytest.mark.parametrize(
+        'error_builder',
+        [
+            lambda factory: factory.rate_limit(code='insufficient_quota'),
+            lambda factory: factory.rate_limit(message='Please try again in 1m30s.'),
+            lambda factory: factory.bad_request(),
+            lambda factory: ValueError('No active dish categories'),
+            lambda factory: json.JSONDecodeError('Expecting value', '', 0),
+        ],
+        ids=['insufficient_quota', 'long_retry_after', 'bad_request', 'value_error', 'json_decode_error'],
+    )
+    def test_raises_processing_error_without_retry(
+        self,
+        error_builder: Callable[[OpenAIErrorFactory], Exception],
+        dish_ai_draft: DishAIDraft,
+        mock_ai_draft_processor_recipe_ai: MockType,
+        mock_ai_draft_processor_sleep: MockType,
+        openai_error_factory: OpenAIErrorFactory,
+    ) -> None:
+        recipe_ai = mock_ai_draft_processor_recipe_ai.return_value
+        recipe_ai.side_effect = error_builder(openai_error_factory)
+        with pytest.raises(AIDraftProcessingError):
+            AIDraftProcessor(draft_id=str(dish_ai_draft.id)).get_recipe_ai(dish_ai_draft)
+        assert recipe_ai.call_count == 1
+        mock_ai_draft_processor_sleep.assert_not_called()
 
 
 class TestPreparePayload:

@@ -88,7 +88,7 @@ class SetupPeriodicTasksService(TaskService):
                 'task': process_ai_drafts_background.name,
                 'description': (
                     'Каждые 2 минуты. Повторно ставит в очередь AI-черновики блюд, '
-                    'которые находятся в статусе PROCESSING дольше 2 минут.'
+                    'которые находятся в статусе PROCESSING дольше 4 минут.'
                 ),
                 'schedule': every_2_minutes,
                 'schedule_field': 'interval',
