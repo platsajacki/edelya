@@ -4,7 +4,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.fields import HiddenField
 from rest_framework.serializers import CurrentUserDefault, ModelSerializer, UUIDField
 
-from apps.dishes.api.serializers.ingredients import IngredientSerializer
+from apps.dishes.api.serializers.ingredients import IngredientReadSerializer
 from apps.dishes.models import Ingredient
 from apps.shopping.constants import MAX_DAYS_TO_SHOPPING_LIST
 from apps.shopping.models import ShoppingList, ShoppingListItem
@@ -38,7 +38,7 @@ class ShoppingListSerializer(ModelSerializer):
 
 
 class ShoppingLisItemtReadSerializer(ModelSerializer):
-    ingredient = IngredientSerializer(read_only=True)
+    ingredient = IngredientReadSerializer(read_only=True)
 
     class Meta:
         model = ShoppingListItem

@@ -28,7 +28,16 @@ class IngredientCategoryFilter(filters.FilterSet):
 
 class IngredientFilter(filters.FilterSet):
     category = filters.UUIDFilter(field_name='category__id')
+    only_owned = filters.BooleanFilter(field_name='owner_id', lookup_expr='isnull', exclude=True)
+    only_global = filters.BooleanFilter(field_name='owner_id', lookup_expr='isnull')
     search = filters.CharFilter(method='filter_search')
+    ordering = filters.OrderingFilter(
+        fields=(
+            ('name', 'name'),
+            ('created_at', 'created_at'),
+            ('updated_at', 'updated_at'),
+        )
+    )
 
     class Meta:
         model = Ingredient

@@ -3,7 +3,11 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
 from apps.dishes.api.schemas import IngredientCategoryViewSetSchema, IngredientViewSetSchema
-from apps.dishes.api.serializers.ingredients import IngredientCategorySerializer, IngredientSerializer
+from apps.dishes.api.serializers.ingredients import (
+    IngredientCategorySerializer,
+    IngredientReadSerializer,
+    IngredientWriteSerializer,
+)
 from apps.dishes.api.views.filters.ingredient import IngredientCategoryFilter, IngredientFilter
 from apps.dishes.models import Ingredient, IngredientCategory
 from apps.users.models import User
@@ -25,7 +29,7 @@ class IngredientCategoryViewSet(ReadOnlyModelViewSet):
 @extend_schema_view_from_class(IngredientViewSetSchema)
 class IngredientViewSet(ModelViewSet):
     queryset = Ingredient.objects.none()
-    serializer_class = IngredientSerializer
+    serializer_class = IngredientWriteSerializer
     permission_classes = [IsAuthenticated & OwnerObjectPermission & (HasActiveTrial | CanUseBaseFeatures)]
     filterset_class = IngredientFilter
     lookup_url_kwarg = 'ingredient_id'
@@ -34,6 +38,11 @@ class IngredientViewSet(ModelViewSet):
         if isinstance(self.request.user, User) and self.request.user.is_authenticated:
             return Ingredient.objects.for_user(self.request.user)
         return Ingredient.objects.none()
+
+    def get_serializer_class(self) -> type[IngredientReadSerializer | IngredientWriteSerializer]:
+        if self.request.method in {'GET', 'HEAD', 'OPTIONS'}:
+            return IngredientReadSerializer
+        return IngredientWriteSerializer
 
     def perform_destroy(self, instance: Ingredient) -> None:
         instance.deactivate()

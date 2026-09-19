@@ -3,7 +3,11 @@ from rest_framework import status
 
 from apps.dishes.api.serializers.ai_drafts import DishAIDraftCreateDishSerializer, DishAIDraftSerializer
 from apps.dishes.api.serializers.dishes import DishCategorySerializer, DishReadSerializer, DishWriteSerializer
-from apps.dishes.api.serializers.ingredients import IngredientCategorySerializer, IngredientSerializer
+from apps.dishes.api.serializers.ingredients import (
+    IngredientCategorySerializer,
+    IngredientReadSerializer,
+    IngredientWriteSerializer,
+)
 from core.schemas import STANDARD_ERROR_RESPONSES
 
 AI_DRAFT_TAG = 'AI Drafts'
@@ -174,7 +178,7 @@ class IngredientViewSetSchema:
         responses={
             status.HTTP_200_OK: OpenApiResponse(
                 description='A list of ingredients',
-                response=IngredientSerializer(many=True),
+                response=IngredientReadSerializer(many=True),
             ),
             **STANDARD_ERROR_RESPONSES,
         },
@@ -186,7 +190,7 @@ class IngredientViewSetSchema:
         responses={
             status.HTTP_200_OK: OpenApiResponse(
                 description='Details of the ingredient',
-                response=IngredientSerializer(),
+                response=IngredientReadSerializer(),
             ),
             **STANDARD_ERROR_RESPONSES,
         },
@@ -195,11 +199,11 @@ class IngredientViewSetSchema:
         tags=[INGREDIENT_TAG],
         summary='Create a new ingredient',
         description='Create a new ingredient for the authenticated user.',
-        request=IngredientSerializer(),
+        request=IngredientWriteSerializer(),
         responses={
             status.HTTP_201_CREATED: OpenApiResponse(
                 description='The created ingredient',
-                response=IngredientSerializer(),
+                response=IngredientReadSerializer(),
             ),
             **STANDARD_ERROR_RESPONSES,
         },
@@ -208,11 +212,11 @@ class IngredientViewSetSchema:
         tags=[INGREDIENT_TAG],
         summary='Update an ingredient',
         description='Update an existing ingredient by its ID.',
-        request=IngredientSerializer(),
+        request=IngredientWriteSerializer(),
         responses={
             status.HTTP_200_OK: OpenApiResponse(
                 description='The updated ingredient',
-                response=IngredientSerializer(),
+                response=IngredientReadSerializer(),
             ),
             **STANDARD_ERROR_RESPONSES,
         },
@@ -221,11 +225,11 @@ class IngredientViewSetSchema:
         tags=[INGREDIENT_TAG],
         summary='Partially update an ingredient',
         description='Partially update an existing ingredient by its ID.',
-        request=IngredientSerializer(partial=True),
+        request=IngredientWriteSerializer(partial=True),
         responses={
             status.HTTP_200_OK: OpenApiResponse(
                 description='The updated ingredient',
-                response=IngredientSerializer(),
+                response=IngredientReadSerializer(),
             ),
             **STANDARD_ERROR_RESPONSES,
         },

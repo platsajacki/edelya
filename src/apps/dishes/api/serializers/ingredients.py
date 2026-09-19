@@ -16,7 +16,24 @@ class IngredientCategorySerializer(serializers.ModelSerializer):
         ]
 
 
-class IngredientSerializer(serializers.ModelSerializer):
+class IngredientReadSerializer(serializers.ModelSerializer):
+    category = IngredientCategorySerializer(read_only=True)
+
+    class Meta:
+        model = Ingredient
+        fields = [
+            'id',
+            'name',
+            'owner',
+            'base_unit',
+            'is_active',
+            'category',
+            'created_at',
+            'updated_at',
+        ]
+
+
+class IngredientWriteSerializer(serializers.ModelSerializer):
     owner = serializers.HiddenField(default=serializers.CurrentUserDefault())
 
     class Meta:
@@ -46,6 +63,4 @@ class IngredientSerializer(serializers.ModelSerializer):
         ]
 
     def to_representation(self, instance: Ingredient) -> dict:
-        data = super().to_representation(instance)
-        data['category'] = IngredientCategorySerializer(instance.category).data
-        return data
+        return IngredientReadSerializer(instance).data

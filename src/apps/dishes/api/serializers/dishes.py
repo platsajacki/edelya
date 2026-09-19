@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from apps.dishes.api.serializers.ingredients import IngredientSerializer
+from apps.dishes.api.serializers.ingredients import IngredientReadSerializer
 from apps.dishes.contstants import MAX_INGREDIENTS_PER_DISH
 from apps.dishes.models import Dish, DishCategory, DishIngredient
 
@@ -18,7 +18,7 @@ class DishCategorySerializer(serializers.ModelSerializer):
 
 
 class DishIngredientSerializer(serializers.ModelSerializer):
-    ingredient = IngredientSerializer(read_only=True)
+    ingredient = IngredientReadSerializer(read_only=True)
 
     class Meta:
         model = DishIngredient

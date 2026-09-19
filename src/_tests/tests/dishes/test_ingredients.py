@@ -4,7 +4,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from apps.dishes.api.serializers.ingredients import IngredientCategorySerializer, IngredientSerializer
+from apps.dishes.api.serializers.ingredients import IngredientCategorySerializer, IngredientReadSerializer
 from apps.dishes.models import IngredientCategory
 from apps.dishes.models.ingredients import Ingredient
 from apps.dishes.models.model_enums import Unit
@@ -93,7 +93,7 @@ class TestIngredientViewSet:
         assert response.status_code == status.HTTP_200_OK
         assert response.data['count'] == 1
         results = response.data['results']
-        assert results == IngredientSerializer([ingredient_global], many=True).data
+        assert results == IngredientReadSerializer([ingredient_global], many=True).data
 
     @pytest.mark.usefixtures('ingredients')
     def test_authenticated_client_can_filter_ingredient_list_by_name(
@@ -103,7 +103,7 @@ class TestIngredientViewSet:
         assert response.status_code == status.HTTP_200_OK
         assert response.data['count'] == 1
         results = response.data['results']
-        assert results == IngredientSerializer([ingredient_user], many=True).data
+        assert results == IngredientReadSerializer([ingredient_user], many=True).data
 
     def test_authenticated_client_cannot_get_another_user_ingredients(
         self, auth_telegram_api_client: APIClient, ingredient_global: Ingredient, another_telegram_user: User
@@ -127,7 +127,7 @@ class TestIngredientViewSet:
         assert response.status_code == status.HTTP_200_OK
         assert response.data['count'] == 1
         results = response.data['results']
-        assert results == IngredientSerializer([ingredient], many=True).data
+        assert results == IngredientReadSerializer([ingredient], many=True).data
 
     def test_list_returns_global_and_owner_ingredients_only(
         self,
@@ -147,6 +147,86 @@ class TestIngredientViewSet:
         assert str(ingredient_global.id) in returned_ids
         assert str(ingredient_user.id) in returned_ids
         assert str(other.id) not in returned_ids
+
+    def test_only_owned_filters_out_global_and_foreign(
+        self,
+        auth_telegram_api_client: APIClient,
+        ingredient_global: Ingredient,
+        ingredient_user: Ingredient,
+        another_telegram_user: User,
+    ) -> None:
+        foreign = Ingredient.objects.create(
+            name='foreign',
+            base_unit=Unit.GRAM,
+            category=ingredient_global.category,
+            owner=another_telegram_user,
+        )
+        response = auth_telegram_api_client.get(self.list_url, data={'only_owned': 'true'})
+        assert response.status_code == status.HTTP_200_OK
+        ids = {item['id'] for item in response.data['results']}
+        assert str(ingredient_user.id) in ids
+        assert str(ingredient_global.id) not in ids
+        assert str(foreign.id) not in ids
+
+    def test_only_global_returns_only_global_ingredients(
+        self,
+        auth_telegram_api_client: APIClient,
+        ingredient_global: Ingredient,
+        ingredient_user: Ingredient,
+    ) -> None:
+        response = auth_telegram_api_client.get(self.list_url, data={'only_global': 'true'})
+        assert response.status_code == status.HTTP_200_OK
+        ids = {item['id'] for item in response.data['results']}
+        assert str(ingredient_global.id) in ids
+        assert str(ingredient_user.id) not in ids
+
+    @pytest.mark.usefixtures('ingredients')
+    def test_authenticated_client_get_ingredient_list_with_ordering(
+        self, auth_telegram_api_client: APIClient, ingredient_data: list[dict]
+    ) -> None:
+        response = auth_telegram_api_client.get(self.list_url, data={'ordering': '-name'})
+        assert response.status_code == status.HTTP_200_OK
+        expected_names = sorted([data['name'] for data in ingredient_data[5::]], reverse=True)
+        assert [result['name'] for result in response.data['results']] == expected_names
+
+    def test_list_returns_owner(
+        self,
+        auth_telegram_api_client: APIClient,
+        ingredient_global: Ingredient,
+        ingredient_user: Ingredient,
+        telegram_user: User,
+    ) -> None:
+        response = auth_telegram_api_client.get(self.list_url)
+        owners = {item['id']: item['owner'] for item in response.data['results']}
+        assert owners[str(ingredient_global.id)] is None
+        assert owners[str(ingredient_user.id)] == telegram_user.id
+
+    def test_authenticated_client_can_create_own_copy_of_global_ingredient(
+        self, auth_telegram_api_client: APIClient, ingredient_global: Ingredient, telegram_user: User
+    ) -> None:
+        response = auth_telegram_api_client.post(
+            self.list_url,
+            data={
+                'name': ingredient_global.name,
+                'base_unit': ingredient_global.base_unit,
+                'category': str(ingredient_global.category.id),
+            },
+            format='json',
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        assert response.data['owner'] == telegram_user.id
+        assert response.data['id'] != str(ingredient_global.id)
+
+    def test_create_response_contains_owner(
+        self, auth_telegram_api_client: APIClient, ingredient_category: IngredientCategory, telegram_user: User
+    ) -> None:
+        response = auth_telegram_api_client.post(
+            self.list_url,
+            data={'name': 'Owned', 'base_unit': Unit.GRAM, 'category': str(ingredient_category.id)},
+            format='json',
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        assert response.data['owner'] == telegram_user.id
 
     def test_filtering_by_category_and_base_unit(
         self, auth_telegram_api_client: APIClient, ingredient_category: IngredientCategory, telegram_user: User
