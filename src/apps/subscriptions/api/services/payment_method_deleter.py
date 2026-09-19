@@ -9,7 +9,7 @@ from apps.subscriptions.models import Subscription
 from apps.users.models.consents import ConsentLog
 from apps.users.models.model_enums import ConsentAction, ConsentType
 from core.base.services import BaseInstanceService
-from core.logging_handlers import loki_logger
+from core.logging_handlers import app_logger
 from core.utils import get_client_ip
 
 
@@ -28,7 +28,7 @@ class PaymentMethodDeleter(BaseInstanceService):
                 user_agent=self.request.headers.get('User-Agent'),
             )
         except Exception:
-            loki_logger.error(
+            app_logger.error(
                 self.get_log_msg(
                     f'Failed to create consent log for user {self.request.user.id} on delete_payment_method'
                 ),

@@ -4,7 +4,7 @@ from apps.subscriptions.models import Payment, Subscription
 from apps.subscriptions.models.model_enums import PaymentStatus, SubscriptionStatus
 from apps.subscriptions.tasks.base import RecurringTaskService
 from core import celery_app
-from core.logging_handlers import loki_logger
+from core.logging_handlers import app_logger
 
 
 class ExpireTrialsService(RecurringTaskService):
@@ -29,7 +29,7 @@ class ExpirePastDueService(RecurringTaskService):
         count = 0
         for subscription in subscriptions:
             if Payment.objects.has_pending_recurring_payment(subscription):
-                loki_logger.warning(
+                app_logger.warning(
                     self.get_log_msg(
                         f'Skipping expiry of subscription {subscription.id!r} due to pending recurring payment.'
                     )

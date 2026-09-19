@@ -12,7 +12,7 @@ from telebot.types import InlineKeyboardMarkup, InputFile, ReplyKeyboardMarkup, 
 from telebot.util import antiflood
 
 from core.base.services import BaseService
-from core.logging_handlers import loki_logger
+from core.logging_handlers import app_logger
 from core.rate_limits import limiter
 
 if TYPE_CHECKING:
@@ -38,15 +38,15 @@ class EdelyaBotSender(BaseService):
     with_limit: bool = True
 
     def handle_400(self, e: ApiTelegramException) -> None:
-        loki_logger.warning(self.get_log_msg(f'User {self.user.id} Telegram bad request: {str(e)}'))
+        app_logger.warning(self.get_log_msg(f'User {self.user.id} Telegram bad request: {str(e)}'))
 
     def handle_403(self, e: ApiTelegramException) -> None:
-        loki_logger.warning(self.get_log_msg(f'User {self.user.id} Telegram access forbidden: {str(e)}'))
+        app_logger.warning(self.get_log_msg(f'User {self.user.id} Telegram access forbidden: {str(e)}'))
         self.user.inactivate_telegram()
-        loki_logger.info(self.get_log_msg(f'User {self.user.id} Telegram inactivated due to 403 error'))
+        app_logger.info(self.get_log_msg(f'User {self.user.id} Telegram inactivated due to 403 error'))
 
     def handle_429(self, e: ApiTelegramException) -> None:
-        loki_logger.warning(self.get_log_msg(f'User {self.user.id} hit Telegram rate limit: {str(e)}'))
+        app_logger.warning(self.get_log_msg(f'User {self.user.id} hit Telegram rate limit: {str(e)}'))
 
     def handle_error(self, e: ApiTelegramException) -> None:
         match e.error_code:
@@ -105,7 +105,7 @@ class EdelyaBotSender(BaseService):
     def act(self) -> bool:
         try:
             if not self.user.telegram_id:
-                loki_logger.warning(
+                app_logger.warning(
                     self.get_log_msg(f'User {self.user.id} does not have a Telegram ID, skipping message sending')
                 )
                 return False

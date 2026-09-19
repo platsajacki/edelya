@@ -1,8 +1,6 @@
-from logging import Handler, LogRecord, StreamHandler, getLogger
+from logging import Handler, LogRecord, getLogger
 from os import getenv
-from pathlib import Path
 
-from logging_loki import LokiHandler
 from telebot import TeleBot, apihelper
 from telebot.util import antiflood
 
@@ -16,10 +14,8 @@ bot = TeleBot(logger_tg_token) if logger_tg_token else None
 ERROR_CHAT_ID = getenv('LOGGER_ERROR_CHAT_ID', '')
 MAX_MESSAGE_LENGTH = 4096
 
-loki_logger = getLogger('loki')
+app_logger = getLogger('app')
 tg_logger = getLogger('tg')
-only_internal_logger = getLogger('only_internal_logger')
-only_internal_logger.addHandler(StreamHandler())
 
 
 class TelegramHandler(Handler):
@@ -31,9 +27,7 @@ class TelegramHandler(Handler):
 
     def emit(self, record: LogRecord) -> None:
         if not self.bot or not self.chat_id:
-            only_internal_logger.error(
-                f'Telegram logging is not configured properly. Bot: {self.bot}, Chat ID: {self.chat_id}'
-            )
+            app_logger.error(f'Telegram logging is not configured properly. Bot: {self.bot}, Chat ID: {self.chat_id}')
             return
         try:
             log_entry = self.format(record)
@@ -44,20 +38,10 @@ class TelegramHandler(Handler):
                     log_entry[i : i + self.MAX_MESSAGE_LENGTH],
                 )
         except Exception as e:
-            only_internal_logger.error(f'Failed to send log to Telegram: {e}\nOriginal log: {self.format(record)}')
+            app_logger.error(f'Failed to send log to Telegram: {e}\nOriginal log: {self.format(record)}')
 
 
-class SafeLokiHandler(LokiHandler):
-    def emit(self, record: LogRecord) -> None:
-        try:
-            super().emit(record)
-        except Exception as e:
-            only_internal_logger.error(f'Failed to send log to Loki: {e}\nOriginal log: {self.format(record)}')
-
-
-def get_logging_dict(
-    log_formatter: str, datetime_formatter: str, log_dir: Path, loki_container: str, loki_app_name: str, debug: bool
-) -> dict:
+def get_logging_dict(log_formatter: str, datetime_formatter: str, debug: bool) -> dict:
     logging_dict = {
         'version': 1,
         'disable_existing_loggers': False,
@@ -73,22 +57,6 @@ def get_logging_dict(
                 'class': 'logging.StreamHandler',
                 'formatter': 'main',
             },
-            'loki': {
-                'level': 'DEBUG',
-                'class': 'core.logging_handlers.SafeLokiHandler',
-                'url': f'http://{loki_container}/loki/api/v1/push',
-                'tags': {'application': loki_app_name},
-                'version': '1',
-            },
-            'timed_rotating_file': {
-                'level': 'DEBUG',
-                'class': 'logging.handlers.TimedRotatingFileHandler',
-                'filename': log_dir / 'app.log',
-                'formatter': 'main',
-                'when': 'midnight',
-                'interval': 1,
-                'backupCount': 7,
-            },
             'telegram_error': {
                 'level': 'DEBUG',
                 'class': 'core.logging_handlers.TelegramHandler',
@@ -96,28 +64,23 @@ def get_logging_dict(
             },
         },
         'loggers': {
-            'loki': {
-                'handlers': ['console', 'timed_rotating_file', 'loki'],
+            'app': {
+                'handlers': ['console'],
                 'level': 'INFO',
                 'propagate': False,
             },
             'django': {
-                'handlers': ['console', 'timed_rotating_file', 'telegram_error', 'loki'],
+                'handlers': ['console', 'telegram_error'],
                 'level': 'ERROR',
                 'propagate': False,
             },
             'tg': {
-                'handlers': ['console', 'timed_rotating_file', 'telegram_error', 'loki'],
-                'level': 'DEBUG',
-                'propagate': False,
-            },
-            'only_internal_logger': {
-                'handlers': ['console', 'timed_rotating_file'],
+                'handlers': ['console', 'telegram_error'],
                 'level': 'DEBUG',
                 'propagate': False,
             },
             'celery': {
-                'handlers': ['console', 'timed_rotating_file', 'loki'],
+                'handlers': ['console'],
                 'level': 'INFO',
                 'propagate': False,
             },

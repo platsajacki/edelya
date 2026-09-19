@@ -6,15 +6,15 @@ from django.db.utils import OperationalError
 
 import psycopg2
 
-from core.logging_handlers import loki_logger
+from core.logging_handlers import app_logger
 
 
 def check_delay_between_retries(delay: float) -> float:
     if delay < 0:
-        loki_logger.warning('Negative DELAY_BETWEEN_DB_RETRIES value %s is invalid, setting to 0.2', delay)
+        app_logger.warning('Negative DELAY_BETWEEN_DB_RETRIES value %s is invalid, setting to 0.2', delay)
         delay = 0.2
     if delay > 1:
-        loki_logger.warning('High DELAY_BETWEEN_DB_RETRIES value %s may slow down application startup', delay)
+        app_logger.warning('High DELAY_BETWEEN_DB_RETRIES value %s may slow down application startup', delay)
     return delay
 
 
@@ -42,7 +42,7 @@ class DatabaseWrapper(PostgresDatabaseWrapper):
                     raise
                 last_error = e
                 msg = str(e)
-                loki_logger.warning(
+                app_logger.warning(
                     'Database connection attempt %s/%s failed: %s',
                     attempt,
                     settings.MAX_DB_CONNECTION_RETRIES,

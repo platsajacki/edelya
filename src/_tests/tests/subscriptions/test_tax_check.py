@@ -86,14 +86,14 @@ class TestTaxCheckSender:
         telegram_user: User,
         active_subscription: Subscription,
     ) -> None:
-        """Successful HTTP response → loki_logger.info is called."""
+        """Successful HTTP response → app_logger.info is called."""
         mock_response = mocker.MagicMock()
         mock_response.raise_for_status.return_value = None
         mock_tax3r_post.return_value = mock_response
-        mock_loki = mocker.patch('apps.subscriptions.services.tax_check.loki_logger')
+        mock_logger = mocker.patch('apps.subscriptions.services.tax_check.app_logger')
         payment = make_payment(active_subscription, telegram_user)
         TaxCheckSender(payment=payment, service_name='Test')()
-        mock_loki.info.assert_called_once()
+        mock_logger.info.assert_called_once()
 
     @override_settings(**ENABLED)
     def test_logs_error_on_http_error(

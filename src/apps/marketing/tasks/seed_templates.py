@@ -5,7 +5,7 @@ import yaml
 from apps.marketing.models.template_messages import MessageTemplate
 from core import celery_app
 from core.base.services import TaskService
-from core.logging_handlers import loki_logger
+from core.logging_handlers import app_logger
 
 TEMPLATES_YAML_PATH = settings.BASE_DIR / 'data' / 'message_templates.yaml'
 
@@ -29,7 +29,7 @@ class SeedMessageTemplatesService(TaskService):
                 },
             )
             if created:
-                loki_logger.info(self.get_log_msg(f'Created message template {item["name"]!r}.'))
+                app_logger.info(self.get_log_msg(f'Created message template {item["name"]!r}.'))
                 created_count += 1
         return created_count
 

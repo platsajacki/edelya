@@ -16,7 +16,7 @@ from apps.users.models.consents import ConsentLog
 from apps.users.models.legal_docs import PrivacyPolicyVersion, TermsOfServiceVersion
 from apps.users.models.model_enums import ConsentAction, ConsentType
 from core.base.services import BaseService
-from core.logging_handlers import loki_logger
+from core.logging_handlers import app_logger
 from core.utils import get_client_ip
 
 REGISTRATION_CONSENT_TYPES = [
@@ -43,7 +43,7 @@ class TelegramA12nJWTService(BaseService):
                 )
             return user
         except IntegrityError:
-            loki_logger.error(f'Telegram ID {tg_id} already exists.', exc_info=True)
+            app_logger.error(f'Telegram ID {tg_id} already exists.', exc_info=True)
             return User.objects.get(telegram_id=tg_id)
 
     @transaction.atomic

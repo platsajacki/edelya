@@ -5,7 +5,7 @@ import yaml
 from apps.marketing.models.model_enums import MessageTemplateName
 from core import celery_app
 from core.base.services import TaskService
-from core.logging_handlers import loki_logger, tg_logger
+from core.logging_handlers import app_logger, tg_logger
 
 TEMPLATES_YAML_PATH = settings.BASE_DIR / 'data' / 'message_templates.yaml'
 
@@ -24,10 +24,10 @@ class ValidateMessageTemplatesService(TaskService):
         issues = []
         for name in sorted(missing_in_yaml):
             issues.append(f'In enum but missing in YAML: {name!r}')
-            loki_logger.warning(self.get_log_msg(f'Template {name!r} is defined in enum but missing in YAML.'))
+            app_logger.warning(self.get_log_msg(f'Template {name!r} is defined in enum but missing in YAML.'))
         for name in sorted(missing_in_enum):
             issues.append(f'In YAML but missing in enum: {name!r}')
-            loki_logger.warning(self.get_log_msg(f'Template {name!r} is defined in YAML but missing in enum.'))
+            app_logger.warning(self.get_log_msg(f'Template {name!r} is defined in YAML but missing in enum.'))
         return issues
 
 

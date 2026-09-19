@@ -5,7 +5,7 @@ import yaml
 from apps.settings.models import Prompt
 from core import celery_app
 from core.base.services import TaskService
-from core.logging_handlers import loki_logger
+from core.logging_handlers import app_logger
 
 PROMPTS_YAML_PATH = settings.BASE_DIR / 'data' / 'prompts.yaml'
 
@@ -28,7 +28,7 @@ class SeedPromptsService(TaskService):
                 },
             )
             if created:
-                loki_logger.info(self.get_log_msg(f'Created prompt {item["name"]!r}.'))
+                app_logger.info(self.get_log_msg(f'Created prompt {item["name"]!r}.'))
                 created_count += 1
         return created_count
 

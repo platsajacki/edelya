@@ -8,7 +8,7 @@ from apps.subscriptions.models.model_enums import PaymentStatus, SubscriptionSta
 from apps.subscriptions.services.webhook_handler import WebhookAction
 from apps.subscriptions.tasks.base import RecurringTaskService
 from core import celery_app
-from core.logging_handlers import loki_logger
+from core.logging_handlers import app_logger
 
 
 class ChargeTrialToPaidService(RecurringTaskService):
@@ -32,7 +32,7 @@ class ChargeTrialToPaidService(RecurringTaskService):
     def process_subscription(self, subscription: Subscription, pending_tariff: Tariff) -> None:
         self.check_pending_recurring_payment(subscription)
         payment = self.create_payment(subscription, pending_tariff, action=WebhookAction.FIRST_PAYMENT)
-        loki_logger.info(
+        app_logger.info(
             self.get_log_msg(
                 f'Created payment {payment.id!r} for subscription {subscription.id!r} to charge trial to paid.'
             )
@@ -46,7 +46,7 @@ class ChargeTrialToPaidService(RecurringTaskService):
                 description=f'Активация подписки "{pending_tariff.name}" после пробного периода',
             )
         except PaymentPendingRecurringError as e:
-            loki_logger.warning(self.get_log_msg(f'Skipping trial to paid conversion. {e.message}'))
+            app_logger.warning(self.get_log_msg(f'Skipping trial to paid conversion. {e.message}'))
             self.process_payment(
                 payment,
                 pending_tariff,
@@ -90,10 +90,10 @@ class ChargeTrialToPaidService(RecurringTaskService):
                 self.process_subscription(subscription, pending_tariff=subscription.pending_tariff)
                 count += 1
             except (SubscriptionDoesHavePendingTariffError, PaymentPendingRecurringError) as e:
-                loki_logger.warning(self.get_log_msg(f'Skipping trial to paid conversion. {e.message}'), exc_info=True)
+                app_logger.warning(self.get_log_msg(f'Skipping trial to paid conversion. {e.message}'), exc_info=True)
                 continue
             except Exception as e:
-                loki_logger.error(
+                app_logger.error(
                     self.get_log_msg(f'Error processing subscription {subscription.id!r}: {e}'), exc_info=True
                 )
                 continue

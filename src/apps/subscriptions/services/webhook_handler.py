@@ -19,7 +19,7 @@ from apps.subscriptions.services.tax_check import TaxCheckSender
 from apps.users.models.consents import ConsentLog
 from apps.users.models.model_enums import ConsentAction, ConsentType
 from core.base.services import BaseService
-from core.logging_handlers import loki_logger, tg_logger
+from core.logging_handlers import app_logger, tg_logger
 
 
 class WebhookAction(StrEnum):
@@ -51,7 +51,7 @@ class PaymentSucceededHandler(BaseService):
                 action=ConsentAction.GRANTED,
             )
         except Exception:
-            loki_logger.error(
+            app_logger.error(
                 self.get_log_msg(f'Failed to log payment method storage consent for user {self.payment.user_id}'),
                 exc_info=True,
             )
@@ -100,7 +100,7 @@ class PaymentSucceededHandler(BaseService):
     def _renew_subscription(self, subscription: Subscription, payment_method: PaymentMethod) -> None:
         tariff = subscription.pending_tariff or subscription.tariff
         if not tariff:
-            loki_logger.error(self.get_log_msg(f'Subscription {subscription.id} has no tariff during renewal'))
+            app_logger.error(self.get_log_msg(f'Subscription {subscription.id} has no tariff during renewal'))
             return
         period_start = subscription.current_period_end or timezone.now()
         subscription.status = SubscriptionStatus.ACTIVE
@@ -260,20 +260,20 @@ class WebhookHandler(BaseService):
                 .get(yookassa_payment_id=yookassa_id)
             )
         except Payment.DoesNotExist:
-            loki_logger.warning('Payment not found for YooKassa ID: %s', self.object_data)
+            app_logger.warning('Payment not found for YooKassa ID: %s', self.object_data)
             raise
 
     def _check_idempotence(self) -> bool:
         idempotence_key = self.object_data.get('metadata', {}).get('idempotence_key')
         if idempotence_key:
             if payment_sync_flag_controler.check_payment_sync_flag(idempotence_key):
-                loki_logger.info(
+                app_logger.info(
                     'Payment with idempotence_key=%s was processed synchronously, skipping webhook',
                     idempotence_key,
                 )
                 return True
         else:
-            loki_logger.warning(
+            app_logger.warning(
                 'No idempotence_key in webhook metadata for event %s and object %s',
                 self.event,
                 self.object_data,
@@ -284,9 +284,9 @@ class WebhookHandler(BaseService):
         try:
             event_type = WebhookEventType(self.event)
         except ValueError:
-            loki_logger.info('Unsupported YooKassa webhook event: %s', self.event)
+            app_logger.info('Unsupported YooKassa webhook event: %s', self.event)
             return
-        loki_logger.info('Processing YooKassa webhook event: %s', event_type)
+        app_logger.info('Processing YooKassa webhook event: %s', event_type)
         if (
             event_type in (WebhookEventType.PAYMENT_SUCCEEDED, WebhookEventType.PAYMENT_CANCELED, WebhookAction.UPGRADE)
             and self._check_idempotence()

@@ -4,14 +4,14 @@ from apps.subscriptions.models.model_enums import PaymentStatus, SubscriptionSta
 from apps.subscriptions.services.webhook_handler import WebhookAction
 from apps.subscriptions.tasks.base import RecurringTaskService
 from core import celery_app
-from core.logging_handlers import loki_logger
+from core.logging_handlers import app_logger
 
 
 class ChargeRenewalService(RecurringTaskService):
     def process_subscription(self, subscription: Subscription, tariff: Tariff) -> None:
         self.check_pending_recurring_payment(subscription)
         payment = self.create_payment(subscription, tariff, action=WebhookAction.RECURRING)
-        loki_logger.info(
+        app_logger.info(
             self.get_log_msg(
                 f'Created payment {payment.id!r} for subscription {subscription.id!r} to renew subscription.'
             )
@@ -22,7 +22,7 @@ class ChargeRenewalService(RecurringTaskService):
                 payment, tariff, subscription, description=f'Продление подписки "{tariff.name}"'
             )
         except PaymentPendingRecurringError as e:
-            loki_logger.warning(self.get_log_msg(f'Skipping renewal. {e.message}'))
+            app_logger.warning(self.get_log_msg(f'Skipping renewal. {e.message}'))
             self.process_payment(
                 payment,
                 tariff,
@@ -65,10 +65,10 @@ class ChargeRenewalService(RecurringTaskService):
                 self.process_subscription(subscription, tariff=tariff)
                 count += 1
             except PaymentPendingRecurringError as e:
-                loki_logger.warning(self.get_log_msg(f'Skipping renewal. {e.message}'), exc_info=True)
+                app_logger.warning(self.get_log_msg(f'Skipping renewal. {e.message}'), exc_info=True)
                 continue
             except Exception as e:
-                loki_logger.error(
+                app_logger.error(
                     self.get_log_msg(f'Error processing subscription {subscription.id!r}: {e}'), exc_info=True
                 )
                 continue

@@ -28,7 +28,7 @@ from apps.users.models.consents import ConsentLog
 from apps.users.models.model_enums import ConsentAction, ConsentType
 from core.base.exceptions import ConflictError
 from core.base.services import BaseService, BaseViewSetService
-from core.logging_handlers import loki_logger
+from core.logging_handlers import app_logger
 from core.utils import get_client_ip
 
 
@@ -346,7 +346,7 @@ class TariffSelector(BaseViewSetService):
     def create_consent_log(self, tariff: Tariff) -> None:
         try:
             if not self.request:
-                loki_logger.error(self.get_log_msg('Request is None, cannot create consent log'))
+                app_logger.error(self.get_log_msg('Request is None, cannot create consent log'))
                 return
             ConsentLog.objects.create(
                 user=self.user,
@@ -357,7 +357,7 @@ class TariffSelector(BaseViewSetService):
                 user_agent=self.request.headers.get('User-Agent'),
             )
         except Exception:
-            loki_logger.error(
+            app_logger.error(
                 self.get_log_msg(f'Failed to create consent log for user {self.user.id} and tariff {tariff.id}'),
                 exc_info=True,
             )

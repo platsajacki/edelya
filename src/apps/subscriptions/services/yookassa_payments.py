@@ -13,7 +13,7 @@ from yookassa.client import ApiClient
 from yookassa.payment import PaymentResponse
 from yookassa.payment_method import PaymentMethodResponse
 
-from core.logging_handlers import loki_logger
+from core.logging_handlers import app_logger
 
 
 class YookassaProxyConfigurator:
@@ -88,7 +88,7 @@ class YookassaPaymentsService:
             params['description'] = description[:128]
         if metadata:
             params['metadata'] = metadata
-        loki_logger.info('Creating YooKassa payment, idempotence_key=%s', idempotence_key)
+        app_logger.info('Creating YooKassa payment, idempotence_key=%s', idempotence_key)
         return YooPayment.create(params, idempotency_key=idempotence_key)
 
     def get_payment(self, payment_id: str) -> PaymentResponse:
@@ -97,7 +97,7 @@ class YookassaPaymentsService:
         Используется для polling'а статуса или в webhook-обработчике.
         Жизненный цикл: pending → waiting_for_capture → succeeded / canceled.
         """
-        loki_logger.info('Fetching YooKassa payment, payment_id=%s', payment_id)
+        app_logger.info('Fetching YooKassa payment, payment_id=%s', payment_id)
         return YooPayment.find_one(payment_id)
 
     def capture_payment(
@@ -116,7 +116,7 @@ class YookassaPaymentsService:
         params: dict[str, Any] | None = None
         if amount is not None:
             params = {'amount': {'value': str(amount), 'currency': currency}}
-        loki_logger.info('Capturing YooKassa payment, payment_id=%s', payment_id)
+        app_logger.info('Capturing YooKassa payment, payment_id=%s', payment_id)
         return YooPayment.capture(payment_id, params, idempotency_key=idempotence_key)
 
     def cancel_payment(self, payment_id: str, idempotence_key: str | None = None) -> PaymentResponse:
@@ -126,7 +126,7 @@ class YookassaPaymentsService:
         Деньги разблокируются на карте пользователя.
         """
         idempotence_key = idempotence_key or str(uuid4())
-        loki_logger.info('Cancelling YooKassa payment, payment_id=%s', payment_id)
+        app_logger.info('Cancelling YooKassa payment, payment_id=%s', payment_id)
         return YooPayment.cancel(payment_id, idempotency_key=idempotence_key)
 
     def create_payment_method_binding(
@@ -149,7 +149,7 @@ class YookassaPaymentsService:
                 'return_url': return_url or settings.YOOKASSA_RETURN_URL,
             },
         }
-        loki_logger.info('Creating YooKassa payment method binding, idempotence_key=%s', idempotence_key)
+        app_logger.info('Creating YooKassa payment method binding, idempotence_key=%s', idempotence_key)
         return YooPaymentMethod.create(params, idempotency_key=idempotence_key)
 
     def get_payment_method(self, payment_method_id: str) -> PaymentMethodResponse:
@@ -158,7 +158,7 @@ class YookassaPaymentsService:
         Используется для проверки статуса привязки (pending → active)
         и получения данных карты (last4, card_type) для отображения в ЛК.
         """
-        loki_logger.info('Fetching YooKassa payment method, payment_method_id=%s', payment_method_id)
+        app_logger.info('Fetching YooKassa payment method, payment_method_id=%s', payment_method_id)
         return YooPaymentMethod.find_one(payment_method_id)
 
 

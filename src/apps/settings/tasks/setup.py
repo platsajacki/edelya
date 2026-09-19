@@ -13,7 +13,7 @@ from apps.subscriptions.tasks.tax3r_check import process_tax3r_check_results
 from apps.subscriptions.tasks.trials import process_trial_to_paid
 from core import celery_app
 from core.base.services import TaskService
-from core.logging_handlers import loki_logger
+from core.logging_handlers import app_logger
 
 
 class SetupPeriodicTasksService(TaskService):
@@ -151,7 +151,7 @@ class SetupPeriodicTasksService(TaskService):
                 defaults=defaults,
             )
             action = 'Создана' if created else 'Обновлена'
-            loki_logger.info(self.get_log_msg(f'{action} периодическая задача: {task_def["name"]!r}'))
+            app_logger.info(self.get_log_msg(f'{action} периодическая задача: {task_def["name"]!r}'))
 
 
 @celery_app.task

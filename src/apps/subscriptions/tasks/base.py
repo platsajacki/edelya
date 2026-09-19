@@ -16,7 +16,7 @@ from apps.subscriptions.services.tax_check import TaxCheckSender
 from apps.subscriptions.services.webhook_handler import WebhookAction
 from apps.subscriptions.services.yookassa_payments import yookassa_service
 from core.base.services import TaskService
-from core.logging_handlers import loki_logger
+from core.logging_handlers import app_logger
 
 
 class RecurringTaskService(TaskService):
@@ -55,7 +55,7 @@ class RecurringTaskService(TaskService):
             payment.payment_method = subscription.payment_method
         payment.save(update_fields=['status', 'paid_at', 'payment_method'])
         subscription.status = SubscriptionStatus.ACTIVE
-        loki_logger.info(
+        app_logger.info(
             self.get_log_msg(
                 f'Processed successful payment {payment.id!r} for subscription {subscription.id!r}. '
                 f'Status set to ACTIVE.'
@@ -97,7 +97,7 @@ class RecurringTaskService(TaskService):
         payment.cancellation_reason = cancellation_reason or 'Unknown reason'
         payment.save(update_fields=['status', 'cancellation_reason'])
         subscription.status = failed_status
-        loki_logger.info(
+        app_logger.info(
             self.get_log_msg(
                 f'Cancelled payment {payment.id!r} '
                 f'for subscription {subscription.id!r} due to failed payment. Reason: {cancellation_reason}'

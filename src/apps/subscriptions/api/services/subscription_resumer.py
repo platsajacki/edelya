@@ -11,7 +11,7 @@ from apps.subscriptions.services.auto_renew_enabler import AutoRenewEnabler
 from apps.subscriptions.services.webhook_handler import WebhookAction
 from apps.users.models.consents import ConsentLog
 from apps.users.models.model_enums import ConsentAction, ConsentType
-from core.logging_handlers import loki_logger
+from core.logging_handlers import app_logger
 from core.utils import get_client_ip
 
 
@@ -37,7 +37,7 @@ class SubscriptionResumer(CurrentSubscriptionService):
                 user_agent=self.request.headers.get('User-Agent'),
             )
         except Exception:
-            loki_logger.error(
+            app_logger.error(
                 f'Failed to create consent log for user {self.authenticated_user.id} on resume_subscription',
                 exc_info=True,
             )

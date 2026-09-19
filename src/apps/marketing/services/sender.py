@@ -9,7 +9,7 @@ from apps.marketing.models.notifications import Notification
 from apps.marketing.models.template_messages import MessageTemplate
 from apps.users.models.users import User
 from core.base.services import BaseService
-from core.logging_handlers import loki_logger
+from core.logging_handlers import app_logger
 
 
 def fmt_date(dt: datetime | None) -> str:
@@ -37,7 +37,7 @@ class NotificationSender(BaseService):
     def send_notification(self) -> bool:
         template = MessageTemplate.objects.filter(name=self.template_name).first()
         if template is None:
-            loki_logger.error(self.get_log_msg(f'MessageTemplate {self.template_name!r} not found, skipping.'))
+            app_logger.error(self.get_log_msg(f'MessageTemplate {self.template_name!r} not found, skipping.'))
             return False
         text = template.render_text_str(self.variables)
         delivered = self.user.send_telegram_message(text)
@@ -49,7 +49,7 @@ class NotificationSender(BaseService):
         try:
             return self.send_notification()
         except Exception as e:
-            loki_logger.error(
+            app_logger.error(
                 self.get_log_msg(
                     f'Failed to send notification {self.template_name!r} to user {self.user.id}. Error: {e}'
                 ),

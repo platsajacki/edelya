@@ -377,7 +377,6 @@ Edelya — backend-сервис для приложения по ведению 
 - YooKassa SDK.
 - OpenAI SDK.
 - pyTelegramBotAPI.
-- Loki logging.
 - Ruff, mypy, pytest, pytest-django, pytest-xdist.
 
 ## Качество и тесты
@@ -436,7 +435,6 @@ make celery
 - `YOOKASSA_SHOP_ID`, `YOOKASSA_SECRET_KEY` — YooKassa.
 - `TAX3R_URL`, `TAX3R_API_KEY`, `SEND_CHECKS_TO_TAX3R` — Tax3r.
 - `SERVICE_NAME` — имя сервиса, используется в очередях и логировании.
-- `LOKI_CONTAINER`, `LOKI_APP_NAME` — настройки Loki.
 
 ## Структура проекта
 

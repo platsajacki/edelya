@@ -5,7 +5,7 @@ from django.conf import settings
 from apps.subscriptions.models.payments import Payment
 from core.base.services import BaseService
 from core.external_requests.tax3r import TaxCheckData, send_payment_check_to_taxer
-from core.logging_handlers import loki_logger, tg_logger
+from core.logging_handlers import app_logger, tg_logger
 
 
 @dataclass
@@ -19,7 +19,7 @@ class TaxCheckSender(BaseService):
             response.raise_for_status()
             self.payment.send_to_tax3r = True
             self.payment.save(update_fields=['send_to_tax3r'])
-            loki_logger.info(self.get_log_msg(f'Tax check sent for payment {self.payment.id!r}, data: {data}'))
+            app_logger.info(self.get_log_msg(f'Tax check sent for payment {self.payment.id!r}, data: {data}'))
         except Exception as e:
             tg_logger.error(
                 self.get_log_msg(f'Failed to send tax check for payment {self.payment.id!r}: {e}'),
