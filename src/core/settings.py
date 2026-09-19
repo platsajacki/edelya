@@ -254,6 +254,9 @@ CELERY_BROKER_TRANSPORT_OPTIONS = {
 # logging configuration
 LOGGING = get_logging_dict(
     log_formatter='[%(asctime)s] %(levelname)s in %(module)s: %(message)s',
+    telegram_formatter=(
+        '[%(asctime)s] [%(levelname)s] %(name)s:%(funcName)s:%(lineno)d\nFile: %(pathname)s\nMessage: %(message)s\n'
+    ),
     datetime_formatter='%Y-%m-%d %H:%M:%S',
     debug=DEBUG,
 )

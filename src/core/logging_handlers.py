@@ -41,13 +41,17 @@ class TelegramHandler(Handler):
             app_logger.error(f'Failed to send log to Telegram: {e}\nOriginal log: {self.format(record)}')
 
 
-def get_logging_dict(log_formatter: str, datetime_formatter: str, debug: bool) -> dict:
+def get_logging_dict(log_formatter: str, telegram_formatter: str, datetime_formatter: str, debug: bool) -> dict:
     logging_dict = {
         'version': 1,
         'disable_existing_loggers': False,
         'formatters': {
             'main': {
                 'format': log_formatter,
+                'datefmt': datetime_formatter,
+            },
+            'telegram': {
+                'format': telegram_formatter,
                 'datefmt': datetime_formatter,
             },
         },
@@ -60,7 +64,7 @@ def get_logging_dict(log_formatter: str, datetime_formatter: str, debug: bool) -
             'telegram_error': {
                 'level': 'DEBUG',
                 'class': 'core.logging_handlers.TelegramHandler',
-                'formatter': 'main',
+                'formatter': 'telegram',
             },
         },
         'loggers': {
