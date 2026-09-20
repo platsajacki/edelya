@@ -8,6 +8,7 @@ from apps.dishes.api.serializers.ingredients import (
     IngredientReadSerializer,
     IngredientWriteSerializer,
 )
+from apps.dishes.api.services.ingredient_deactivator import IngredientDeactivator
 from apps.dishes.api.views.filters.ingredient import IngredientCategoryFilter, IngredientFilter
 from apps.dishes.models import Ingredient, IngredientCategory
 from apps.users.models import User
@@ -45,4 +46,4 @@ class IngredientViewSet(ModelViewSet):
         return IngredientWriteSerializer
 
     def perform_destroy(self, instance: Ingredient) -> None:
-        instance.deactivate()
+        IngredientDeactivator(instance=instance)()

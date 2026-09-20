@@ -1,13 +1,16 @@
 import pytest
 
+from decimal import Decimal
+
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
 from apps.dishes.api.serializers.ingredients import IngredientCategorySerializer, IngredientReadSerializer
-from apps.dishes.models import IngredientCategory
+from apps.dishes.models import Dish, DishIngredient, IngredientCategory
 from apps.dishes.models.ingredients import Ingredient
 from apps.dishes.models.model_enums import Unit
+from apps.shopping.models import ShoppingListItem
 from apps.users.models import User
 
 
@@ -343,6 +346,85 @@ class TestIngredientViewSet:
         )
         response = auth_telegram_api_client.delete(self.get_detail_url(str(foreign.id)))
         assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_authenticated_client_can_create_ingredient_with_deleted_name(
+        self, auth_telegram_api_client: APIClient, ingredient_user: Ingredient
+    ) -> None:
+        auth_telegram_api_client.delete(self.get_detail_url(str(ingredient_user.id)))
+        response = auth_telegram_api_client.post(
+            self.list_url,
+            data={
+                'name': ingredient_user.name,
+                'base_unit': ingredient_user.base_unit,
+                'category': str(ingredient_user.category.id),
+            },
+            format='json',
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+
+    def test_authenticated_client_can_rename_ingredient_to_deleted_name(
+        self, auth_telegram_api_client: APIClient, ingredient_user: Ingredient, telegram_user: User
+    ) -> None:
+        deleted = Ingredient.objects.create(
+            name='deleted',
+            base_unit=Unit.GRAM,
+            category=ingredient_user.category,
+            owner=telegram_user,
+        )
+        auth_telegram_api_client.delete(self.get_detail_url(str(deleted.id)))
+        response = auth_telegram_api_client.patch(
+            self.get_detail_url(str(ingredient_user.id)),
+            data={'name': deleted.name},
+            format='json',
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_authenticated_client_cannot_delete_ingredient_used_by_dish(
+        self, auth_telegram_api_client: APIClient, ingredient_user: Ingredient, dish_user: Dish
+    ) -> None:
+        DishIngredient.objects.create(
+            dish=dish_user,
+            ingredient=ingredient_user,
+            amount=Decimal('100.000'),
+            is_optional=False,
+        )
+        response = auth_telegram_api_client.delete(self.get_detail_url(str(ingredient_user.id)))
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.data['dishes'] == [{'id': str(dish_user.id), 'name': dish_user.name}]
+        assert response.data['dishes_total'] == 1
+        assert response.data['shopping_lists_total'] == 0
+        ingredient_user.refresh_from_db()
+        assert ingredient_user.is_active
+
+    def test_authenticated_client_cannot_delete_ingredient_used_by_shopping_list(
+        self,
+        auth_telegram_api_client: APIClient,
+        ingredient_user: Ingredient,
+        manual_shopping_list_item: ShoppingListItem,
+    ) -> None:
+        shopping_list = manual_shopping_list_item.shopping_list
+        response = auth_telegram_api_client.delete(self.get_detail_url(str(ingredient_user.id)))
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert response.data['shopping_lists_total'] == 1
+        assert response.data['shopping_lists'][0]['name'] == shopping_list.name
+        assert response.data['shopping_lists'][0]['date_from'] == shopping_list.date_from.isoformat()
+        ingredient_user.refresh_from_db()
+        assert ingredient_user.is_active
+
+    def test_authenticated_client_can_delete_ingredient_used_by_inactive_dish(
+        self, auth_telegram_api_client: APIClient, ingredient_user: Ingredient, dish_user: Dish
+    ) -> None:
+        DishIngredient.objects.create(
+            dish=dish_user,
+            ingredient=ingredient_user,
+            amount=Decimal('100.000'),
+            is_optional=False,
+        )
+        dish_user.deactivate()
+        response = auth_telegram_api_client.delete(self.get_detail_url(str(ingredient_user.id)))
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        ingredient_user.refresh_from_db()
+        assert not ingredient_user.is_active
 
     def test_authenticated_client_cannot_make_duplicate_ingredient(
         self, auth_telegram_api_client: APIClient, ingredient_user: Ingredient, ingredient_category: IngredientCategory

@@ -26,6 +26,12 @@ class ConflictError(APIException):
     default_code = 'conflict'
 
 
+class IngredientInUseError(ConflictError):
+    def __init__(self, detail: dict[str, Any]) -> None:
+        super().__init__()
+        self.detail = detail
+
+
 class AIRecipeLimitExceeded(APIException):
     status_code = status.HTTP_403_FORBIDDEN
     default_detail = 'AI recipe limit for the current subscription period has been exceeded.'

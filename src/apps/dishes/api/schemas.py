@@ -16,6 +16,30 @@ INGREDIENT_TAG = 'Ingredients'
 DISH_CATEGORY_TAG = 'Dish Categories'
 DISH_TAG = 'Dishes'
 
+USAGE_REFERENCE_SCHEMA = {
+    'type': 'array',
+    'items': {'type': 'object', 'additionalProperties': {'type': 'string'}},
+}
+INGREDIENT_IN_USE_RESPONSE = {
+    'type': 'object',
+    'properties': {
+        'detail': {'type': 'string'},
+        'dishes': USAGE_REFERENCE_SCHEMA,
+        'dishes_total': {'type': 'integer'},
+        'shopping_lists': USAGE_REFERENCE_SCHEMA,
+        'shopping_lists_total': {'type': 'integer'},
+    },
+    'example': {
+        'detail': 'Ingredient is used and cannot be deleted.',
+        'dishes': [{'id': '01994b0e-...', 'name': 'Борщ'}],
+        'dishes_total': 1,
+        'shopping_lists': [
+            {'id': '01994b0e-...', 'name': 'Продукты на неделю', 'date_from': '2026-09-14', 'date_to': '2026-09-20'}
+        ],
+        'shopping_lists_total': 1,
+    },
+}
+
 
 class DishAIDraftViewSetSchema:
     custom_actions = {'create_dish'}
@@ -237,9 +261,16 @@ class IngredientViewSetSchema:
     destroy = extend_schema(
         tags=[INGREDIENT_TAG],
         summary='Delete an ingredient',
-        description='Delete an existing ingredient by its ID.',
+        description=(
+            'Delete an existing ingredient by its ID. '
+            'An ingredient used by an active dish or by a shopping list cannot be deleted.'
+        ),
         responses={
             status.HTTP_204_NO_CONTENT: OpenApiResponse(description='Ingredient deleted successfully'),
+            status.HTTP_409_CONFLICT: OpenApiResponse(
+                description='The ingredient is in use and cannot be deleted',
+                response=INGREDIENT_IN_USE_RESPONSE,
+            ),
             **STANDARD_ERROR_RESPONSES,
         },
     )
