@@ -8,6 +8,7 @@ class IngredientPayloadData(TypedDict):
     name: str
     category: str
     base_unit: str
+    owner: str | None
     amount: float
     is_optional: bool
     new: bool

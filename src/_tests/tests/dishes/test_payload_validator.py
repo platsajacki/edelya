@@ -50,6 +50,18 @@ class TestDishPayloadValidator:
         with pytest.raises(ValidationError, match='Ingredient #1 missing keys: base_unit.'):
             DishPayloadValidator()(payload)
 
+    def test_missing_owner_raises_validation_error(self, valid_dish_payload: DishPayloadData) -> None:
+        payload = deepcopy(valid_dish_payload)
+        del payload['ingredients'][0]['owner']  # type: ignore[misc]
+        with pytest.raises(ValidationError, match='Ingredient #1 missing keys: owner.'):
+            DishPayloadValidator()(payload)
+
+    def test_invalid_owner_raises_validation_error(self, valid_dish_payload: DishPayloadData) -> None:
+        payload = deepcopy(valid_dish_payload)
+        payload['ingredients'][0]['owner'] = 1  # type: ignore[typeddict-item]
+        with pytest.raises(ValidationError, match='Ingredient #1 owner must be null or string.'):
+            DishPayloadValidator()(payload)
+
     def test_invalid_ingredient_string_fields_raise_validation_error(
         self,
         valid_dish_payload: DishPayloadData,

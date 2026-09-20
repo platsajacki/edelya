@@ -14,6 +14,7 @@ from apps.dishes.api.services.dish_updater import DishUpdater
 from apps.dishes.data_types import DishPayloadData, IngredientPayloadData
 from apps.dishes.models import Dish, DishAIDraft, DishAIDraftStatus, Ingredient, IngredientCategory, Unit
 from core.base.services import BaseViewSetService
+from core.utils import normalize_name
 
 
 @dataclass
@@ -48,18 +49,29 @@ class AIDraftDishCreator(AIDraftService, BaseViewSetService):
         for item in items:
             self._validate_existing_ingredient(item)
 
-    def create_ingredient(self, item: IngredientPayloadData) -> Ingredient:
+    def build_new_ingredient(self, item: IngredientPayloadData, name: str) -> Ingredient:
         self._validate_new_ingredient(item)
         return Ingredient(
             owner=self.draft.owner,
-            name=item['name'],
+            name=name,
             category_id=item['category'],
             base_unit=item['base_unit'],
         )
 
-    def get_new_ingredients(self, items: list[IngredientPayloadData]) -> list[Ingredient]:
-        ingredients = [self.create_ingredient(item) for item in items]
-        return Ingredient.objects.bulk_create(ingredients)
+    def get_owned_ingredients_by_name(self, names: list[str]) -> dict[str, Ingredient]:
+        ingredients = Ingredient.objects.get_by_names_for_user(names, self.draft.owner)
+        return {normalize_name(ingredient.name).lower(): ingredient for ingredient in ingredients}
+
+    def get_new_ingredients(self, items: list[IngredientPayloadData]) -> dict[str, Ingredient]:
+        names = [normalize_name(item['name']) for item in items]
+        ingredient_by_name = self.get_owned_ingredients_by_name(names)
+        to_create: dict[str, Ingredient] = {}
+        for item, name in zip(items, names, strict=True):
+            key = name.lower()
+            if key not in ingredient_by_name and key not in to_create:
+                to_create[key] = self.build_new_ingredient(item, name)
+        Ingredient.objects.bulk_create(list(to_create.values()))
+        return {**ingredient_by_name, **to_create}
 
     def get_existing_ingredients(self, items: list[IngredientPayloadData]) -> dict[str, Ingredient]:
         self._validate_existing_ingredients(items)
@@ -71,21 +83,20 @@ class AIDraftDishCreator(AIDraftService, BaseViewSetService):
             raise NotFound(detail=f'Ingredients not found: {", ".join(missing_ids)}')
         return ingredient_by_id
 
+    def resolve_ingredient(
+        self, item: IngredientPayloadData, new_by_name: dict[str, Ingredient], existing_by_id: dict[str, Ingredient]
+    ) -> Ingredient:
+        if item['new']:
+            return new_by_name[normalize_name(item['name']).lower()]
+        ingredient_id = item['ingredient']
+        if ingredient_id is None:
+            raise ValidationError('Existing ingredient id is required.')
+        return existing_by_id[ingredient_id]
+
     def get_ingredients(self, items: list[IngredientPayloadData]) -> list[Ingredient]:
-        new_ingredients_data = [item for item in items if item['new']]
-        existing_ingredients_data = [item for item in items if not item['new']]
-        new_ingredients = iter(self.get_new_ingredients(new_ingredients_data))
-        existing_ingredient_by_id = self.get_existing_ingredients(existing_ingredients_data)
-        ingredients: list[Ingredient] = []
-        for item in items:
-            if item['new']:
-                ingredients.append(next(new_ingredients))
-                continue
-            ingredient_id = item['ingredient']
-            if ingredient_id is None:
-                raise ValidationError('Existing ingredient id is required.')
-            ingredients.append(existing_ingredient_by_id[ingredient_id])
-        return ingredients
+        new_by_name = self.get_new_ingredients([item for item in items if item['new']])
+        existing_by_id = self.get_existing_ingredients([item for item in items if not item['new']])
+        return [self.resolve_ingredient(item, new_by_name, existing_by_id) for item in items]
 
     def get_dish_name(self, name: str) -> str:
         if self.queryset.filter(name__iexact=name, owner=self.draft.owner).exists():

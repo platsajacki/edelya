@@ -219,6 +219,7 @@ def valid_dish_payload(dish_category: DishCategory, ingredient_category: Ingredi
                 'name': 'Свекла',
                 'category': str(ingredient_category.id),
                 'base_unit': Unit.GRAM,
+                'owner': None,
                 'amount': 300.0,
                 'is_optional': False,
                 'new': True,

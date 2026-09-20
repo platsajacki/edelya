@@ -40,7 +40,6 @@ class AIDraftProcessor(TaskService):
     _redis_lock_expire: int = dc_field(default=300)  # 5 минут
     _max_attempts: int = dc_field(default=3)
     _retry_policy: OpenAIRetryPolicy = dc_field(default_factory=OpenAIRetryPolicy)
-    _another_category_name: str = dc_field(default='Другое')
     _exact_ingredient_similarity: float = dc_field(default=0.95)
     _similar_ingredient_similarity: float = dc_field(default=0.8)
     _similar_ingredients_limit: int = dc_field(default=3)
@@ -77,8 +76,8 @@ class AIDraftProcessor(TaskService):
 
     def _get_category_id(self, category_name: str) -> str:
         category = DishCategory.objects.filter(name__iexact=category_name).first()
-        if not category:
-            category, _ = DishCategory.objects.get_or_create(name=self._another_category_name)
+        if category is None:
+            raise AIDraftProcessingError(f'Dish category not found: {category_name}.')
         return str(category.id)
 
     def _get_category_ids(self, category_names: list[str]) -> dict[str, str]:
@@ -86,12 +85,7 @@ class AIDraftProcessor(TaskService):
         if len(existing_categories) != len(set(category_names)):
             existing_category_names = {normalize_name(cat.name).lower() for cat in existing_categories}
             missing_categories = set(name.lower() for name in category_names) - existing_category_names
-            tg_logger.warning(
-                self.get_log_msg(
-                    f'Missing ingredient categories: {missing_categories}. '
-                    f'They will be created as "{self._another_category_name}".'
-                )
-            )
+            tg_logger.warning(self.get_log_msg(f'Missing ingredient categories: {missing_categories}.'))
             raise AIDraftProcessingError(f'Missing ingredient categories: {missing_categories}.')
         return {normalize_name(cat.name).lower(): str(cat.id) for cat in existing_categories}
 
@@ -110,15 +104,9 @@ class AIDraftProcessor(TaskService):
 
     def _get_ingredient_category_name(self, ingredient: RecipeAIIngredientData, name: str) -> str:
         category_name = normalize_name(ingredient['category_name']).lower()
-        if category_name:
-            return category_name
-        tg_logger.warning(
-            self.get_log_msg(
-                f'Ingredient "{name}" with empty category found in draft {self.draft_id}, '
-                f'assigning to "{self._another_category_name}".'
-            )
-        )
-        return self._another_category_name.lower()
+        if not category_name:
+            raise AIDraftProcessingError(f'Ingredient "{name}" has no category in draft {self.draft_id}.')
+        return category_name
 
     def _get_existing_ingredients_by_name(
         self, ingredient_names: list[str], draft: DishAIDraft
@@ -174,6 +162,7 @@ class AIDraftProcessor(TaskService):
             'name': ingredient.name,
             'category': str(ingredient.category_id),
             'base_unit': ingredient.base_unit,
+            'owner': str(ingredient.owner_id) if ingredient.owner_id else None,
             'amount': ingredient_data['amount'],
             'is_optional': ingredient_data['is_optional'],
             'new': False,
@@ -188,6 +177,7 @@ class AIDraftProcessor(TaskService):
             'name': normalize_name(ingredient_data['name']),
             'category': category_id,
             'base_unit': ingredient_data['base_unit'],
+            'owner': None,
             'amount': ingredient_data['amount'],
             'is_optional': ingredient_data['is_optional'],
             'new': True,

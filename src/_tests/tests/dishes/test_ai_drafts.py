@@ -14,7 +14,7 @@ from rest_framework.test import APIClient
 from apps.dishes.api.serializers.ai_drafts import DishAIDraftSerializer
 from apps.dishes.data_types import DishPayloadData
 from apps.dishes.models import Dish, DishAIDraft, DishIngredient, Ingredient, IngredientCategory
-from apps.dishes.models.model_enums import DishAIDraftStatus
+from apps.dishes.models.model_enums import DishAIDraftStatus, Unit
 from apps.subscriptions.models import Subscription
 from apps.users.models import User
 
@@ -185,6 +185,53 @@ class TestDishAIDraftViewSetCreateDish:
         assert parsed_dish_ai_draft.payload == valid_dish_payload
         assert parsed_dish_ai_draft.created_dish_id == dish.id
 
+    def test_duplicate_new_ingredients_do_not_break_creation(
+        self,
+        auth_telegram_api_client: APIClient,
+        parsed_dish_ai_draft: DishAIDraft,
+        valid_dish_payload: DishPayloadData,
+        telegram_user: User,
+    ) -> None:
+        payload = deepcopy(valid_dish_payload)
+        payload['ingredients'].append({**payload['ingredients'][0], 'name': '  свекла  '})
+        response = self.post_create_dish(auth_telegram_api_client, parsed_dish_ai_draft, payload)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST, response.data
+        assert 'Duplicate ingredients are not allowed.' in str(response.data)
+        assert not Ingredient.objects.filter(owner=telegram_user, name__iexact='свекла').exists()
+
+    def test_new_ingredient_reuses_existing_owned_ingredient(
+        self,
+        auth_telegram_api_client: APIClient,
+        parsed_dish_ai_draft: DishAIDraft,
+        valid_dish_payload: DishPayloadData,
+        telegram_user: User,
+        ingredient_category: IngredientCategory,
+    ) -> None:
+        existing = Ingredient.objects.create(
+            name='Свекла',
+            base_unit=Unit.GRAM,
+            category=ingredient_category,
+            owner=telegram_user,
+        )
+        response = self.post_create_dish(auth_telegram_api_client, parsed_dish_ai_draft, valid_dish_payload)
+        assert response.status_code == status.HTTP_201_CREATED, response.data
+        assert Ingredient.objects.filter(owner=telegram_user, name__iexact='свекла').count() == 1
+        dish = Dish.objects.get(id=response.data['id'])
+        assert DishIngredient.objects.get(dish=dish).ingredient_id == existing.id
+
+    def test_new_ingredient_name_is_normalized(
+        self,
+        auth_telegram_api_client: APIClient,
+        parsed_dish_ai_draft: DishAIDraft,
+        valid_dish_payload: DishPayloadData,
+        telegram_user: User,
+    ) -> None:
+        payload = deepcopy(valid_dish_payload)
+        payload['ingredients'][0]['name'] = '  Свекла   красная  '
+        response = self.post_create_dish(auth_telegram_api_client, parsed_dish_ai_draft, payload)
+        assert response.status_code == status.HTTP_201_CREATED, response.data
+        assert Ingredient.objects.filter(owner=telegram_user, name='Свекла красная').exists()
+
     def test_creates_dish_from_parsed_draft_with_existing_ingredient(
         self,
         auth_telegram_api_client: APIClient,
@@ -198,6 +245,7 @@ class TestDishAIDraftViewSetCreateDish:
             'name': ingredient_user.name,
             'category': str(ingredient_user.category_id),
             'base_unit': ingredient_user.base_unit,
+            'owner': str(ingredient_user.owner_id),
             'amount': 75.5,
             'is_optional': False,
             'new': False,
@@ -229,6 +277,7 @@ class TestDishAIDraftViewSetCreateDish:
                 'name': ingredient_user.name,
                 'category': str(ingredient_user.category_id),
                 'base_unit': ingredient_user.base_unit,
+                'owner': str(ingredient_user.owner_id),
                 'amount': 75.0,
                 'is_optional': False,
                 'new': False,
@@ -317,6 +366,7 @@ class TestDishAIDraftViewSetCreateDish:
             'name': foreign_ingredient.name,
             'category': str(foreign_ingredient.category_id),
             'base_unit': foreign_ingredient.base_unit,
+            'owner': str(foreign_ingredient.owner_id),
             'amount': 100.0,
             'is_optional': False,
             'new': False,

@@ -122,6 +122,7 @@ class TestPreparePayload:
                     'name': 'Свекла',
                     'category': str(ingredient_category.id),
                     'base_unit': Unit.GRAM,
+                    'owner': None,
                     'amount': 300.0,
                     'is_optional': False,
                     'new': True,
@@ -143,7 +144,7 @@ class TestPreparePayload:
         payload = processor._prepare_payload(data, dish_ai_draft)
         assert payload['recipe'] == '1. Нарезать овощи\n2. Сварить суп\n3. Подать'
 
-    def test_unknown_dish_category_uses_another_category(
+    def test_unknown_dish_category_raises_processing_error(
         self,
         dish_ai_draft: DishAIDraft,
         ingredient_category: IngredientCategory,
@@ -154,10 +155,22 @@ class TestPreparePayload:
         data['dish']['category_name'] = 'Несуществующая категория'
         processor = AIDraftProcessor(draft_id=str(dish_ai_draft.id))
         mocker.patch.object(processor, '_get_similar_ingredients', return_value=[])
-        payload = processor._prepare_payload(data, dish_ai_draft)
-        another_category = DishCategory.objects.get(name='Другое')
-        assert payload['category'] == str(another_category.id)
-        assert payload['ingredients'][0]['category'] == str(ingredient_category.id)
+        with pytest.raises(AIDraftProcessingError, match='Dish category not found'):
+            processor._prepare_payload(data, dish_ai_draft)
+        assert not DishCategory.objects.filter(name='Другое').exists()
+
+    def test_empty_ingredient_category_raises_processing_error(
+        self,
+        dish_ai_draft: DishAIDraft,
+        recipe_ai_success_data: RecipeAISuccessData,
+        mocker: MockFixture,
+    ) -> None:
+        data = deepcopy(recipe_ai_success_data)
+        data['ingredients'][0]['category_name'] = '   '
+        processor = AIDraftProcessor(draft_id=str(dish_ai_draft.id))
+        mocker.patch.object(processor, '_get_similar_ingredients', return_value=[])
+        with pytest.raises(AIDraftProcessingError, match='has no category'):
+            processor._prepare_payload(data, dish_ai_draft)
 
     def test_existing_ingredient_by_name_is_not_new(
         self,
@@ -179,6 +192,7 @@ class TestPreparePayload:
             'name': ingredient_user.name,
             'category': str(ingredient_user.category_id),
             'base_unit': ingredient_user.base_unit,
+            'owner': str(ingredient_user.owner_id),
             'amount': 300.0,
             'is_optional': False,
             'new': False,
@@ -211,6 +225,7 @@ class TestPreparePayload:
             'name': ingredient_global.name,
             'category': str(ingredient_global.category_id),
             'base_unit': ingredient_global.base_unit,
+            'owner': None,
             'amount': 300.0,
             'is_optional': False,
             'new': False,
@@ -280,6 +295,7 @@ class TestProcessDraft:
                     'name': 'Свекла',
                     'category': str(ingredient_category.id),
                     'base_unit': Unit.GRAM,
+                    'owner': None,
                     'amount': 300.0,
                     'is_optional': False,
                     'new': True,
