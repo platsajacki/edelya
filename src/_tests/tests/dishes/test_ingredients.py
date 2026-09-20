@@ -271,6 +271,35 @@ class TestIngredientViewSet:
         assert ingredient_user.name == 'Updated'
         assert ingredient_user.base_unit == Unit.LITER
 
+    def test_authenticated_client_can_update_own_ingredient_keeping_name(
+        self, auth_telegram_api_client: APIClient, ingredient_user: Ingredient
+    ) -> None:
+        url = self.get_detail_url(str(ingredient_user.id))
+        response = auth_telegram_api_client.patch(
+            url,
+            data={'name': ingredient_user.name, 'base_unit': Unit.LITER},
+            format='json',
+        )
+        assert response.status_code == status.HTTP_200_OK
+        ingredient_user.refresh_from_db()
+        assert ingredient_user.base_unit == Unit.LITER
+
+    def test_authenticated_client_cannot_update_own_ingredient_to_existing_name(
+        self, auth_telegram_api_client: APIClient, ingredient_user: Ingredient, telegram_user: User
+    ) -> None:
+        other = Ingredient.objects.create(
+            name='taken',
+            base_unit=Unit.GRAM,
+            category=ingredient_user.category,
+            owner=telegram_user,
+        )
+        response = auth_telegram_api_client.patch(
+            self.get_detail_url(str(ingredient_user.id)),
+            data={'name': other.name.upper()},
+            format='json',
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
     def test_authenticated_client_cannot_update_foreign_ingredient(
         self,
         auth_telegram_api_client: APIClient,

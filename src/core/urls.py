@@ -3,6 +3,8 @@ from django.http import JsonResponse
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
+from core.views import HealthView
+
 api_urlpatterns_v1 = [
     path('auth/', include(('apps.a12n.urls', 'a12n'), namespace='a12n')),
     path('', include(('apps.users.api.urls', 'users'), namespace='users')),
@@ -14,6 +16,7 @@ api_urlpatterns_v1 = [
 
 urlpatterns = [
     path('ping/', lambda request: JsonResponse({'pong': 'pong'}), name='ping'),
+    path('health/', HealthView.as_view(), name='health'),
     path('admin/', admin.site.urls),
     path('api/v1/', include((api_urlpatterns_v1, 'api_v1')), name='api_v1'),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),

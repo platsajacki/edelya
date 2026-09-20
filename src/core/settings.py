@@ -1,3 +1,4 @@
+import socket
 from datetime import timedelta
 from os import getenv
 from pathlib import Path
@@ -18,6 +19,8 @@ SERVICE_NAME = getenv('SERVICE_NAME', 'edelya')
 DEBUG = bool(int(getenv('DEBUG', 0)))
 
 ALLOWED_HOSTS = getenv('ALLOWED_HOSTS', '').split(', ')
+_, _, own_ips = socket.gethostbyname_ex(socket.gethostname())  # type: ignore[assignment]
+ALLOWED_HOSTS.extend(own_ips)
 CORS_ALLOWED_ORIGINS = getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:5173, http://127.0.0.1:5173').split(', ')
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = list(default_headers) + [

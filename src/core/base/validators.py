@@ -1,6 +1,8 @@
+from typing import Any
+
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.validators import RegexValidator
-from django.db.models import Q, QuerySet
+from django.db.models import Model, Q, QuerySet
 from rest_framework.exceptions import ValidationError
 from rest_framework.serializers import BaseSerializer
 
@@ -11,6 +13,8 @@ ALLOWED_OPERATORS = {'iexact'}
 
 
 class UniqueTogetherWithOperatorValidator:
+    requires_context = True
+
     def __init__(
         self, queryset: QuerySet, fields: _SequenceOfExpressionFieldType, message: str, condition: Q | None = None
     ) -> None:
@@ -18,7 +22,6 @@ class UniqueTogetherWithOperatorValidator:
         self.fields = fields
         self.message = message
         self.condition = condition
-        self.serializer: BaseSerializer | None = None
 
     def get_field_operator(self, field: _ExpressionFieldType) -> tuple[str, str | None]:
         if any(field.endswith(f'__{op}') for op in ALLOWED_OPERATORS):
@@ -26,37 +29,33 @@ class UniqueTogetherWithOperatorValidator:
             return field_name, operator
         return field, None
 
-    def create_filter_kwargs(self, attrs: dict) -> dict:
+    def get_field_value(self, field_name: str, attrs: dict, instance: Model | None) -> Any:
+        value = attrs.get(field_name)
+        if value is None and instance is not None:
+            return getattr(instance, field_name, None)
+        return value
+
+    def create_filter_kwargs(self, attrs: dict, instance: Model | None) -> dict:
         filter_kwargs = {}
         for field in self.fields:
             field_name, operator = self.get_field_operator(field)
-            value = attrs.get(field_name)
-            if value is None and getattr(self, 'serializer', None) is not None:
-                instance = getattr(self.serializer, 'instance', None)
-                if instance is not None:
-                    value = getattr(instance, field_name, None)
+            value = self.get_field_value(field_name, attrs, instance)
             if value is None:
                 continue
             filter_key = f'{field_name}__{operator}' if operator else field_name
             filter_kwargs[filter_key] = value
         return filter_kwargs
 
-    def set_context(self, serializer: BaseSerializer) -> None:
-        self.serializer = serializer
+    def create_queryset(self, instance: Model | None) -> QuerySet:
+        queryset = self.queryset if self.condition is None else self.queryset.filter(self.condition)
+        return queryset if instance is None else queryset.exclude(pk=instance.pk)
 
-    def __call__(self, attrs: dict) -> None:
-        filter_kwargs = self.create_filter_kwargs(attrs)
+    def __call__(self, attrs: dict, serializer: BaseSerializer) -> None:
+        instance = getattr(serializer, 'instance', None)
+        filter_kwargs = self.create_filter_kwargs(attrs, instance)
         if not filter_kwargs:
             return
-        qs = self.queryset
-        if self.condition is not None:
-            qs = qs.filter(self.condition)
-        instance = None
-        if getattr(self, 'serializer', None) is not None:
-            instance = getattr(self.serializer, 'instance', None)
-        if instance is not None:
-            qs = qs.exclude(pk=instance.pk)
-        if qs.filter(**filter_kwargs).exists():
+        if self.create_queryset(instance).filter(**filter_kwargs).exists():
             raise ValidationError(self.message)
 
 
