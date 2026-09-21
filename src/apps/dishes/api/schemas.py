@@ -1,7 +1,7 @@
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import status
 
-from apps.dishes.api.serializers.ai_drafts import DishAIDraftCreateDishSerializer, DishAIDraftSerializer
+from apps.dishes.api.serializers.ai_drafts import DishAIDraftPayloadSerializer, DishAIDraftSerializer
 from apps.dishes.api.serializers.dishes import DishCategorySerializer, DishReadSerializer, DishWriteSerializer
 from apps.dishes.api.serializers.ingredients import (
     IngredientCategorySerializer,
@@ -104,6 +104,23 @@ class DishAIDraftViewSetSchema:
             **STANDARD_ERROR_RESPONSES,
         },
     )
+    partial_update = extend_schema(
+        tags=[AI_DRAFT_TAG],
+        summary='Save AI draft payload',
+        description=(
+            'Replaces the draft payload with the frontend-edited one. '
+            'Only the payload is writable, and it is replaced as a whole. '
+            'The draft must be in the parsed status.'
+        ),
+        request=DishAIDraftPayloadSerializer(),
+        responses={
+            status.HTTP_200_OK: OpenApiResponse(
+                description='The updated AI dish draft',
+                response=DishAIDraftSerializer(),
+            ),
+            **STANDARD_ERROR_RESPONSES,
+        },
+    )
     create_dish = extend_schema(
         tags=[AI_DRAFT_TAG],
         summary='Create dish from AI draft',
@@ -117,7 +134,7 @@ class DishAIDraftViewSetSchema:
             'The operation is atomic: on validation errors the dish, dish ingredients, new ingredients, '
             'and draft status update are rolled back.'
         ),
-        request=DishAIDraftCreateDishSerializer(),
+        request=DishAIDraftPayloadSerializer(),
         responses={
             status.HTTP_201_CREATED: OpenApiResponse(
                 description='The created dish',

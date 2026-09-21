@@ -2,36 +2,24 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from dataclasses import field as dc_field
-from typing import Any
+from typing import Any, ClassVar
 
-from django.db import transaction
 from django.db.models import QuerySet
 from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.response import Response
 
 from apps.dishes.api.serializers.dishes import DishWriteSerializer
+from apps.dishes.api.services.ai_draft_service import AIDraftService
 from apps.dishes.api.services.dish_updater import DishUpdater
 from apps.dishes.data_types import DishPayloadData, IngredientPayloadData
-from apps.dishes.models import Dish, DishAIDraft, DishAIDraftStatus, Ingredient, IngredientCategory, Unit
-from core.base.services import BaseViewSetService
+from apps.dishes.models import Dish, DishAIDraftStatus, Ingredient, IngredientCategory, Unit
 from core.utils import normalize_name
 
 
 @dataclass
-class AIDraftService:
-    draft: DishAIDraft = dc_field(kw_only=True)
-
-
-@dataclass
-class AIDraftDishCreator(AIDraftService, BaseViewSetService):
+class AIDraftDishCreator(AIDraftService):
     queryset: QuerySet[Dish] = dc_field(default_factory=Dish.objects.none)
-
-    def validate_draft_status(self) -> None:
-        if self.draft.status != DishAIDraftStatus.PARSED:
-            raise ValidationError('AI draft must be parsed before dish creation.')
-
-    def get_validators(self) -> list:
-        return super().get_validators() + [self.validate_draft_status]
+    not_parsed_message: ClassVar[str] = 'AI draft must be parsed before dish creation.'
 
     def _validate_new_ingredient(self, item: IngredientPayloadData) -> None:
         if item['ingredient'] is not None:
@@ -132,11 +120,10 @@ class AIDraftDishCreator(AIDraftService, BaseViewSetService):
             queryset=self.queryset,
         )()
 
-    @transaction.atomic
     def act(self) -> Response:
         response = self.create_dish(self.validated_data['payload'])
         self.draft.payload = self.validated_data['payload']
         self.draft.created_dish_id = response.data['id']
         self.draft.status = DishAIDraftStatus.DISH_CREATED
-        self.draft.save(update_fields=['payload', 'created_dish', 'status'])
+        self.draft.save(update_fields=['payload', 'created_dish', 'status', 'updated_at'])
         return response

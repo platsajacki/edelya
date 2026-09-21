@@ -8,9 +8,10 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from apps.dishes.api.schemas import DishAIDraftViewSetSchema
-from apps.dishes.api.serializers.ai_drafts import DishAIDraftCreateDishSerializer, DishAIDraftSerializer
+from apps.dishes.api.serializers.ai_drafts import DishAIDraftPayloadSerializer, DishAIDraftSerializer
 from apps.dishes.api.services.ai_draft_creator import AIDraftCreator
 from apps.dishes.api.services.ai_draft_dish_creator import AIDraftDishCreator
+from apps.dishes.api.services.ai_draft_payload_updater import AIDraftPayloadUpdater
 from apps.dishes.api.views.filters.ai_drafts import DishAIDraftFilter
 from apps.dishes.models import Dish, DishAIDraft
 from apps.users.models import User
@@ -23,7 +24,7 @@ class DishAIDraftViewSet(ModelViewSet):
     queryset = DishAIDraft.objects.none()
     serializer_class = DishAIDraftSerializer
     permission_classes = [IsAuthenticated & OwnerObjectPermission]
-    http_method_names = ['get', 'post', 'head', 'options']
+    http_method_names = ['get', 'post', 'patch', 'head', 'options']
     lookup_url_kwarg = 'draft_id'
     filterset_class = DishAIDraftFilter
 
@@ -40,10 +41,14 @@ class DishAIDraftViewSet(ModelViewSet):
     def perform_create(self, serializer: DishAIDraftSerializer) -> None:
         AIDraftCreator(serializer=serializer)()
 
+    def partial_update(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        serializer = DishAIDraftPayloadSerializer(data=request.data, context=self.get_serializer_context())
+        return AIDraftPayloadUpdater(serializer=serializer, draft=self.get_object())()
+
     @action(detail=True, methods=['post'], url_path='create-dish')
     def create_dish(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         draft = self.get_object()
-        serializer = DishAIDraftCreateDishSerializer(
+        serializer = DishAIDraftPayloadSerializer(
             data=request.data,
             context=self.get_serializer_context(),
         )

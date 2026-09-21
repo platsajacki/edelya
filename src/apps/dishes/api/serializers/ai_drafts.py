@@ -35,12 +35,9 @@ class DishAIDraftSerializer(serializers.ModelSerializer):
         ]
 
 
-class DishAIDraftCreateDishSerializer(serializers.Serializer):
+class DishAIDraftPayloadSerializer(serializers.Serializer):
     payload = serializers.JSONField()
 
     def validate_payload(self, value: dict) -> DishPayloadData:
-        try:
-            dish_payload_validator(value)
-        except serializers.ValidationError as e:
-            raise serializers.ValidationError(e.message) from e
+        dish_payload_validator(value)
         return cast(DishPayloadData, value)

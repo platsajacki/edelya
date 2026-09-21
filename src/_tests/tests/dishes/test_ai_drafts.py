@@ -1,10 +1,13 @@
 import pytest
 from pytest_mock import MockType
 
+from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 from decimal import Decimal
+from threading import Barrier
 from uuid import uuid4
 
+from django.db import connection
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
@@ -144,6 +147,104 @@ class TestDishAIDraftViewSetCreate:
         mock_process_ai_draft_delay.assert_not_called()
 
 
+class TestDishAIDraftViewSetPartialUpdate:
+    def get_detail_url(self, id: str) -> str:
+        return reverse('api_v1:dishes:dishes:dish-ai-draft-detail', kwargs={'draft_id': id})
+
+    def patch_payload(self, api_client: APIClient, draft: DishAIDraft, data: dict) -> Response:
+        return api_client.patch(self.get_detail_url(str(draft.id)), data=data, format='json')
+
+    def test_anon_client_cannot_update_draft(
+        self, api_client: APIClient, parsed_dish_ai_draft: DishAIDraft, valid_dish_payload: DishPayloadData
+    ) -> None:
+        response = self.patch_payload(api_client, parsed_dish_ai_draft, {'payload': valid_dish_payload})
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_updates_payload_of_parsed_draft(
+        self,
+        auth_telegram_api_client: APIClient,
+        parsed_dish_ai_draft: DishAIDraft,
+        valid_dish_payload: DishPayloadData,
+    ) -> None:
+        updated_at = parsed_dish_ai_draft.updated_at
+        response = self.patch_payload(auth_telegram_api_client, parsed_dish_ai_draft, {'payload': valid_dish_payload})
+        parsed_dish_ai_draft.refresh_from_db()
+        assert response.status_code == status.HTTP_200_OK, response.data
+        assert response.data == DishAIDraftSerializer(parsed_dish_ai_draft).data
+        assert parsed_dish_ai_draft.payload == valid_dish_payload
+        assert parsed_dish_ai_draft.status == DishAIDraftStatus.PARSED
+        assert parsed_dish_ai_draft.updated_at > updated_at
+
+    def test_cannot_update_draft_with_invalid_payload(
+        self,
+        auth_telegram_api_client: APIClient,
+        parsed_dish_ai_draft: DishAIDraft,
+        valid_dish_payload: DishPayloadData,
+    ) -> None:
+        payload = deepcopy(valid_dish_payload)
+        del payload['ingredients'][0]['owner']  # type: ignore[misc]
+        response = self.patch_payload(auth_telegram_api_client, parsed_dish_ai_draft, {'payload': payload})
+        parsed_dish_ai_draft.refresh_from_db()
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert 'Ingredient #1 missing keys: owner.' in str(response.data)
+        assert parsed_dish_ai_draft.payload == {'name': 'Parsed dish'}
+
+    @pytest.mark.parametrize(
+        'draft_status',
+        [DishAIDraftStatus.PROCESSING, DishAIDraftStatus.DISH_CREATED, DishAIDraftStatus.FAILED],
+    )
+    def test_cannot_update_not_parsed_draft(
+        self,
+        auth_telegram_api_client: APIClient,
+        dish_ai_draft: DishAIDraft,
+        valid_dish_payload: DishPayloadData,
+        draft_status: DishAIDraftStatus,
+    ) -> None:
+        dish_ai_draft.status = draft_status
+        dish_ai_draft.save(update_fields=['status'])
+        response = self.patch_payload(auth_telegram_api_client, dish_ai_draft, {'payload': valid_dish_payload})
+        dish_ai_draft.refresh_from_db()
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert 'AI draft can be edited only in the parsed status.' in str(response.data)
+        assert dish_ai_draft.payload is None
+
+    def test_cannot_update_another_user_draft(
+        self,
+        auth_telegram_api_client: APIClient,
+        another_user_dish_ai_draft: DishAIDraft,
+        valid_dish_payload: DishPayloadData,
+    ) -> None:
+        response = self.patch_payload(
+            auth_telegram_api_client, another_user_dish_ai_draft, {'payload': valid_dish_payload}
+        )
+        another_user_dish_ai_draft.refresh_from_db()
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert another_user_dish_ai_draft.payload is None
+
+    def test_status_in_body_is_ignored(
+        self,
+        auth_telegram_api_client: APIClient,
+        parsed_dish_ai_draft: DishAIDraft,
+        valid_dish_payload: DishPayloadData,
+    ) -> None:
+        data = {'payload': valid_dish_payload, 'status': DishAIDraftStatus.DISH_CREATED}
+        response = self.patch_payload(auth_telegram_api_client, parsed_dish_ai_draft, data)
+        parsed_dish_ai_draft.refresh_from_db()
+        assert response.status_code == status.HTTP_200_OK, response.data
+        assert parsed_dish_ai_draft.status == DishAIDraftStatus.PARSED
+
+    def test_put_is_not_allowed(
+        self,
+        auth_telegram_api_client: APIClient,
+        parsed_dish_ai_draft: DishAIDraft,
+        valid_dish_payload: DishPayloadData,
+    ) -> None:
+        response = auth_telegram_api_client.put(
+            self.get_detail_url(str(parsed_dish_ai_draft.id)), data={'payload': valid_dish_payload}, format='json'
+        )
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+
+
 class TestDishAIDraftViewSetCreateDish:
     def get_create_dish_url(self, id: str) -> str:
         return reverse('api_v1:dishes:dishes:dish-ai-draft-create-dish', kwargs={'draft_id': id})
@@ -159,6 +260,34 @@ class TestDishAIDraftViewSetCreateDish:
             data={'payload': payload},
             format='json',
         )
+
+    def post_create_dish_in_thread(
+        self, barrier: Barrier, user: User, draft: DishAIDraft, payload: DishPayloadData
+    ) -> int:
+        api_client = APIClient()
+        api_client.force_authenticate(user=user)
+        barrier.wait()
+        try:
+            return self.post_create_dish(api_client, draft, payload).status_code
+        finally:
+            connection.close()
+
+    @pytest.mark.django_db(transaction=True)
+    def test_concurrent_requests_create_single_dish(
+        self,
+        parsed_dish_ai_draft: DishAIDraft,
+        valid_dish_payload: DishPayloadData,
+        telegram_user: User,
+    ) -> None:
+        barrier = Barrier(2)
+        args = (barrier, telegram_user, parsed_dish_ai_draft, valid_dish_payload)
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            futures = [executor.submit(self.post_create_dish_in_thread, *args) for _ in range(2)]
+        status_codes = sorted(future.result() for future in futures)
+        parsed_dish_ai_draft.refresh_from_db()
+        assert status_codes == [status.HTTP_201_CREATED, status.HTTP_400_BAD_REQUEST]
+        assert Dish.objects.filter(owner=telegram_user, name__startswith=valid_dish_payload['name']).count() == 1
+        assert parsed_dish_ai_draft.status == DishAIDraftStatus.DISH_CREATED
 
     def test_creates_dish_from_parsed_draft_with_new_ingredient(
         self,
