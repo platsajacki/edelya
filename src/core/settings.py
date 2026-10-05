@@ -87,6 +87,13 @@ DATABASES = {
         'PORT': getenv('POSTGRES_PORT', '5432'),
         'CONN_MAX_AGE': int(getenv('DB_CONN_MAX_AGE', '60')),
         'CONN_HEALTH_CHECKS': True,
+        'OPTIONS': {
+            'connect_timeout': int(getenv('DB_CONNECT_TIMEOUT', '5')),
+            'keepalives': 1,
+            'keepalives_idle': int(getenv('DB_KEEPALIVES_IDLE', '30')),
+            'keepalives_interval': int(getenv('DB_KEEPALIVES_INTERVAL', '10')),
+            'keepalives_count': int(getenv('DB_KEEPALIVES_COUNT', '3')),
+        },
     }
 }
 MAX_DB_CONNECTION_RETRIES = int(getenv('MAX_DB_CONNECTION_RETRIES', '3'))

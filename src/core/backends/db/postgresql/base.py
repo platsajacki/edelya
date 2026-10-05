@@ -23,6 +23,7 @@ TRANSIENT_CONNECTION_ERROR_MARKERS = (
     'could not connect to server',
     'could not translate host name',
     'temporary failure in name resolution',
+    'timeout expired',
 )
 
 
